@@ -58,23 +58,32 @@ def client(db):
 
 @pytest.fixture(scope="function")
 def admin_token_headers(client, db):
-    from app.models.user import User
+    from app.models.staff import Staff
+    from app.models.organization import Organization
+    from uuid import uuid4
+
+    # Create organization
+    org = Organization(id=uuid4(), name="Test Org")
+    db.add(org)
+    db.commit()
 
     admin_data = {
-        "user_id": uuid4(),
-        "staff_code": "admin_test",
+        "id": uuid4(),
+        "organization_id": org.id,
+        "staff_code": f"admin_test_{uuid4().hex[:8]}",
+        "name": "Test Admin",
         "full_name": "Test Admin",
-        "email": "admin_test@test.com",
+        "email": f"admin_test_{uuid4().hex[:8]}@test.com",
         "hashed_password": security.get_password_hash("testpass"),
         "is_superuser": True,
         "is_active": True,
         "role": "ADMIN",
     }
-    user = User(**admin_data)
-    db.add(user)
+    staff = Staff(**admin_data)
+    db.add(staff)
     db.commit()
 
-    login_data = {"username": "admin_test", "password": "testpass"}
+    login_data = {"username": admin_data["staff_code"], "password": "testpass"}
     r = client.post("/api/v1/login/access-token", data=login_data)
     tokens = r.json()
     a_token = tokens["access_token"]

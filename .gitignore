@@ -10,7 +10,16 @@ __pycache__/
 node_modules/
 
 # Environment
-.env
+# .env (Uncommented as per user request)
+venv/
+.venv/
+env/
+.env/
+
+# Build
+dist/
+build/
+*.egg-info/
 
 # Database
 chroma_store/
@@ -19,3 +28,8 @@ yolov8n.pt
 # OS files
 .DS_Store
 Thumbs.db
+*.log
+test_log.txt
+test_output.txt
+BENCHMARK_REPORT.md
+FULL_PROJECT_VALIDATION_REPORT.md

@@ -33,3 +33,7 @@ def read_root():
         "version": "1.0.0",
         "docs_url": f"{settings.API_V1_STR}/docs"
     }
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
