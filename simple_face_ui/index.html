@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Face Registration & Recognition</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <div>
+          <h1>Face Registration & Recognition</h1>
+          <p class="sub">Simple UI to test backend face performance (GPU/CPU).</p>
+        </div>
+        <div class="status">
+          <span id="serverStatus" class="badge idle">Server: unknown</span>
+          <span id="authStatus" class="badge idle">Auth: signed out</span>
+        </div>
+      </header>
+
+      <section class="panel">
+        <h2>Backend</h2>
+        <div class="row">
+          <label>API Base URL</label>
+          <input id="apiUrl" type="text" value="http://127.0.0.1:8000/api/v1" />
+          <button id="pingBtn">Ping</button>
+        </div>
+        <div class="row">
+          <label>Username</label>
+          <input id="username" type="text" placeholder="admin" />
+          <label>Password</label>
+          <input id="password" type="password" placeholder="admin" />
+          <button id="loginBtn">Login</button>
+          <button id="logoutBtn" class="ghost">Logout</button>
+        </div>
+      </section>
+
+      <section class="panel grid">
+        <div class="card">
+          <h2>Camera</h2>
+          <video id="video" autoplay muted playsinline></video>
+          <div class="row">
+            <button id="startCamBtn">Start Camera</button>
+            <button id="stopCamBtn" class="ghost">Stop</button>
+            <button id="snapBtn" class="ghost">Snap</button>
+          </div>
+          <canvas id="preview" class="hidden"></canvas>
+          <p class="hint">Tip: Use bright light and center your face.</p>
+        </div>
+
+        <div class="card">
+          <h2>Register Face</h2>
+          <div class="row">
+            <label>Student ID</label>
+            <input id="studentId" type="text" placeholder="roll or external id" />
+          </div>
+          <div class="row">
+            <button id="registerBtn">Register Current Frame</button>
+          </div>
+          <div class="row">
+            <label>Batch Angles</label>
+            <div class="inline">
+              <button data-angle="front" class="angleBtn ghost">Front</button>
+              <button data-angle="left" class="angleBtn ghost">Left</button>
+              <button data-angle="right" class="angleBtn ghost">Right</button>
+            </div>
+          </div>
+          <div id="registerLog" class="log"></div>
+        </div>
+
+        <div class="card">
+          <h2>Recognize Faces</h2>
+          <div class="row">
+            <label>Interval (ms)</label>
+            <input id="intervalMs" type="number" value="1100" min="400" step="100" />
+            <button id="scanOnceBtn">Scan Once</button>
+            <button id="toggleScanBtn">Start Auto Scan</button>
+          </div>
+          <div class="row">
+            <label>Max Width</label>
+            <input id="maxWidth" type="number" value="512" min="256" step="64" />
+          </div>
+          <div id="recognizeLog" class="log"></div>
+          <div class="results" id="results"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

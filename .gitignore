@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.lock.txt
+
+# Node.js
+node_modules/
+
+# Environment
+.env
+
+# Database
+chroma_store/
+yolov8n.pt
+
+# OS files
+.DS_Store
+Thumbs.db
