@@ -14,33 +14,41 @@ interface FaceScannerProps {
   isScanning: boolean;
 }
 
-/** Capture a JPEG blob from the video element */
-function captureFrame(video: HTMLVideoElement): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const srcWidth = video.videoWidth || 640;
-    const srcHeight = video.videoHeight || 480;
-    const maxWidth = 512;
-    const targetWidth = Math.min(srcWidth, maxWidth);
-    const targetHeight = Math.max(1, Math.round((srcHeight / srcWidth) * targetWidth));
-
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return resolve(null);
-    ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
-    canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.72);
-  });
-}
-
 const FaceScanner: React.FC<FaceScannerProps> = ({ onDetect, isScanning }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [detections, setDetections] = useState<{ id: string; label: string; conf: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [statusText, setStatusText] = useState<string>('Sensor Ready');
   const scanningRef = useRef(false);
   const busyRef = useRef(false);
+
+  /** Capture a JPEG blob from the video element using shared canvas */
+  const captureFrame = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas) return resolve(null);
+
+      const srcWidth = video.videoWidth || 640;
+      const srcHeight = video.videoHeight || 480;
+      const maxWidth = 512;
+      const targetWidth = Math.min(srcWidth, maxWidth);
+      const targetHeight = Math.max(1, Math.round((srcHeight / srcWidth) * targetWidth));
+
+      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+      }
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) return resolve(null);
+
+      ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.65);
+    });
+  }, []);
 
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -162,16 +170,16 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onDetect, isScanning }) => {
     <div className="relative w-full aspect-square md:aspect-video bg-slate-900 rounded-none overflow-hidden group">
       {error ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-slate-900">
-           <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-500/20">
-             <AlertCircle size={32} />
-           </div>
-           <p className="text-sm font-bold text-slate-300 max-w-xs">{error}</p>
-           <button 
-             onClick={startCamera}
-             className="flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl tap-active"
-           >
-             <RefreshCw size={16} /> Retry Camera
-           </button>
+          <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-500/20">
+            <AlertCircle size={32} />
+          </div>
+          <p className="text-sm font-bold text-slate-300 max-w-xs">{error}</p>
+          <button
+            onClick={startCamera}
+            className="flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl tap-active"
+          >
+            <RefreshCw size={16} /> Retry Camera
+          </button>
         </div>
       ) : (
         <video
@@ -206,21 +214,23 @@ const FaceScanner: React.FC<FaceScannerProps> = ({ onDetect, isScanning }) => {
         )}
 
         <div className="absolute inset-0 flex items-center justify-center opacity-25">
-           <div className="w-64 h-64 border border-indigo-600 rounded-full flex items-center justify-center">
-              <div className="w-1 h-10 bg-indigo-600 rounded-full absolute top-0"></div>
-              <div className="w-1 h-10 bg-indigo-600 rounded-full absolute bottom-0"></div>
-              <div className="h-1 w-10 bg-indigo-600 rounded-full absolute left-0"></div>
-              <div className="h-1 w-10 bg-indigo-600 rounded-full absolute right-0"></div>
-           </div>
+          <div className="w-64 h-64 border border-indigo-600 rounded-full flex items-center justify-center">
+            <div className="w-1 h-10 bg-indigo-600 rounded-full absolute top-0"></div>
+            <div className="w-1 h-10 bg-indigo-600 rounded-full absolute bottom-0"></div>
+            <div className="h-1 w-10 bg-indigo-600 rounded-full absolute left-0"></div>
+            <div className="h-1 w-10 bg-indigo-600 rounded-full absolute right-0"></div>
+          </div>
         </div>
 
         {isScanning && !error && (
           <div className="absolute inset-0 overflow-hidden">
-             <div className="w-full h-32 bg-gradient-to-b from-transparent via-indigo-600/10 to-transparent absolute top-0 animate-[scan_3s_linear_infinite]" 
-                  style={{animation: 'scan-move 3s linear infinite'}}></div>
+            <div className="w-full h-32 bg-gradient-to-b from-transparent via-indigo-600/10 to-transparent absolute top-0 animate-[scan_3s_linear_infinite]"
+              style={{ animation: 'scan-move 3s linear infinite' }}></div>
           </div>
         )}
       </div>
+
+      <canvas ref={canvasRef} className="hidden" />
 
       <style>{`
         @keyframes scan-move {

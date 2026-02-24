@@ -95,8 +95,14 @@ const AppContent: React.FC = () => {
 
   const loadGlobalData = async () => {
     try {
-      // Fetch Staff from backend
-      const staffData = await data.getStaff();
+      // Fetch everything in parallel
+      const [staffData, groupData, memberData] = await Promise.all([
+        data.getStaff(),
+        data.getClasses(),
+        data.getStudents()
+      ]);
+
+      // Transform Staff
       const transformedStaff: StaffMember[] = staffData
         .filter((u: any) => u.role !== 'ADMIN') // Exclude admin from staff list
         .map((u: any) => ({
@@ -112,8 +118,7 @@ const AppContent: React.FC = () => {
         }));
       setStaffList(transformedStaff);
 
-      // Fetch Groups (V2)
-      const groupData = await data.getClasses();
+      // Transform Groups (V2)
       const transformedGroups = (groupData || []).map((g: any) => ({
         id: g.id,
         name: g.name,
@@ -121,8 +126,7 @@ const AppContent: React.FC = () => {
       }));
       setGroupList(transformedGroups.length > 0 ? transformedGroups : MOCK_CLASSES);
 
-      // Fetch Members (V2)
-      const memberData = await data.getStudents();
+      // Transform Members (V2)
       const transformedMembers: Student[] = memberData.map((m: any) => ({
         id: m.id,
         name: m.name,

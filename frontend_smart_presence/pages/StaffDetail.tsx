@@ -29,6 +29,8 @@ const StaffDetail: React.FC<StaffDetailProps> = ({ staff, onBack, onOpenChat, on
       fetchActivity();
    }, [staff.id]);
 
+   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
    return (
       <div className="space-y-6 md:space-y-8 pb-10 px-1 page-enter">
          <BackButton onClick={onBack} />
@@ -51,9 +53,9 @@ const StaffDetail: React.FC<StaffDetailProps> = ({ staff, onBack, onOpenChat, on
 
                <div className="flex flex-wrap justify-center gap-2">
                   {staff.assignedClassId && (
-                    <span className="px-5 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-[9px] font-bold uppercase tracking-widest border border-indigo-100 dark:border-indigo-800/50">
-                       Group: {staff.assignedClassId}
-                    </span>
+                     <span className="px-5 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-[9px] font-bold uppercase tracking-widest border border-indigo-100 dark:border-indigo-800/50">
+                        Group: {staff.assignedClassId}
+                     </span>
                   )}
                   <span className="px-5 py-2 bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-600 rounded-xl text-[9px] font-bold border border-slate-100 dark:border-slate-800 uppercase tracking-widest">
                      {staff.type.replace('_', ' ')}
@@ -103,12 +105,23 @@ const StaffDetail: React.FC<StaffDetailProps> = ({ staff, onBack, onOpenChat, on
 
                <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
-                     <AreaChart data={activityData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.2} />
+                     <AreaChart data={activityData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        {!isMobile && <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.2} />}
                         <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10, fontWeight: 800 }} />
                         <YAxis hide domain={[0, 100]} />
-                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px', color: '#fff' }} />
-                        <Area type="monotone" dataKey="attendance" stroke="#4F46E5" strokeWidth={4} fill="url(#colorPerf)" fillOpacity={1} />
+                        <Tooltip
+                           contentStyle={{ backgroundColor: '#0f172a', border: 'none', borderRadius: '12px', fontSize: '10px', color: '#fff' }}
+                           itemStyle={{ padding: 0 }}
+                        />
+                        <Area
+                           type="monotone"
+                           dataKey="attendance"
+                           stroke="#4F46E5"
+                           strokeWidth={isMobile ? 3 : 4}
+                           fill="url(#colorPerf)"
+                           fillOpacity={1}
+                           animationDuration={isMobile ? 500 : 1500}
+                        />
                         <defs>
                            <linearGradient id="colorPerf" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.15} />
