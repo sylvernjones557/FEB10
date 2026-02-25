@@ -49,13 +49,13 @@ class FaceEngine:
             device_label = 'CPU'
 
         try:
-            self.app = FaceAnalysis(name="buffalo_l", providers=providers)
+            self.app = FaceAnalysis(name=settings.FACE_MODEL_NAME, providers=providers)
             self.app.prepare(ctx_id=ctx_id, det_size=det_size)
             self.device = device_label
             self.providers = providers
         except Exception as e:
             print(f"Warning: Failed to initialize on {device_label}. Falling back to CPU. Error: {e}")
-            self.app = FaceAnalysis(name="buffalo_l", providers=['CPUExecutionProvider'])
+            self.app = FaceAnalysis(name=settings.FACE_MODEL_NAME, providers=['CPUExecutionProvider'])
             self.app.prepare(ctx_id=-1, det_size=(settings.FACE_DET_SIZE_CPU, settings.FACE_DET_SIZE_CPU))
             self.device = 'CPU'
             self.providers = ['CPUExecutionProvider']

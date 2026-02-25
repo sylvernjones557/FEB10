@@ -29,8 +29,11 @@ class Settings(BaseSettings):
     FACE_DEVICE_PREFERENCE: str = Field(default="auto", env="FACE_DEVICE_PREFERENCE")
 
     # Device-specific detector input size (higher = potentially better accuracy, lower = faster)
-    FACE_DET_SIZE_CPU: int = Field(default=480, env="FACE_DET_SIZE_CPU")
+    FACE_DET_SIZE_CPU: int = Field(default=320, env="FACE_DET_SIZE_CPU")
     FACE_DET_SIZE_GPU: int = Field(default=640, env="FACE_DET_SIZE_GPU")
+
+    # Model variant: buffalo_l (large, accurate), buffalo_m (medium), buffalo_sc (small, fast)
+    FACE_MODEL_NAME: str = Field(default="buffalo_sc", env="FACE_MODEL_NAME")
 
     class Config:
         case_sensitive = True
