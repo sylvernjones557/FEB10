@@ -189,7 +189,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
       )}
 
       <main className={`flex-1 transition-all ${isAuth ? 'px-5 py-6 pb-48' : ''}`}>
-        <div className={isAuth ? 'max-w-xl mx-auto' : 'w-full'}>
+        <div className={isAuth ? 'w-full max-w-6xl mx-auto' : 'w-full'}>
           {children}
         </div>
       </main>

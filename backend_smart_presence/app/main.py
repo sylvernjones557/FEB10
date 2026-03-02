@@ -1,4 +1,9 @@
 
+# Load environment variables from .env before any config import
+import os
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 

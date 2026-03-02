@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 // Base URL configuration (Vite environment variable or default)
+// Backend runs plain HTTP; browsers treat 127.0.0.1 as a secure context.
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
 
 const api = axios.create({
@@ -174,7 +175,9 @@ export const recognition = {
      */
     recognizeFace: async (imageBlob: Blob): Promise<{
         match: boolean;
-        matches: Array<{ student_id: string; distance: number; metadata: any }>;
+        matches: Array<{ student_id: string; distance: number; metadata: any; bbox?: number[] }>;
+        unrecognized?: Array<{ bbox: number[] }>;
+        frame_size?: number[];
         detail?: string;
     }> => {
         const formData = new FormData();

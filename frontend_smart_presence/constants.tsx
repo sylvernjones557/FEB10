@@ -38,6 +38,17 @@ export const MOCK_CLASSES = [
   { id: 'g4', name: 'Batch 2', code: 'B2' },
 ];
 
+/**
+ * Check if a class/group is the special "Test Class".
+ * Test Class bypasses timetable logic and shows ALL registered students.
+ */
+export const isTestClass = (cls: { name?: string; code?: string; id?: string } | null | undefined): boolean => {
+  if (!cls) return false;
+  const name = (cls.name || '').toLowerCase();
+  const code = (cls.code || '').toLowerCase();
+  return name.includes('test') || code === 'test' || code === 'tst';
+};
+
 export const NAV_ITEMS = {
   ADMIN: [
     { label: 'Home', icon: <LayoutDashboard size={24} />, path: '/dashboard' },

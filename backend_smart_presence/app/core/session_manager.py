@@ -26,6 +26,14 @@ class SessionManager:
         self.state: str = "IDLE"  # IDLE, SCANNING, VERIFYING, COMPLETED
         self.session_db_id: Optional[str] = None
 
+    def force_reset(self):
+        """Force-reset the session back to IDLE. Used by Test Class to allow unlimited sessions."""
+        print(f"Force-reset session (was {self.state})")
+        self.active_session = None
+        self.session_db_id = None
+        self.present_students = set()
+        self.state = "IDLE"
+
     def start_session(self, created_by: str, group_id: str, session_db_id: str):
         if self.active_session:
             raise ValueError("Session already active")

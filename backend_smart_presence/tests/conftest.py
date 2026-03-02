@@ -1,5 +1,6 @@
 
 import os
+from dotenv import load_dotenv
 import pytest
 from uuid import uuid4
 from typing import Generator
@@ -11,6 +12,9 @@ from app.db.base import Base
 from app.main import app
 from app.db.session import get_db
 from app.core import security
+
+# Load environment variables from .env for tests
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
 # Use the same Supabase DB for tests, or override with TEST_DATABASE_URL
 TEST_DATABASE_URL = os.getenv(

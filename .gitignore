@@ -3,14 +3,11 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.sqlite3
-*.lock.txt
 
 # Node.js
 node_modules/
 
-# Environment
-# .env (Uncommented as per user request)
+# Virtual environments
 venv/
 .venv/
 env/
@@ -20,10 +17,21 @@ env/
 dist/
 build/
 *.egg-info/
+.vite/
 
-# Database
+# Database / Vector store
 chroma_store/
+*.sqlite3
+
+# AI model files (downloaded at runtime)
 yolov8n.pt
+*.onnx
+
+# Certs (generated locally)
+backend_smart_presence/certs/
+
+# Lock files
+*.lock.txt
 
 # OS files
 .DS_Store
@@ -31,5 +39,8 @@ Thumbs.db
 *.log
 test_log.txt
 test_output.txt
+
+# Reports (auto-generated)
 BENCHMARK_REPORT.md
 FULL_PROJECT_VALIDATION_REPORT.md
+HTTPS_MIGRATION_NOTES.md

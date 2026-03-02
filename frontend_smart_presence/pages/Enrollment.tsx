@@ -13,6 +13,7 @@ const Enrollment: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', roll: '', standard: '', section: 'A' });
   const [studentId, setStudentId] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null); // Stores duplicate face owner name
   const [isCreating, setIsCreating] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -132,6 +133,23 @@ const Enrollment: React.FC = () => {
       }
     } catch (err: any) {
       const detail = err?.response?.data?.detail || 'Face registration failed. Try again.';
+      const status = err?.response?.status;
+
+      // Duplicate face detected — stop the entire registration flow
+      if (status === 409 || (typeof detail === 'string' && detail.includes('DUPLICATE_FACE'))) {
+        // Extract the name from "DUPLICATE_FACE: This face is already registered to "Name"..."
+        const nameMatch = detail.match(/registered to "([^"]+)"/);
+        const ownerName = nameMatch ? nameMatch[1] : 'another student';
+        setDuplicateInfo(ownerName);
+        setErrorMsg(null);
+        // Stop camera
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop());
+          streamRef.current = null;
+        }
+        return; // Stop — do NOT continue to next angle
+      }
+
       setErrorMsg(detail);
       setAngleStatus(prev => { const n = [...prev]; n[idx] = 'error'; return n; });
     }
@@ -225,13 +243,43 @@ const Enrollment: React.FC = () => {
             </div>
 
             {/* Error message */}
-            {errorMsg && (
+            {errorMsg && !duplicateInfo && (
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold">
                 <AlertCircle size={18} /> {errorMsg}
               </div>
             )}
 
+            {/* Duplicate face detected — full stop UI */}
+            {duplicateInfo && (
+              <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-rose-500/10 border-2 border-rose-500/30 text-center">
+                <div className="w-16 h-16 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center">
+                  <Shield size={32} className="text-rose-400" />
+                </div>
+                <div className="space-y-1.5">
+                  <h4 className="text-lg font-bold text-rose-400">Duplicate Face Detected</h4>
+                  <p className="text-sm text-rose-300/80">
+                    This face is already registered to <strong className="text-white">{duplicateInfo}</strong>.
+                    Each student must have a unique face for accurate attendance tracking.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setDuplicateInfo(null);
+                    setStep(1);
+                    setScanStep(0);
+                    setAngleStatus(['idle', 'idle', 'idle']);
+                    setErrorMsg(null);
+                    setStudentId('');
+                  }}
+                  className="px-6 py-3 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-bold transition-all flex items-center gap-2"
+                >
+                  <RotateCw size={16} /> Go Back & Try Different Student
+                </button>
+              </div>
+            )}
+
             {/* Angle indicators + capture button */}
+            {!duplicateInfo && (
             <div className="flex justify-between items-end px-10">
                {ANGLES.map((label, i) => (
                  <div key={label} className={`flex flex-col items-center gap-2 ${scanStep > i || angleStatus[i] === 'done' ? 'text-emerald-400' : scanStep === i + 1 ? 'text-indigo-400' : 'text-slate-600'}`}>
@@ -248,9 +296,10 @@ const Enrollment: React.FC = () => {
                  </div>
                ))}
             </div>
+            )}
 
-            {/* Capture button — only visible when scanning is active */}
-            {scanStep > 0 && scanStep <= 3 && angleStatus[scanStep - 1] !== 'done' && (
+            {/* Capture button — only visible when scanning is active and no duplicate */}
+            {!duplicateInfo && scanStep > 0 && scanStep <= 3 && angleStatus[scanStep - 1] !== 'done' && (
               <button
                 onClick={captureCurrentAngle}
                 disabled={angleStatus[scanStep - 1] === 'capturing'}
@@ -273,7 +322,7 @@ const Enrollment: React.FC = () => {
              <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500"><CheckCircle2 size={40} /></div>
              <h3 className="text-2xl font-bold text-white">Pupil Registered</h3>
              <p className="text-slate-500 max-w-sm mx-auto">Admission for <strong>{formData.name}</strong> ({formData.standard} Standard - {formData.section}) is complete and biometrics are encrypted.</p>
-             <button onClick={() => { setStep(1); setScanStep(0); setAngleStatus(['idle','idle','idle']); setFormData({ name: '', roll: '', standard: '', section: 'A' }); setStudentId(''); setErrorMsg(null); }} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/10 transition-all">NEW ADMISSION</button>
+             <button onClick={() => { setStep(1); setScanStep(0); setAngleStatus(['idle','idle','idle']); setFormData({ name: '', roll: '', standard: '', section: 'A' }); setStudentId(''); setErrorMsg(null); setDuplicateInfo(null); }} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/10 transition-all">NEW ADMISSION</button>
           </div>
         )}
       </div>

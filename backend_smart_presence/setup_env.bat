@@ -1,16 +1,21 @@
 @echo off
-if not exist venv (
-    echo [INFO] Creating Virtual Environment...
-    python -m venv venv
+echo ============================================
+echo   Smart Presence - Backend Setup
+echo ============================================
+echo.
+
+if not exist .venv (
+    echo [INFO] Creating Virtual Environment (.venv)...
+    python -m venv .venv
 )
 
 echo [INFO] Activating VENV...
-call venv\Scripts\activate
+call .venv\Scripts\activate.bat
 
 echo [INFO] Upgrading pip...
 python -m pip install --upgrade pip
 
-echo [INFO] Installing Dependencies (CPU Default)...
+echo [INFO] Installing Dependencies...
 pip install -r requirements.txt
 
 echo.
@@ -26,12 +31,15 @@ if %errorlevel%==0 (
         pip install onnxruntime==1.16.3
     )
 ) else (
-    echo [INFO] No NVIDIA GPU detected. Ensuring CPU runtime package...
-    pip uninstall -y onnxruntime-gpu >nul 2>nul
-    pip install onnxruntime==1.16.3
+    echo [INFO] No NVIDIA GPU detected. Using CPU runtime (default).
 )
 
-echo [INFO] Runtime setup complete. Face engine will auto-select GPU/CPU at startup.
 echo.
-echo [INFO] Setup API is ready to run.
+echo [INFO] Creating database tables...
+python scripts/create_tables.py
+
+echo.
+echo ============================================
+echo   Setup complete! Run 'run_server.bat' to start.
+echo ============================================
 pause

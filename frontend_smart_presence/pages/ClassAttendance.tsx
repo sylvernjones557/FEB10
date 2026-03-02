@@ -16,10 +16,11 @@ import {
   Check,
   XCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
 import FaceScanner, { FaceMatch } from '../components/FaceScanner';
-import { MOCK_CLASSES, BackButton } from '../constants';
+import { MOCK_CLASSES, BackButton, isTestClass } from '../constants';
 import { Student } from '../types';
 import { attendance as attendanceApi } from '../services/api';
 
@@ -45,6 +46,9 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [finalizeMsg, setFinalizeMsg] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [lastRecognizedEntry, setLastRecognizedEntry] = useState<{ name: string; avatar: string; time: string } | null>(null);
+  // Post-finalize summary
+  const [finalizeResult, setFinalizeResult] = useState<{ present_count: number; total_students: number; present_names: { id: string; name: string; avatar: string }[] } | null>(null);
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
@@ -59,8 +63,10 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
   }, [preSelected, isManualMode]);
 
   // Filter students for the selected class
+  // Test Class special: show ALL registered students across all classes
   const classStudents = useMemo(() => {
     if (!selectedClass) return [];
+    if (isTestClass(selectedClass)) return studentList;
     return studentList.filter(s => s.classId === selectedClass.id);
   }, [selectedClass, studentList]);
 
@@ -161,15 +167,37 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
       // Stop scanning on backend
       try { await attendanceApi.stopScanning(); } catch { /* might already be stopped */ }
 
-      // Merge manual selections if any
+      // Send ALL recognized student IDs (from face scan + manual) to backend verify
+      const aiPresentIds = Array.from(recognizedStudents.keys());
       const manualPresentIds = Object.entries(manualPresence).filter(([, v]) => v).map(([id]) => id);
-      if (manualPresentIds.length > 0) {
-        await attendanceApi.verify(manualPresentIds, []);
+      const allPresentIds = [...new Set([...aiPresentIds, ...manualPresentIds])];
+      if (allPresentIds.length > 0) {
+        await attendanceApi.verify(allPresentIds, []);
       }
 
       // Finalize
       const result = await attendanceApi.finalize();
-      setFinalizeMsg(`Session finalized! ${result.summary?.present_count || 0} students marked present.`);
+      const presentCount = result.present_count || 0;
+      const totalStudents = result.total_students || 0;
+
+      // Build present names list from recognizedStudents + manual
+      const presentNames: { id: string; name: string; avatar: string }[] = [];
+      for (const sid of allPresentIds) {
+        const fromRecognized = recognizedStudents.get(sid);
+        if (fromRecognized) {
+          presentNames.push({ id: sid, name: fromRecognized.name, avatar: fromRecognized.avatar });
+        } else {
+          const student = studentList.find(s => s.id === sid);
+          presentNames.push({
+            id: sid,
+            name: student?.name || sid,
+            avatar: student?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(sid)}&background=137fec&color=fff&size=150&bold=true`,
+          });
+        }
+      }
+
+      setFinalizeResult({ present_count: presentCount, total_students: totalStudents, present_names: presentNames });
+      setFinalizeMsg(`Session finalized! ${presentCount} students marked present.`);
       setSessionActive(false);
       setIsScanning(false);
     } catch (err: any) {
@@ -184,7 +212,9 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
     setDetectedCount(0);
     setRecognizedStudents(new Map());
     setFinalizeMsg(null);
+    setFinalizeResult(null);
     setSessionError(null);
+    setLastRecognizedEntry(null);
   };
 
   if (!selectedClass) {
@@ -200,31 +230,193 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          {groupList.map(cls => (
-            <button 
-              key={cls.id}
-              onClick={() => setSelectedClass(cls)}
-              className="bg-white dark:bg-slate-900 p-7 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group tap-active transition-all duration-300"
-            >
-              <div className="flex items-center gap-6">
-                <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center transition-all group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500 group-hover:scale-105 shadow-sm">
-                  <Layers size={24} />
+          {groupList.map(cls => {
+            const testCls = isTestClass(cls);
+            return (
+              <button 
+                key={cls.id}
+                onClick={() => setSelectedClass(cls)}
+                className={`p-7 rounded-[2.5rem] border shadow-sm flex items-center justify-between group tap-active transition-all duration-300 ${
+                  testCls
+                    ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/40'
+                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-6">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105 shadow-sm ${
+                    testCls
+                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white'
+                      : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500'
+                  }`}>
+                    {testCls ? <Sparkles size={24} /> : <Layers size={24} />}
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{cls.name}</h3>
+                    <p className={`text-[10px] font-bold uppercase mt-2.5 ${
+                      testCls ? 'text-amber-500 dark:text-amber-400' : 'text-indigo-500 dark:text-indigo-400'
+                    }`}>
+                      {testCls ? 'All Students • No Schedule Limits' : `Code ${cls.code || cls.id}`}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{cls.name}</h3>
-                  <p className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase mt-2.5">Code {cls.code || cls.id}</p>
-                </div>
-              </div>
-              <ChevronRight size={20} strokeWidth={3} className="text-slate-200 dark:text-slate-800 group-hover:text-indigo-600 transition-all group-hover:translate-x-1" />
-            </button>
-          ))}
+                <ChevronRight size={20} strokeWidth={3} className="text-slate-200 dark:text-slate-800 group-hover:text-indigo-600 transition-all group-hover:translate-x-1" />
+              </button>
+            );
+          })}
         </div>
       </div>
     );
   }
 
-  // No period selection in V2
+  // Post-finalize summary screen
+  if (finalizeResult) {
+    const { present_count, total_students, present_names } = finalizeResult;
+    const absentStudents = classStudents.filter(s => !present_names.some(p => p.id === s.id));
+    return (
+      <div className="space-y-6 page-enter pb-10">
+        <BackButton onClick={() => { handleReset(); setSelectedClass(null); if (onExit) onExit(); }} />
 
+        {/* Header */}
+        <div className="text-center space-y-3">
+          <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+            <CheckCircle2 size={40} className="text-emerald-500" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Session Complete</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{selectedClass?.name} &middot; {today}</p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 text-center">
+            <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{present_count}</p>
+            <p className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-widest mt-1">Present</p>
+          </div>
+          <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/30 text-center">
+            <p className="text-3xl font-black text-rose-600 dark:text-rose-400">{total_students - present_count}</p>
+            <p className="text-[10px] font-bold text-rose-500/70 uppercase tracking-widest mt-1">Absent</p>
+          </div>
+        </div>
+
+        {/* Present students list */}
+        {present_names.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+              <CheckCircle2 size={12} /> Present ({present_names.length})
+            </h3>
+            <div className="space-y-2">
+              {present_names.map((s) => (
+                <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/20">
+                  <img src={s.avatar} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-emerald-300 dark:border-emerald-700" />
+                  <span className="font-semibold text-sm text-slate-800 dark:text-white flex-1">{s.name}</span>
+                  <CheckCircle2 size={16} className="text-emerald-500" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Absent students list */}
+        {absentStudents.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest flex items-center gap-2">
+              <XCircle size={12} /> Absent ({absentStudents.length})
+            </h3>
+            <div className="space-y-2">
+              {absentStudents.map((s) => (
+                <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-800/20">
+                  <img src={s.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=f43f5e&color=fff&size=150&bold=true`} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-rose-300 dark:border-rose-700 opacity-60" />
+                  <span className="font-semibold text-sm text-slate-500 dark:text-slate-400 flex-1">{s.name}</span>
+                  <XCircle size={16} className="text-rose-400" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => { handleReset(); }}
+            className="flex-1 h-12 rounded-xl bg-[#137fec] text-white font-bold text-[13px] flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-indigo-600/20"
+          >
+            <RotateCcw size={16} /> New Session
+          </button>
+          <button
+            onClick={() => { handleReset(); setSelectedClass(null); if (onExit) onExit(); }}
+            className="flex-1 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[13px] flex items-center justify-center gap-2 active:scale-95 transition-transform border border-slate-200 dark:border-slate-700"
+          >
+            <ArrowLeft size={16} /> Exit
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Full-screen AI Scanner mode
+  if (!isManualMode) {
+    return (
+      <FaceScanner
+        onDetect={(count, matches) => {
+          handleDetect(count, matches);
+          // Update last recognized for bottom-sheet
+          if (matches && matches.length > 0) {
+            const m = matches[matches.length - 1];
+            const student = studentList.find(s => s.id === m.student_id);
+            setLastRecognizedEntry({
+              name: student?.name || m.student_id,
+              avatar: student?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.student_id)}&background=137fec&color=fff&size=150&bold=true`,
+              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+            });
+          }
+        }}
+        isScanning={isScanning}
+        onBack={() => { handlePauseScan(); setIsManualMode(true); }}
+        title={selectedClass?.name || 'Group Attendance'}
+        lastRecognized={lastRecognizedEntry}
+        recognizedList={recognizedStudents}
+        count={currentCount}
+        total={totalCapacity}
+        onDone={undefined}
+        studentLookup={(id: string) => {
+          const s = studentList.find(st => st.id === id);
+          return s ? { name: s.name, avatar: s.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=137fec&color=fff&size=150&bold=true` } : null;
+        }}
+        bottomContent={
+          <div className="flex gap-2 w-full">
+            {sessionError && (
+              <div className="absolute -top-14 left-0 right-0 mx-5 bg-rose-500/15 backdrop-blur-xl rounded-xl border border-rose-500/20 p-2.5 flex items-center gap-2 text-rose-300 text-xs font-bold">
+                <AlertCircle size={14} /> {sessionError}
+              </div>
+            )}
+            {finalizeMsg && (
+              <div className="absolute -top-14 left-0 right-0 mx-5 bg-emerald-500/15 backdrop-blur-xl rounded-xl border border-emerald-500/20 p-2.5 flex items-center gap-2 text-emerald-300 text-xs font-bold">
+                <CheckCircle2 size={14} /> {finalizeMsg}
+              </div>
+            )}
+            <button
+              onClick={handleToggleScan}
+              className={`flex-1 h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-[13px] tracking-wide transition-all active:scale-95 ${
+                isScanning
+                  ? 'bg-amber-500 text-white shadow-[0_4px_14px_0_rgba(245,158,11,0.35)]'
+                  : 'bg-[#137fec] text-white shadow-[0_4px_14px_0_rgba(19,127,236,0.39)]'
+              }`}
+            >
+              {isScanning ? <><Pause size={16} fill="currentColor" strokeWidth={0} /> Pause</> : <><Play size={16} fill="currentColor" strokeWidth={0} /> {sessionActive ? 'Resume' : 'Start'}</>}
+            </button>
+            <button
+              onClick={handleFinalize}
+              disabled={isFinalizing || (!sessionActive && recognizedStudents.size === 0 && Object.values(manualPresence).filter(v => v).length === 0)}
+              className="flex-1 h-12 flex items-center justify-center gap-2 rounded-xl bg-emerald-500 text-white font-bold text-[13px] tracking-wide disabled:opacity-40 transition-all active:scale-95 shadow-[0_4px_14px_0_rgba(16,185,129,0.35)]"
+            >
+              {isFinalizing ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <><CheckCircle2 size={16} /> Finalize</>}
+            </button>
+          </div>
+        }
+      />
+    );
+  }
+
+  // Manual attendance mode
   return (
     <div className="space-y-6 page-enter pb-10">
       <div className="flex items-center justify-between">
@@ -273,28 +465,10 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
         {/* Dynamic Display Area */}
         {!isManualMode ? (
           <>
-            <div className="rounded-[2.8rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 transition-all duration-500 bg-slate-900">
-              <FaceScanner onDetect={handleDetect} isScanning={isScanning} />
-            </div>
-            
-            <div className="grid grid-cols-4 gap-4 px-2">
-              <button 
-                onClick={handleToggleScan}
-                className={`col-span-3 flex items-center justify-center gap-3 py-6 rounded-2xl font-black transition-all duration-300 tracking-widest text-[11px] uppercase shadow-2xl ${
-                  isScanning 
-                  ? 'bg-amber-500 dark:bg-amber-600 text-white' 
-                  : 'bg-indigo-600 dark:bg-indigo-50 text-white'
-                } tap-active active:scale-95`}
-              >
-                {isScanning ? <Pause size={20} fill="currentColor" strokeWidth={0} /> : <Play size={20} fill="currentColor" strokeWidth={0} />}
-                {isScanning ? 'Pause Scan' : sessionActive ? 'Resume Scan' : 'Start Face Scan'}
-              </button>
-              <button 
-                onClick={handleReset}
-                className="flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 rounded-2xl shadow-sm tap-active transition-all"
-              >
-                <RotateCcw size={22} strokeWidth={2.5} />
-              </button>
+            {/* This should never render — AI mode uses the full-screen early return above */}
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+              <Camera size={48} className="text-[#137fec] opacity-50" />
+              <p className="text-sm font-bold text-slate-400">Switching to full-screen scanner…</p>
             </div>
           </>
         ) : (

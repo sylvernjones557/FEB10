@@ -25,6 +25,65 @@ html.light :root {
   --label-hover-opacity: 0.9;
 }
 
+/* Generic enter animations used across pages */
+.animate-in {
+  --tw-enter-opacity: 0;
+  --tw-enter-x: 0;
+  --tw-enter-y: 0;
+  --tw-enter-scale: 1;
+  opacity: var(--tw-enter-opacity);
+  transform: translate3d(var(--tw-enter-x), var(--tw-enter-y), 0) scale3d(var(--tw-enter-scale), var(--tw-enter-scale), 1);
+  animation: sp-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+
+.slide-in-from-bottom-6 {
+  --tw-enter-y: 1.5rem;
+}
+
+.slide-in-from-right-6 {
+  --tw-enter-x: 1.5rem;
+}
+
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+.animate-in.bounce-in {
+  opacity: 0;
+  transform: scale3d(0.95, 0.95, 1);
+  animation: sp-bounce-in 520ms cubic-bezier(0.2, 0.9, 0.2, 1.15) forwards;
+}
+
+@keyframes sp-enter {
+  from {
+    opacity: var(--tw-enter-opacity, 0);
+    transform: translate3d(var(--tw-enter-x, 0), var(--tw-enter-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), 1);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+  }
+}
+
+@keyframes sp-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale3d(0.95, 0.95, 1);
+  }
+  60% {
+    opacity: 1;
+    transform: scale3d(1.03, 1.03, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+  }
+}
+
 /* Performance optimizations for mobile */
 @media (max-width: 768px) {
   .nav-blur {
@@ -55,6 +114,47 @@ html.light :root {
     transform: none;
   }
 }
+
+/* Full-screen camera safe-area helpers */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .p-safe-top { padding-top: env(safe-area-inset-top, 0px); }
+  .p-safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+/* Fullscreen scanner scrollbar hide */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Tabular nums for smooth counter transitions */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ── iPhone Face ID-style scan line sweep ── */
+@keyframes scanSweep {
+  0%   { top: 5%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 92%; opacity: 0; }
+}
+.scan-line-sweep {
+  animation: scanSweep 2.4s ease-in-out infinite;
+}
+
+/* Face guide glow pulse */
+.face-guide-active svg {
+  filter: drop-shadow(0 0 18px rgba(19,127,236,0.35));
+}
+.face-guide-idle svg {
+  filter: none;
+  transition: filter 0.5s;
+}
+
+/* Slide-in-from-bottom for recognized card */
+@keyframes slideInFromBottom {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in.slide-in-from-bottom-4 { animation: slideInFromBottom 0.4s ease-out forwards; }
+.animate-in.fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
 @keyframes glowPulse {
   0% { box-shadow: 0 0 0 rgba(0,0,0,0); filter: none; }

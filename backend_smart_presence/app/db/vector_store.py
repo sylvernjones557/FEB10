@@ -54,4 +54,16 @@ class VectorStore:
             where={"student_id": student_id}
         )
 
+    def clear_all(self):
+        """Delete ALL face embeddings from the collection and recreate it."""
+        self.client.delete_collection("student_faces")
+        self.collection = self.client.get_or_create_collection(
+            name="student_faces",
+            metadata={"hnsw:space": "cosine"}
+        )
+
+    def get_count(self) -> int:
+        """Return the total number of face embeddings stored."""
+        return self.collection.count()
+
 vector_store = VectorStore()

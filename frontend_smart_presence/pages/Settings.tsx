@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ChevronRight,
   Camera,
@@ -14,11 +15,14 @@ import {
   ImagePlus,
   AlertCircle,
   Loader2,
-  RotateCw
+  RotateCw,
+  ArrowLeft,
+  SwitchCamera
 } from 'lucide-react';
 import { BackButton, MOCK_CLASSES } from '../constants';
 import { StaffMember, Student, StaffType, DaySchedule } from '../types';
 import { recognition } from '../services/api';
+import { useToast } from '../components/Toast';
 
 interface SettingsProps {
   onBack: () => void;
@@ -43,13 +47,18 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
   const [scanStep, setScanStep] = useState(0);
   const [scanProgress, setScanProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [useUploadFallback, setUseUploadFallback] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [anglesDone, setAnglesDone] = useState<boolean[]>([false, false, false]);
+  const [regFacingMode, setRegFacingMode] = useState<'user' | 'environment'>('user');
+  const [autoCapStatus, setAutoCapStatus] = useState<'scanning' | 'detected' | 'captured' | null>(null);
+  const { showToast } = useToast();
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,30 +93,7 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
     }))
   );
 
-  useEffect(() => {
-    if (step === 2 && activeTab === 'STUDENT') {
-      navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      })
-        .then(stream => {
-          streamRef.current = stream;
-          if (videoRef.current) videoRef.current.srcObject = stream;
-        })
-        .catch(err => { console.error(err); setScanError('Camera access denied.'); });
-    }
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-      }
-    };
-  }, [step, activeTab]);
-
-  const updateTimetable = (dayIndex: number, periodIndex: number, field: string, value: string) => {
-    const newTimetable = [...timetable];
-    newTimetable[dayIndex].periods[periodIndex] = { ...newTimetable[dayIndex].periods[periodIndex], [field]: value };
-    setTimetable(newTimetable);
-  };
+  // ── Helpers (defined before effects that depend on them) ──
 
   /** Capture a JPEG blob from the video */
   const captureFrame = useCallback((): Promise<Blob | null> => {
@@ -124,6 +110,12 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
     });
   }, []);
 
+  const updateTimetable = (dayIndex: number, periodIndex: number, field: string, value: string) => {
+    const newTimetable = [...timetable];
+    newTimetable[dayIndex].periods[periodIndex] = { ...newTimetable[dayIndex].periods[periodIndex], [field]: value };
+    setTimetable(newTimetable);
+  };
+
   const startScanSequence = () => {
     setScanStep(1);
     setScanProgress(0);
@@ -131,50 +123,169 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
     setAnglesDone([false, false, false]);
   };
 
-  /** Capture current angle and register via API */
-  const captureCurrentAngle = async () => {
+  const finalizeStudent = useCallback(() => {
+    showToast('success', 'New Student Registered', `${studentForm.name} has been enrolled successfully`);
+    setStep(4);
+  }, [showToast, studentForm.name]);
+
+  const registerCurrentAngle = async (blob: Blob) => {
     const idx = scanStep - 1;
     if (idx < 0 || idx > 2) return;
+
+    const studentId = studentForm.roll;
+    await recognition.registerFace(studentId, blob);
+
+    const newDone = [...anglesDone];
+    newDone[idx] = true;
+    setAnglesDone(newDone);
+    setScanProgress(Math.round(((idx + 1) / 3) * 100));
+
+    if (scanStep < 3) {
+      setScanStep(scanStep + 1);
+    } else {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+      finalizeStudent();
+    }
+  };
+
+  const uploadCurrentAngle = async (file: File | null) => {
+    const idx = scanStep - 1;
+    if (idx < 0 || idx > 2 || !file) return;
     setIsCapturing(true);
     setScanError(null);
 
     try {
-      const blob = await captureFrame();
-      if (!blob) throw new Error('Failed to capture frame');
-
-      // Use roll/id as student_id
-      const studentId = studentForm.roll;
-      await recognition.registerFace(studentId, blob);
-
-      // Mark this angle as done
-      const newDone = [...anglesDone];
-      newDone[idx] = true;
-      setAnglesDone(newDone);
-      setScanProgress(Math.round(((idx + 1) / 3) * 100));
-
-      if (scanStep < 3) {
-        setScanStep(scanStep + 1);
-      } else {
-        // All 3 angles done — finalize
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(t => t.stop());
-          streamRef.current = null;
-        }
-        finalizeStudent();
-      }
+      await registerCurrentAngle(file);
     } catch (err: any) {
       const detail = err?.response?.data?.detail || 'Face registration failed. Ensure your face is clearly visible.';
       setScanError(detail);
     } finally {
       setIsCapturing(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = '';
     }
   };
 
-  const finalizeStudent = () => {
-    // Student was already created via onAddStudent in step 1 → step 2 transition
-    // Face data is now registered via API calls above
-    setStep(4);
-  };
+  // ── Camera initialization effect ──
+  useEffect(() => {
+    if (step === 2 && activeTab === 'STUDENT') {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const hasSecureContext = window.isSecureContext || isLocalhost;
+
+      if (!hasSecureContext) {
+        setUseUploadFallback(true);
+        setScanError('Live camera on mobile requires HTTPS. Use upload capture below or open app via HTTPS for live scan.');
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setUseUploadFallback(true);
+        setScanError('Live camera API is unavailable on this device/browser. Use upload capture below.');
+        return;
+      }
+
+      setUseUploadFallback(false);
+
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: regFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+      })
+        .then(stream => {
+          streamRef.current = stream;
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        })
+        .catch(err => {
+          console.error(err);
+          if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+            setScanError('Camera permission denied. Please allow camera access in browser settings.');
+          } else if (err?.name === 'NotReadableError' || err?.name === 'TrackStartError') {
+            setScanError('Camera is busy in another app. Close other camera apps and retry.');
+          } else {
+            setScanError('Could not start camera. Ensure HTTPS is used on mobile and retry.');
+          }
+        });
+    }
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [step, activeTab, regFacingMode]);
+
+  // ── Auto-capture loop: automatically detect face & register each angle ──
+  useEffect(() => {
+    if (step !== 2 || activeTab !== 'STUDENT' || scanStep < 1 || scanStep > 3 || useUploadFallback) {
+      setAutoCapStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    setAutoCapStatus('scanning');
+
+    const attemptCapture = async () => {
+      if (cancelled) return;
+      try {
+        const blob = await captureFrame();
+        if (!blob || cancelled) {
+          if (!cancelled) retryTimer = setTimeout(attemptCapture, 1500);
+          return;
+        }
+
+        if (cancelled) return;
+        setAutoCapStatus('detected');
+
+        const studentId = studentForm.roll;
+        await recognition.registerFace(studentId, blob);
+        if (cancelled) return;
+
+        // Face detected & registered successfully
+        setAutoCapStatus('captured');
+        setScanError(null);
+
+        const idx = scanStep - 1;
+        setAnglesDone(prev => {
+          const nd = [...prev];
+          nd[idx] = true;
+          return nd;
+        });
+        setScanProgress(Math.round(((idx + 1) / 3) * 100));
+
+        // Brief visual pause to show success
+        await new Promise(r => setTimeout(r, 800));
+        if (cancelled) return;
+
+        if (scanStep < 3) {
+          setScanStep(scanStep + 1);
+        } else {
+          // All angles captured
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+          }
+          showToast('success', 'New Student Registered', `${studentForm.name} has been enrolled successfully`);
+          setStep(4);
+        }
+      } catch (_e) {
+        // No face detected or registration error — retry
+        if (!cancelled) {
+          setAutoCapStatus('scanning');
+          retryTimer = setTimeout(attemptCapture, 2000);
+        }
+      }
+    };
+
+    // Start after camera warm-up delay
+    const startTimer = setTimeout(attemptCapture, 1200);
+    return () => {
+      cancelled = true;
+      clearTimeout(startTimer);
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanStep, step, activeTab, useUploadFallback, captureFrame]);
 
   const finalizeStaff = async () => {
     // Construct payload for API (UserCreate schema)
@@ -216,6 +327,8 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
 
     setStep(4);
   };
+
+  const guideColor = autoCapStatus === 'captured' ? '#10b981' : '#137fec';
 
   return (
     <div className="max-w-xl mx-auto space-y-8 pb-24 page-enter">
@@ -470,68 +583,188 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
           </div>
         )}
 
-        {step === 2 && activeTab === 'STUDENT' && (
-          <div className="space-y-8 animate-in zoom-in-95">
-            <div className="relative w-full aspect-square bg-slate-100 dark:bg-slate-950 rounded-[2.5rem] overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-inner">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-              {scanStep > 0 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <div className="w-48 h-48 border-[6px] border-indigo-600/20 rounded-full flex items-center justify-center relative bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm shadow-2xl">
-                    <div className="absolute inset-0 border-[6px] border-t-indigo-600 rounded-full animate-spin"></div>
-                    <span className="text-slate-900 dark:text-white font-black text-4xl">{scanProgress}%</span>
+        {step === 2 && activeTab === 'STUDENT' && createPortal(
+          <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden">
+            {/* ── Full-screen camera feed ── */}
+            <div className="absolute inset-0">
+              {!useUploadFallback ? (
+                <video ref={videoRef} autoPlay playsInline muted className={`w-full h-full object-cover ${regFacingMode === 'user' ? 'scale-x-[-1]' : ''}`} />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-b from-black via-[#0a1018] to-black" />
+              )}
+            </div>
+
+            {/* Gradients */}
+            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-black/70 to-transparent pointer-events-none z-10" />
+            <div className="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10" />
+
+            {/* ── Header ── */}
+            <header className="relative z-30 flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={() => { if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; } setScanStep(0); setScanError(null); setAnglesDone([false, false, false]); setScanProgress(0); setStep(1); }}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md active:scale-90 transition-transform"
+                >
+                  <ArrowLeft size={20} className="text-white" />
+                </button>
+                <span className="text-white text-[15px] font-semibold">Face Registration</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full">
+                  <span className="text-[13px] font-bold text-white tabular-nums">{scanStep}<span className="text-white/40">/3</span></span>
+                </div>
+                {!useUploadFallback && (
+                  <button
+                    onClick={() => setRegFacingMode(prev => prev === 'user' ? 'environment' : 'user')}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md active:scale-90 transition-transform"
+                    aria-label="Switch camera"
+                  >
+                    <SwitchCamera size={19} className="text-white" />
+                  </button>
+                )}
+              </div>
+            </header>
+
+            {/* Progress bar */}
+            <div className="relative z-30 mx-5 h-[3px] bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#137fec] rounded-full transition-all duration-700 ease-out" style={{ width: `${scanProgress}%` }} />
+            </div>
+
+            {/* ── Center: iPhone Face ID-style guide ── */}
+            <div className="flex-1 relative z-20 flex flex-col items-center justify-center pointer-events-none">
+              {scanStep === 0 ? (
+                <div className="flex flex-col items-center gap-8 pointer-events-auto">
+                  {/* Idle face outline */}
+                  <svg width="240" height="310" viewBox="0 0 260 340" fill="none" className="opacity-60">
+                    <rect x="4" y="4" width="252" height="332" rx="126" ry="140" stroke="white" strokeWidth="2.5" fill="none" strokeDasharray="12 8" />
+                    <path d="M50 8 L8 8 Q4 8 4 12 L4 60" stroke="rgba(255,255,255,0.5)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                    <path d="M210 8 L252 8 Q256 8 256 12 L256 60" stroke="rgba(255,255,255,0.5)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                    <path d="M50 332 L8 332 Q4 332 4 328 L4 280" stroke="rgba(255,255,255,0.5)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                    <path d="M210 332 L252 332 Q256 332 256 328 L256 280" stroke="rgba(255,255,255,0.5)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                  </svg>
+                  <button onClick={startScanSequence} className="h-[52px] px-10 bg-[#137fec] text-white rounded-2xl font-semibold text-[15px] tracking-wide transition-all active:scale-95 flex items-center gap-2.5">
+                    <Camera size={20} /> Begin Face Scan
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  {/* Active face guide with scanning animation */}
+                  <div className="relative face-guide-active">
+                    <svg width="260" height="340" viewBox="0 0 260 340" fill="none" className={`drop-shadow-lg transition-all duration-500 ${autoCapStatus === 'captured' ? 'drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]' : ''}`}>
+                      <rect x="4" y="4" width="252" height="332" rx="126" ry="140" stroke={guideColor} strokeWidth="3" fill="none" strokeLinecap="round" className="transition-all duration-500" />
+                      <path d="M50 8 L8 8 Q4 8 4 12 L4 60" stroke={guideColor} strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-500" />
+                      <path d="M210 8 L252 8 Q256 8 256 12 L256 60" stroke={guideColor} strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-500" />
+                      <path d="M50 332 L8 332 Q4 332 4 328 L4 280" stroke={guideColor} strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-500" />
+                      <path d="M210 332 L252 332 Q256 332 256 328 L256 280" stroke={guideColor} strokeWidth="4" fill="none" strokeLinecap="round" className="transition-all duration-500" />
+                    </svg>
+                    {/* Scanning sweep line (hidden when captured) */}
+                    {!useUploadFallback && autoCapStatus !== 'captured' && (
+                      <div className="absolute inset-x-8 top-1 bottom-1 overflow-hidden rounded-[126px]">
+                        <div className="scan-line-sweep absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#137fec]/80 to-transparent blur-[1px]" />
+                      </div>
+                    )}
+                    {/* Checkmark on successful capture */}
+                    {autoCapStatus === 'captured' && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CheckCircle2 size={64} className="text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.6)]" style={{ animation: 'slideInFromBottom 0.4s ease-out' }} />
+                      </div>
+                    )}
+                    {/* Upload fallback overlay */}
+                    {useUploadFallback && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <Camera size={40} className="text-[#137fec] mb-2 opacity-80" />
+                        <span className="text-3xl font-bold text-white/80 tabular-nums">{scanProgress}%</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-8 bg-indigo-600 text-white px-8 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest shadow-xl">
-                    {scanStep === 1 ? 'CENTER FACE' : scanStep === 2 ? 'TURN LEFT' : 'TURN RIGHT'}
+
+                  {/* Instruction — contextual per angle + auto-capture feedback */}
+                  <div className={`mt-6 px-5 py-2.5 rounded-full backdrop-blur-md border transition-all duration-500 ${
+                    autoCapStatus === 'captured' ? 'bg-emerald-500/20 border-emerald-500/30' :
+                    autoCapStatus === 'detected' ? 'bg-amber-500/20 border-amber-500/30' :
+                    'bg-[#137fec]/20 border-[#137fec]/30'
+                  }`}>
+                    <span className="text-white text-[13px] font-medium">
+                      {autoCapStatus === 'captured' ? '✓ Captured!' :
+                       autoCapStatus === 'detected' ? 'Hold still — registering…' :
+                       scanStep === 1 ? 'Look straight at the camera' :
+                       scanStep === 2 ? 'Slowly turn your head left' :
+                       'Slowly turn your head right'}
+                    </span>
                   </div>
                 </div>
               )}
-              {scanStep === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center p-8 text-center transition-all duration-500">
-                  <button onClick={startScanSequence} className="px-10 py-6 bg-indigo-600 text-white rounded-[2rem] font-bold text-sm tracking-widest shadow-2xl flex items-center gap-4 hover:scale-105 active:scale-95 transition-all">
-                    <Camera size={24} /> START FACE SCAN
+            </div>
+
+            {/* ── Bottom controls ── */}
+            <div className="relative z-30 px-5 pb-[max(16px,env(safe-area-inset-bottom))]">
+              {/* Error */}
+              {scanError && (
+                <div className="bg-rose-500/15 backdrop-blur-xl rounded-2xl border border-rose-500/20 p-3 flex items-center gap-2 text-rose-300 text-[13px] font-medium mb-3">
+                  <AlertCircle size={16} /> {scanError}
+                </div>
+              )}
+
+              {/* Angle progress */}
+              {scanStep > 0 && (
+                <div className="bg-white/8 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mb-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white/40 text-[11px] font-semibold uppercase tracking-widest">Progress</span>
+                    <span className="text-[#137fec] text-[13px] font-bold tabular-nums">{anglesDone.filter(Boolean).length}/3</span>
+                  </div>
+                  <div className="flex justify-center gap-6">
+                    {['Front', 'Left', 'Right'].map((ang, i) => (
+                      <div key={ang} className="flex flex-col items-center gap-1.5">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
+                          anglesDone[i] ? 'bg-emerald-500/20 border-emerald-400 text-emerald-400' :
+                          scanStep === i + 1 ? 'bg-[#137fec]/20 border-[#137fec] text-[#137fec] shadow-[0_0_12px_rgba(19,127,236,0.4)]' :
+                          'bg-white/5 border-white/15 text-white/25'
+                        }`}>
+                          {anglesDone[i] ? <CheckCircle2 size={18} /> : <span className="text-sm font-bold">{i + 1}</span>}
+                        </div>
+                        <span className={`text-[9px] font-semibold uppercase tracking-wider ${anglesDone[i] ? 'text-emerald-400' : scanStep === i + 1 ? 'text-white' : 'text-white/25'}`}>{ang}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input ref={uploadInputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => uploadCurrentAngle(e.target.files?.[0] || null)} />
+
+              {/* Upload fallback button (shown only when camera unavailable) */}
+              {scanStep > 0 && scanStep <= 3 && !anglesDone[scanStep - 1] && useUploadFallback && (
+                <div className="flex items-center justify-center">
+                  <button
+                    onClick={() => uploadInputRef.current?.click()}
+                    disabled={isCapturing}
+                    className="w-full h-[52px] bg-[#137fec] text-white rounded-2xl font-semibold text-[15px] tracking-wide transition-all active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isCapturing ? (
+                      <><Loader2 size={18} className="animate-spin" /> Registering…</>
+                    ) : (
+                      <><ImagePlus size={18} /> Upload {['Front', 'Left', 'Right'][scanStep - 1]}</>
+                    )}
                   </button>
                 </div>
               )}
-            </div>
-
-            {/* Error message */}
-            {scanError && (
-              <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold">
-                <AlertCircle size={18} /> {scanError}
-              </div>
-            )}
-
-            {/* Angle indicators */}
-            <div className="flex justify-around items-center px-4">
-              {['FRONT', 'LEFT', 'RIGHT'].map((ang, i) => (
-                <div key={ang} className={`flex flex-col items-center gap-3 transition-all duration-500 ${anglesDone[i] ? 'text-emerald-500' : scanStep === i + 1 ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-300 dark:text-slate-800'}`}>
-                  {anglesDone[i] ? (
-                    <CheckCircle2 size={20} />
-                  ) : (
-                    <div className={`w-4 h-4 rounded-full transition-all duration-500 ${scanStep === i + 1 ? 'bg-indigo-600 shadow-[0_0_12px_rgba(79,70,229,0.8)]' : 'bg-slate-200 dark:bg-slate-800'}`}></div>
-                  )}
-                  <span className="text-[9px] font-bold uppercase tracking-widest">{ang}</span>
+              {/* Auto-capture status (when camera is active) */}
+              {scanStep > 0 && scanStep <= 3 && !anglesDone[scanStep - 1] && !useUploadFallback && (
+                <div className="flex items-center justify-center h-[52px]">
+                  <div className="flex items-center gap-2.5 text-white/50 text-[13px] font-medium">
+                    {autoCapStatus === 'detected' ? (
+                      <><Loader2 size={16} className="animate-spin text-amber-400" /> <span className="text-amber-400">Detecting face…</span></>
+                    ) : autoCapStatus === 'captured' ? (
+                      <><CheckCircle2 size={16} className="text-emerald-400" /> <span className="text-emerald-400">Registered!</span></>
+                    ) : (
+                      <><div className="w-2 h-2 rounded-full bg-[#137fec] animate-pulse" /> Auto-scanning — position your face in the guide</>
+                    )}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
-
-            {/* Capture button */}
-            {scanStep > 0 && scanStep <= 3 && !anglesDone[scanStep - 1] && (
-              <button
-                onClick={captureCurrentAngle}
-                disabled={isCapturing}
-                className="w-full py-5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
-              >
-                {isCapturing ? (
-                  <><Loader2 size={20} className="animate-spin" /> Registering Face…</>
-                ) : scanError ? (
-                  <><RotateCw size={20} /> Retry Capture</>
-                ) : (
-                  <><Camera size={20} /> Capture {['Front', 'Left', 'Right'][scanStep - 1]} Angle</>
-                )}
-              </button>
-            )}
-          </div>
+          </div>,
+          document.body
         )}
 
         {step === 4 && (
@@ -543,7 +776,7 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
               <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Saved!</h3>
               <p className="text-slate-400 dark:text-slate-500 text-[11px] font-bold uppercase tracking-widest mt-2">Added successfully</p>
             </div>
-            <button onClick={() => { setStep(1); setScanStep(0); setScanError(null); setAnglesDone([false, false, false]); setScanProgress(0); }} className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Add Another</button>
+            <button onClick={() => { setStep(1); setScanStep(0); setScanError(null); setAnglesDone([false, false, false]); setScanProgress(0); }} className="px-12 py-5 bg-[#137fec] text-white rounded-lg font-bold text-sm tracking-wide shadow-[0_4px_14px_0_rgba(19,127,236,0.39)] active:scale-95 transition-all">Add Another</button>
           </div>
         )}
       </div>

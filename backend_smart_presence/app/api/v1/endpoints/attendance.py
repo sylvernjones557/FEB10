@@ -16,6 +16,13 @@ from app.models.attendance_record import AttendanceRecord
 router = APIRouter()
 
 
+def _is_test_class(group: models.Group) -> bool:
+    """Check if a group is the special Test Class (bypasses all restrictions)."""
+    name = (group.name or "").lower()
+    code = (group.code or "").lower() if hasattr(group, "code") else ""
+    return "test" in name or code in ("test", "tst")
+
+
 @router.post("/start")
 def start_session(
     *,
@@ -29,7 +36,13 @@ def start_session(
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
-    # Check no session already active
+    is_test = _is_test_class(group)
+
+    # For Test Class: auto-reset any previous session so staff can take attendance unlimited times
+    if is_test and session_manager.state != "IDLE":
+        session_manager.force_reset()
+
+    # Check no session already active (non-test classes)
     if session_manager.state != "IDLE":
         raise HTTPException(status_code=400, detail="A session is already active")
 
@@ -134,12 +147,19 @@ def finalize_session(
             db_session.ended_at = datetime.utcnow()
 
     # Get all students in the group to create ABSENT records too
+    # For Test Class, include ALL students across all groups
     all_students = []
     if group_id:
-        all_students = db.query(models.Student).filter(
-            models.Student.group_id == group_id,
-            models.Student.is_active == True,
-        ).all()
+        group = db.query(models.Group).filter(models.Group.id == group_id).first()
+        if group and _is_test_class(group):
+            all_students = db.query(models.Student).filter(
+                models.Student.is_active == True,
+            ).all()
+        else:
+            all_students = db.query(models.Student).filter(
+                models.Student.group_id == group_id,
+                models.Student.is_active == True,
+            ).all()
 
     # Create attendance records
     for student in all_students:
@@ -154,11 +174,19 @@ def finalize_session(
 
     db.commit()
 
+    # Collect present student names for the summary
+    present_details = []
+    for student in all_students:
+        sid = str(student.id)
+        if sid in present_ids:
+            present_details.append({"id": sid, "name": student.name})
+
     return {
         "message": "Session finalized",
         "session_id": session_db_id,
         "present_count": len(present_ids),
         "total_students": len(all_students),
+        "present_details": present_details,
     }
 
 

@@ -2,6 +2,7 @@
 import React from 'react';
 import { PlayCircle, MapPin, CalendarDays, Layers, Users, Sparkles } from 'lucide-react';
 import { QuickAction, SummaryCard } from './Dashboard';
+import { isTestClass } from '../constants';
 
 interface StaffHomeProps {
   user: any;
@@ -19,6 +20,7 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
   const assignedGroup = groupList.find((g: any) => g.id === assignedGroupId);
   const groupDisplayName = assignedGroup ? assignedGroup.name : (assignedGroupId || 'Unassigned');
   const isReady = Boolean(assignedGroupId);
+  const isTest = isTestClass(assignedGroup);
 
   const handleStartAttendance = () => {
     if (isReady) {
@@ -42,7 +44,7 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
           <div className="flex items-center gap-2.5 mb-5">
             <span className={`flex h-2.5 w-2.5 rounded-full ${isReady ? 'bg-emerald-400 animate-pulse shadow-[0_0_12px_#34d399]' : 'bg-slate-600'}`}></span>
             <p className="text-white/70 text-[12px] font-bold uppercase tracking-widest">
-              {isReady ? 'Ready for Session' : 'No Group Assigned'}
+              {isTest ? 'Test Mode • All Students' : isReady ? 'Ready for Session' : 'No Group Assigned'}
             </p>
           </div>
           
