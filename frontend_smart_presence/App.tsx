@@ -23,21 +23,37 @@ import MyClassPage from './pages/MyClassPage';
 
 import { auth as authApi, data } from './services/api';
 
-const generateMockTimetable = (classId: string): DaySchedule[] => {
+// Fetch real timetable from DB for a staff member
+const fetchStaffTimetable = async (assignedClassId: string): Promise<DaySchedule[]> => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  const times = ['09:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00'];
-  const subjects = ['Mathematics', 'Physics', 'Chemistry', 'English', 'Computer Science', 'Data Structures', 'Algorithms', 'Database Systems'];
-
-  return days.map(day => ({
-    day,
-    periods: Array.from({ length: 3 }).map((_, i) => ({
-      period: i + 1,
-      subject: subjects[Math.floor(Math.random() * subjects.length)],
-      teacher: `Teacher ${String.fromCharCode(65 + Math.floor(Math.random() * 5))}`,
-      time: times[i],
-      classId
-    }))
-  }));
+  try {
+    if (!assignedClassId) return days.map(day => ({ day, periods: [] }));
+    const entries = await data.getTimetable({ group_id: assignedClassId });
+    // Group by day_of_week (1=Monday ... 5=Friday)
+    const byDay: Record<number, any[]> = {};
+    for (const e of entries) {
+      const d = e.day_of_week || 1;
+      if (!byDay[d]) byDay[d] = [];
+      byDay[d].push(e);
+    }
+    return days.map((day, i) => {
+      const dayEntries = byDay[i + 1] || [];
+      return {
+        day,
+        periods: dayEntries
+          .sort((a: any, b: any) => a.period - b.period)
+          .map((e: any) => ({
+            period: e.period,
+            subject: e.subject || 'Free Period',
+            teacher: e.staff_name || '',
+            time: e.start_time && e.end_time ? `${e.start_time} - ${e.end_time}` : '',
+            classId: assignedClassId,
+          }))
+      };
+    });
+  } catch {
+    return days.map(day => ({ day, periods: [] }));
+  }
 };
 
 const AppContent: React.FC = () => {
@@ -75,7 +91,7 @@ const AppContent: React.FC = () => {
             assignedClassId: user.assigned_class_id || '',
             avatar: user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.name)}&background=4F46E5&color=fff&size=150&bold=true`,
             primarySubject: user.primary_subject || '',
-            timetable: generateMockTimetable(user.assigned_class_id || 'c1'),
+            timetable: await fetchStaffTimetable(user.assigned_class_id || ''),
             role: user.role
           };
 
@@ -114,7 +130,7 @@ const AppContent: React.FC = () => {
           primarySubject: u.primary_subject || 'General',
           assignedClassId: u.assigned_class_id || '',
           avatar: u.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name || u.name || 'S')}&background=6366F1&color=fff&size=150&bold=true`,
-          timetable: generateMockTimetable(u.assigned_class_id || 'c1'),
+          timetable: [], // Will be loaded on demand
         }));
       setStaffList(transformedStaff);
 
@@ -157,7 +173,7 @@ const AppContent: React.FC = () => {
         assignedClassId: user.assigned_class_id || '',
         avatar: user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.name)}&background=4F46E5&color=fff&size=150&bold=true`,
         primarySubject: user.primary_subject || '',
-        timetable: generateMockTimetable(user.assigned_class_id || 'c1'),
+        timetable: await fetchStaffTimetable(user.assigned_class_id || ''),
         role: user.role
       };
 
@@ -225,7 +241,7 @@ const AppContent: React.FC = () => {
       const staff = staffList.find(s => s.id === selectedStaffId);
       if (!staff) {
         setSelectedStaffId(null);
-        return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} />;
+        return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} groupList={groupList} />;
       }
       return <StaffDetail
         staff={staff}
@@ -260,7 +276,7 @@ const AppContent: React.FC = () => {
       const classStudents = studentList.filter(s => s.classId === selectedClassId);
       if (!classObj) {
         setSelectedClassId(null);
-        return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} />;
+        return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} groupList={groupList} />;
       }
       return <ClassDetail
         classObj={classObj}
@@ -274,9 +290,29 @@ const AppContent: React.FC = () => {
 
     switch (currentPath) {
       // Admin Pages
-      case '/dashboard': return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} />;
+      case '/dashboard': return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} groupList={groupList} />;
       case '/classes': return <ClassDirectory classList={groupList.length ? groupList : MOCK_CLASSES} staffList={staffList} studentList={studentList} onBack={handleBack} onClassClick={(id) => setSelectedClassId(id)} />;
-      case '/students': return <StudentsDirectory studentList={studentList} groupList={groupList.length ? groupList : MOCK_CLASSES} onBack={handleBack} />;
+      case '/students': return <StudentsDirectory 
+        studentList={studentList} 
+        groupList={groupList.length ? groupList : MOCK_CLASSES} 
+        onBack={handleBack}
+        isAdmin={authState.user?.role === 'ADMIN'}
+        onDeleteStudent={(studentId: string, studentName: string) => {
+          toast.showConfirm(
+            'Delete Student',
+            `Are you sure you want to permanently delete "${studentName}"? This will remove all their data including face registrations and attendance records. This action cannot be undone.`,
+            async () => {
+              try {
+                await data.deleteStudent(studentId);
+                toast.showToast('success', 'Student Deleted', `${studentName} has been permanently removed from the system.`);
+                loadGlobalData();
+              } catch (e: any) {
+                toast.showToast('error', 'Deletion Failed', e.response?.data?.detail || e.message);
+              }
+            }
+          );
+        }}
+      />;
       case '/staff': return <StaffDirectory staffList={staffList} onBack={handleBack} onStaffClick={(id) => setSelectedStaffId(id)} />;
       case '/reports': return <InstitutionalReport onBack={handleBack} />;
       case '/settings': return (
@@ -307,7 +343,7 @@ const AppContent: React.FC = () => {
 
       // Staff Pages
       case '/staff-home': return <StaffHome user={authState.user} onNavigate={handleNavigate} groupList={groupList.length ? groupList : MOCK_CLASSES} />;
-      case '/staff-subjects': return <StaffSubjects user={authState.user} groupList={groupList.length ? groupList : MOCK_CLASSES} />;
+      case '/staff-subjects': return <StaffSubjects user={authState.user} groupList={groupList.length ? groupList : MOCK_CLASSES} studentList={studentList} />;
       case '/staff-chat': return <StaffChat onBack={handleBack} targetName={authState.user?.role === 'ADMIN' ? 'Staff Member' : 'Admin Support'} />;
       case '/my-class': return <MyClassPage user={authState.user} studentList={studentList} groupList={groupList.length ? groupList : MOCK_CLASSES} />;
       case '/attendance': return (
@@ -324,7 +360,7 @@ const AppContent: React.FC = () => {
         const isStaffUser = authState.user?.role === 'STAFF';
         return isStaffUser
           ? <StaffHome user={authState.user} onNavigate={handleNavigate} groupList={groupList.length ? groupList : MOCK_CLASSES} />
-          : <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} />;
+          : <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} groupList={groupList} />;
       }
     }
   };

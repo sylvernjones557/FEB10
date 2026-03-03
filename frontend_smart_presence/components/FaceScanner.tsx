@@ -33,12 +33,14 @@ interface FaceScannerProps {
   bottomContent?: React.ReactNode;
   /** Lookup function: given a student_id, return name + avatar. Provided by parent. */
   studentLookup?: (id: string) => { name: string; avatar: string } | null;
+  /** Set of student IDs already recognized — skip sending them again */
+  alreadyRecognizedIds?: Set<string>;
 }
 
 const FaceScanner: React.FC<FaceScannerProps> = ({
   onDetect, isScanning, onBack, title = 'Group Attendance',
   lastRecognized, recognizedList, onDone, count, total,
-  bottomContent, studentLookup,
+  bottomContent, studentLookup, alreadyRecognizedIds,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -193,14 +195,21 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
           setStatusText('Looking for faces…');
         }
 
-        // Forward matches to parent
+        // Forward NEW matches to parent (skip already-recognized students)
         if (result.match && result.matches.length > 0) {
-          onDetect(result.matches.length, result.matches.map((m: any) => ({
-            student_id: m.student_id,
-            distance: m.distance,
-            confidence: (1 - m.distance) * 100,
-            bbox: m.bbox,
-          })));
+          const newMatches = result.matches.filter((m: any) => 
+            !alreadyRecognizedIds || !alreadyRecognizedIds.has(m.student_id)
+          );
+          if (newMatches.length > 0) {
+            onDetect(newMatches.length, newMatches.map((m: any) => ({
+              student_id: m.student_id,
+              distance: m.distance,
+              confidence: (1 - m.distance) * 100,
+              bbox: m.bbox,
+            })));
+          } else {
+            onDetect(0, []);
+          }
         } else {
           onDetect(0, []);
         }
@@ -247,37 +256,80 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
           {detectedFaces.map((face) => {
             const boxStyle = computeBoxStyle(face.bbox);
             const isRecognized = face.name !== null;
+            const isAlreadyCaptured = isRecognized && alreadyRecognizedIds?.has(face.id);
 
             return (
-              <div key={face.id} className="absolute transition-all duration-300 ease-out"
+              <div key={face.id} className="absolute transition-all duration-500 ease-out"
                 style={boxStyle}
               >
-                {/* Bounding box border */}
-                <div className={`absolute inset-0 rounded-lg border-2 ${
-                  isRecognized
-                    ? 'border-[#137fec] shadow-[0_0_20px_rgba(19,127,236,0.5)]'
-                    : 'border-dashed border-yellow-400 bg-yellow-400/5'
+                {/* Glow effect behind box */}
+                <div className={`absolute -inset-1 rounded-2xl blur-md opacity-40 ${
+                  isAlreadyCaptured
+                    ? 'bg-emerald-400'
+                    : isRecognized
+                      ? 'bg-blue-500 animate-pulse'
+                      : 'bg-amber-400/50'
                 }`} />
 
-                {/* Corner accents (recognized only) */}
-                {isRecognized && (
+                {/* Main bounding box */}
+                <div className={`absolute inset-0 rounded-xl ${
+                  isAlreadyCaptured
+                    ? 'border-2 border-emerald-400 bg-emerald-400/5'
+                    : isRecognized
+                      ? 'border-2 border-blue-400 bg-blue-400/5'
+                      : 'border border-dashed border-amber-400/70 bg-amber-400/5'
+                }`} />
+
+                {/* Animated corner brackets */}
+                {(isRecognized || isAlreadyCaptured) && (
                   <>
-                    <div className="absolute -top-[2px] -left-[2px] w-3.5 h-3.5 border-t-[3px] border-l-[3px] border-white rounded-tl-md" />
-                    <div className="absolute -top-[2px] -right-[2px] w-3.5 h-3.5 border-t-[3px] border-r-[3px] border-white rounded-tr-md" />
-                    <div className="absolute -bottom-[2px] -left-[2px] w-3.5 h-3.5 border-b-[3px] border-l-[3px] border-white rounded-bl-md" />
-                    <div className="absolute -bottom-[2px] -right-[2px] w-3.5 h-3.5 border-b-[3px] border-r-[3px] border-white rounded-br-md" />
+                    {/* Top-left */}
+                    <div className={`absolute -top-[1px] -left-[1px] w-5 h-5 ${isAlreadyCaptured ? 'border-emerald-300' : 'border-blue-300'}`}>
+                      <div className={`absolute top-0 left-0 w-full h-[3px] rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                      <div className={`absolute top-0 left-0 w-[3px] h-full rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                    </div>
+                    {/* Top-right */}
+                    <div className={`absolute -top-[1px] -right-[1px] w-5 h-5`}>
+                      <div className={`absolute top-0 right-0 w-full h-[3px] rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                      <div className={`absolute top-0 right-0 w-[3px] h-full rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                    </div>
+                    {/* Bottom-left */}
+                    <div className={`absolute -bottom-[1px] -left-[1px] w-5 h-5`}>
+                      <div className={`absolute bottom-0 left-0 w-full h-[3px] rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                      <div className={`absolute bottom-0 left-0 w-[3px] h-full rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                    </div>
+                    {/* Bottom-right */}
+                    <div className={`absolute -bottom-[1px] -right-[1px] w-5 h-5`}>
+                      <div className={`absolute bottom-0 right-0 w-full h-[3px] rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                      <div className={`absolute bottom-0 right-0 w-[3px] h-full rounded-full ${isAlreadyCaptured ? 'bg-emerald-300' : 'bg-blue-300'}`} />
+                    </div>
                   </>
                 )}
 
+                {/* Scanning line animation for unrecognized */}
+                {!isRecognized && (
+                  <div className="absolute inset-x-0 top-0 h-full overflow-hidden rounded-xl">
+                    <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-[scan_2s_ease-in-out_infinite]"
+                      style={{ animation: 'scan 2s ease-in-out infinite' }}
+                    />
+                  </div>
+                )}
+
                 {/* Name label */}
-                {isRecognized ? (
-                  <div className={`absolute -top-9 left-1/2 -translate-x-1/2 bg-[#137fec] text-white text-[11px] font-bold px-2.5 py-1 rounded-md whitespace-nowrap flex items-center gap-1.5 shadow-lg ${isMirror ? 'scale-x-[-1]' : ''}`}>
+                {isAlreadyCaptured ? (
+                  <div className={`absolute -top-10 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shadow-lg shadow-emerald-500/30 ${isMirror ? 'scale-x-[-1]' : ''}`}>
+                    <CheckCircle2 size={12} />
+                    {face.name} ✓
+                  </div>
+                ) : isRecognized ? (
+                  <div className={`absolute -top-10 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 shadow-lg shadow-blue-500/30 animate-in fade-in slide-in-from-bottom-2 duration-300 ${isMirror ? 'scale-x-[-1]' : ''}`}>
                     <CheckCircle2 size={12} />
                     {face.name}
                   </div>
                 ) : (
-                  <div className={`absolute -bottom-8 left-1/2 -translate-x-1/2 bg-yellow-500/90 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-md whitespace-nowrap animate-pulse ${isMirror ? 'scale-x-[-1]' : ''}`}>
-                    Scanning…
+                  <div className={`absolute -bottom-9 left-1/2 -translate-x-1/2 bg-amber-500/90 backdrop-blur text-white text-[9px] font-bold px-3 py-1.5 rounded-lg whitespace-nowrap flex items-center gap-1.5 ${isMirror ? 'scale-x-[-1]' : ''}`}>
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                    Identifying…
                   </div>
                 )}
               </div>

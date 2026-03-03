@@ -6,4 +6,8 @@ client = TestClient(app)
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["status"] == "ok"
+    # CPU-optimized builds also return device + mode
+    assert "device" in body
+    assert "mode" in body

@@ -1,4 +1,4 @@
-"""Face recognition endpoints — register and recognize faces."""
+"""Face recognition endpoints — register and recognize faces. CPU-optimized."""
 from typing import Any
 from uuid import UUID
 
@@ -11,6 +11,7 @@ from app import models
 from app.api import deps
 from app.db.session import get_db
 from app.core.session_manager import session_manager
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -42,12 +43,22 @@ def get_vector_store():
 
 
 async def _read_image(file: UploadFile) -> np.ndarray:
-    """Read an uploaded image file into an OpenCV BGR array."""
+    """Read an uploaded image file into an OpenCV BGR array.
+    Downscales large images immediately to reduce CPU load."""
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img is None:
         raise HTTPException(status_code=400, detail="Invalid image file")
+    
+    # Downscale large images immediately to save CPU on all subsequent operations
+    max_dim = settings.MAX_IMAGE_DIMENSION
+    h, w = img.shape[:2]
+    if max(h, w) > max_dim:
+        scale = max_dim / max(h, w)
+        new_w, new_h = int(w * scale), int(h * scale)
+        img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    
     return img
 
 

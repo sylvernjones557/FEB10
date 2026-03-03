@@ -25,15 +25,31 @@ class Settings(BaseSettings):
     # Face match threshold (cosine distance)
     FACE_MATCH_THRESHOLD: float = 0.5
 
-    # Face engine runtime mode: auto | gpu | cpu
-    FACE_DEVICE_PREFERENCE: str = Field(default="auto", env="FACE_DEVICE_PREFERENCE")
+    # Face engine runtime mode: forced to CPU for low-power systems
+    FACE_DEVICE_PREFERENCE: str = Field(default="cpu", env="FACE_DEVICE_PREFERENCE")
 
-    # Device-specific detector input size (higher = potentially better accuracy, lower = faster)
+    # Detector input size — lower = faster on CPU (160-320 recommended for low-power)
     FACE_DET_SIZE_CPU: int = Field(default=320, env="FACE_DET_SIZE_CPU")
     FACE_DET_SIZE_GPU: int = Field(default=640, env="FACE_DET_SIZE_GPU")
 
-    # Model variant: buffalo_l (large, accurate), buffalo_m (medium), buffalo_sc (small, fast)
+    # Model variant: buffalo_sc is the smallest & fastest for CPU
     FACE_MODEL_NAME: str = Field(default="buffalo_sc", env="FACE_MODEL_NAME")
+
+    # ── CPU Performance Tuning ──
+    # Max image dimension (pixels) — images are downscaled before processing
+    MAX_IMAGE_DIMENSION: int = Field(default=640, env="MAX_IMAGE_DIMENSION")
+
+    # ONNX Runtime thread count (0 = auto, 1-2 recommended for low-power CPU)
+    ONNX_NUM_THREADS: int = Field(default=2, env="ONNX_NUM_THREADS")
+
+    # Number of uvicorn workers (1 for low-power systems)
+    UVICORN_WORKERS: int = Field(default=1, env="UVICORN_WORKERS")
+
+    # Lazy-load the face engine (only load on first recognition request, not at startup)
+    LAZY_LOAD_ENGINE: bool = Field(default=True, env="LAZY_LOAD_ENGINE")
+
+    # JPEG quality for any re-encoding (lower = faster processing)
+    IMAGE_QUALITY: int = Field(default=80, env="IMAGE_QUALITY")
 
     class Config:
         case_sensitive = True

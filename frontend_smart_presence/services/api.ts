@@ -133,6 +133,11 @@ export const data = {
         const response = await api.delete(`/staff/${staffId}`);
         return response.data;
     },
+    deleteStudent: async (studentId: string) => {
+        // Requires ADMIN token — deletes student by UUID id (also cleans face data + attendance records)
+        const response = await api.delete(`/students/${studentId}`);
+        return response.data;
+    },
     updateStaff: async (staffId: string, updateBody: any) => {
         // PATCH staff profile — admin can update anyone, staff can update self
         const response = await api.patch(`/staff/${staffId}`, updateBody);

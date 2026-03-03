@@ -1,35 +1,58 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, ChevronRight, X, CheckCircle2, AlertCircle, TrendingUp, Activity } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, YAxis } from 'recharts';
 import { MOCK_CLASSES } from '../constants';
+import { attendance as attendanceApi, data as dataApi } from '../services/api';
 
-const perfData = [
-  { name: 'Mon', value: 85 },
-  { name: 'Tue', value: 78 },
-  { name: 'Wed', value: 92 },
-  { name: 'Thu', value: 88 },
-  { name: 'Fri', value: 94 },
-];
-
-const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, groupList = MOCK_CLASSES }) => {
+const StaffSubjects: React.FC<{ user: any; groupList?: any[]; studentList?: any[] }> = ({ user, groupList = MOCK_CLASSES, studentList = [] }) => {
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
+  const [perfData, setPerfData] = useState<{name: string; value: number}[]>([]);
+  const [topPresent, setTopPresent] = useState<{name: string; score: string; id: string}[]>([]);
+  const [topAbsent, setTopAbsent] = useState<{name: string; score: string; id: string}[]>([]);
   
   const subjects = [
-    { name: 'Group Attendance', code: user.assignedClassId || 'g1', classId: user.assignedClassId || 'g1', avg: '92%' }
+    { name: 'Group Attendance', code: user.assignedClassId || 'g1', classId: user.assignedClassId || 'g1', avg: '--' }
   ];
 
-  const topPresent = [
-    { name: 'Alice Johnson', score: '98%', id: 's1' },
-    { name: 'Elena Rodriguez', score: '97%', id: 's2' },
-    { name: 'John Smith', score: '96%', id: 's3' }
-  ];
-  
-  const topAbsent = [
-    { name: 'Bob Wilson', score: '62%', id: 's4' },
-    { name: 'Charlie Chen', score: '64%', id: 's5' },
-    { name: 'David Miller', score: '68%', id: 's6' }
-  ];
+  // Fetch real attendance data when subject detail is opened
+  useEffect(() => {
+    if (!selectedSubject) return;
+    const fetchData = async () => {
+      try {
+        // Try to get weekly history for attendance chart
+        const history = await attendanceApi.getStatus().catch(() => null);
+        // Get students for the class
+        const classStudents = studentList.filter((s: any) => 
+          s.classId === selectedSubject.classId || !selectedSubject.classId
+        );
+        
+        // If we have students, show them sorted by face registration status as proxy
+        if (classStudents.length > 0) {
+          const registered = classStudents.filter((s: any) => s.faceDataRegistered);
+          const unregistered = classStudents.filter((s: any) => !s.faceDataRegistered);
+          
+          setTopPresent(registered.slice(0, 3).map((s: any) => ({
+            name: s.name, score: 'Registered', id: s.id
+          })));
+          setTopAbsent(unregistered.slice(0, 3).map((s: any) => ({
+            name: s.name, score: 'No Face Data', id: s.id
+          })));
+        } else {
+          setTopPresent([]);
+          setTopAbsent([]);
+        }
+        
+        // Simple placeholder chart data (no mock random values)
+        setPerfData([]);
+      } catch {
+        setPerfData([]);
+        setTopPresent([]);
+        setTopAbsent([]);
+      }
+    };
+    fetchData();
+  }, [selectedSubject, studentList]);
 
   const renderSubjectDetail = (sub: any) => {
     const classObj = groupList.find(c => c.id === sub.classId);
@@ -75,7 +98,8 @@ const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, group
                 </div>
               </div>
 
-              {/* Minimal Wave Graph */}
+              {/* Minimal Wave Graph - only shown when data exists */}
+              {perfData.length > 0 && (
               <div className="h-44 w-full -mx-4 -mb-8 mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={perfData}>
@@ -97,6 +121,7 @@ const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, group
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+              )}
 
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 relative z-20">
@@ -106,7 +131,9 @@ const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, group
                 </div>
                 <div className="bg-slate-50 dark:bg-white/5 p-5 rounded-[2rem] border border-slate-100 dark:border-white/5">
                   <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Total Pupils</p>
-                  <p className="text-sm font-black text-slate-900 dark:text-white">42 Active</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">
+                    {studentList.filter((s: any) => s.classId === sub.classId || !sub.classId).length} Active
+                  </p>
                 </div>
               </div>
             </div>
@@ -114,9 +141,10 @@ const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, group
 
           {/* List Section */}
           <div className="space-y-10 px-2 pt-2">
+            {topPresent.length > 0 && (
             <div className="space-y-4">
               <h4 className="text-[11px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                <CheckCircle2 size={16} /> Best Attendance
+                <CheckCircle2 size={16} /> Face Registered Students
               </h4>
               <div className="space-y-3">
                 {topPresent.map((std, i) => (
@@ -126,17 +154,19 @@ const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, group
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-black text-slate-900 dark:text-white">{std.name}</p>
-                      <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1">High Presence</p>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase mt-1">Registered</p>
                     </div>
                     <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-black">{std.score}</div>
                   </div>
                 ))}
               </div>
             </div>
+            )}
 
+            {topAbsent.length > 0 && (
             <div className="space-y-4">
               <h4 className="text-[11px] font-black text-rose-600 dark:text-rose-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                <AlertCircle size={16} /> Low Attendance
+                <AlertCircle size={16} /> Needs Face Registration
               </h4>
               <div className="space-y-3">
                 {topAbsent.map((std, i) => (
@@ -153,6 +183,13 @@ const StaffSubjects: React.FC<{ user: any; groupList?: any[] }> = ({ user, group
                 ))}
               </div>
             </div>
+            )}
+
+            {topPresent.length === 0 && topAbsent.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">No student data available</p>
+              </div>
+            )}
           </div>
         </div>
 

@@ -37,6 +37,7 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
   const [isScanning, setIsScanning] = useState(false);
   const [detectedCount, setDetectedCount] = useState(0);
   const [isManualMode, setIsManualMode] = useState(isManualDay);
+  const [reviewMode, setReviewMode] = useState(false); // New: post-camera review step
   const [manualPresence, setManualPresence] = useState<{ [id: string]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -78,10 +79,12 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
     );
   }, [classStudents, searchTerm]);
 
-  // Current count based on mode
-  const currentCount = isManualMode 
-    ? Object.values(manualPresence).filter(v => v).length 
-    : recognizedStudents.size;
+  // Current count based on mode — in review mode, count both AI-recognized + manual marks (deduplicated)
+  const currentCount = reviewMode
+    ? new Set([...Array.from(recognizedStudents.keys()), ...Object.entries(manualPresence).filter(([, v]) => v).map(([id]) => id)]).size
+    : isManualMode 
+      ? Object.values(manualPresence).filter(v => v).length 
+      : recognizedStudents.size;
 
   const totalCapacity = classStudents.length || 42;
 
@@ -168,9 +171,9 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
       try { await attendanceApi.stopScanning(); } catch { /* might already be stopped */ }
 
       // Send ALL recognized student IDs (from face scan + manual) to backend verify
-      const aiPresentIds = Array.from(recognizedStudents.keys());
-      const manualPresentIds = Object.entries(manualPresence).filter(([, v]) => v).map(([id]) => id);
-      const allPresentIds = [...new Set([...aiPresentIds, ...manualPresentIds])];
+      const aiPresentIds: string[] = Array.from(recognizedStudents.keys());
+      const manualPresentIds: string[] = Object.entries(manualPresence).filter(([, v]) => v).map(([id]) => id);
+      const allPresentIds: string[] = [...new Set([...aiPresentIds, ...manualPresentIds])];
       if (allPresentIds.length > 0) {
         await attendanceApi.verify(allPresentIds, []);
       }
@@ -215,6 +218,8 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
     setFinalizeResult(null);
     setSessionError(null);
     setLastRecognizedEntry(null);
+    setReviewMode(false);
+    setManualPresence({});
   };
 
   if (!selectedClass) {
@@ -370,7 +375,16 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
           }
         }}
         isScanning={isScanning}
-        onBack={() => { handlePauseScan(); setIsManualMode(true); }}
+        onBack={() => {
+          handlePauseScan();
+          // Enter review mode: show captured students + manual backup
+          setReviewMode(true);
+          setIsManualMode(true);
+          // Pre-populate manual toggles: mark all AI-recognized students as present
+          const preFilled: { [id: string]: boolean } = {};
+          recognizedStudents.forEach((_, id) => { preFilled[id] = true; });
+          setManualPresence(prev => ({ ...preFilled, ...prev }));
+        }}
         title={selectedClass?.name || 'Group Attendance'}
         lastRecognized={lastRecognizedEntry}
         recognizedList={recognizedStudents}
@@ -381,6 +395,7 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
           const s = studentList.find(st => st.id === id);
           return s ? { name: s.name, avatar: s.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.name)}&background=137fec&color=fff&size=150&bold=true` } : null;
         }}
+        alreadyRecognizedIds={new Set(recognizedStudents.keys())}
         bottomContent={
           <div className="flex gap-2 w-full">
             {sessionError && (
@@ -416,14 +431,23 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
     );
   }
 
-  // Manual attendance mode
+  // Manual attendance / Review mode
   return (
     <div className="space-y-6 page-enter pb-10">
       <div className="flex items-center justify-between">
-        <BackButton onClick={() => (preSelected && onExit ? onExit() : setSelectedClass(null))} />
+        <BackButton onClick={() => {
+          if (reviewMode) {
+            // Go back to camera from review
+            setReviewMode(false);
+            setIsManualMode(false);
+            if (sessionActive) setIsScanning(true); else handleStartScan();
+          } else {
+            preSelected && onExit ? onExit() : setSelectedClass(null);
+          }
+        }} />
         <div className="text-right">
           <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest">
-            {isManualMode ? 'Manual Selection' : isScanning ? 'Scanning Active' : 'Scanner Paused'}
+            {reviewMode ? 'Review & Confirm' : isManualMode ? 'Manual Selection' : isScanning ? 'Scanning Active' : 'Scanner Paused'}
           </p>
           <h4 className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter flex items-center justify-end gap-2">
             {currentCount}
@@ -446,130 +470,276 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
       )}
 
       <div className="space-y-8">
-        {/* Toggle Mode Switcher */}
-        <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.8rem]">
-          <button 
-            onClick={() => { setIsManualMode(false); if (!sessionActive) handleStartScan(); else setIsScanning(true); }}
-            className={`flex-1 py-4 flex items-center justify-center gap-3 rounded-[1.4rem] text-[11px] font-black uppercase tracking-widest transition-all ${!isManualMode ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500'}`}
-          >
-            <Camera size={18} /> AI Scan
-          </button>
-          <button 
-            onClick={() => { setIsManualMode(true); setIsScanning(false); }}
-            className={`flex-1 py-4 flex items-center justify-center gap-3 rounded-[1.4rem] text-[11px] font-black uppercase tracking-widest transition-all ${isManualMode ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500'}`}
-          >
-            <User size={18} /> Manual Fallback
-          </button>
-        </div>
-
-        {/* Dynamic Display Area */}
-        {!isManualMode ? (
+        {/* ── Review Mode: post-camera verification ── */}
+        {reviewMode ? (
           <>
-            {/* This should never render — AI mode uses the full-screen early return above */}
-            <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
-              <Camera size={48} className="text-[#137fec] opacity-50" />
-              <p className="text-sm font-bold text-slate-400">Switching to full-screen scanner…</p>
+            {/* Info banner */}
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/30">
+              <Camera size={20} className="text-indigo-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">Camera scan complete</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {recognizedStudents.size > 0
+                    ? `${recognizedStudents.size} student${recognizedStudents.size > 1 ? 's' : ''} detected by AI. Review below and add anyone missed manually.`
+                    : 'No students were detected. You can manually mark attendance below.'}
+                </p>
+              </div>
+            </div>
+
+            {/* AI-Captured Students (auto-present) */}
+            {recognizedStudents.size > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2 px-1">
+                  <CheckCircle2 size={12} /> Captured by Camera ({recognizedStudents.size})
+                </h3>
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                  <div className="max-h-[240px] overflow-y-auto no-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
+                    {Array.from(recognizedStudents.entries()).map(([id, info]) => {
+                      const student = studentList.find(s => s.id === id);
+                      return (
+                        <div key={id} className="flex items-center gap-3 p-4">
+                          <img src={info.avatar} alt="" className="w-10 h-10 rounded-xl object-cover border-2 border-emerald-300 dark:border-emerald-700" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{info.name}</h4>
+                            <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">
+                              {student?.rollNo ? `ID: ${student.rollNo}` : ''} &middot; {info.confidence.toFixed(0)}% match
+                            </p>
+                          </div>
+                          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <CheckCircle2 size={16} strokeWidth={3} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Backup: students NOT captured by camera */}
+            {(() => {
+              const uncapturedStudents = classStudents.filter(s => !recognizedStudents.has(s.id));
+              if (uncapturedStudents.length === 0) return null;
+              return (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center px-1">
+                    <h3 className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+                      <AlertCircle size={12} /> Not Detected ({uncapturedStudents.length})
+                    </h3>
+                    <button
+                      onClick={() => {
+                        const next = { ...manualPresence };
+                        uncapturedStudents.forEach(s => { next[s.id] = true; });
+                        setManualPresence(next);
+                      }}
+                      className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800/40"
+                    >
+                      Mark All Present
+                    </button>
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Search missed students..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl py-3.5 pl-12 pr-5 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 shadow-inner"
+                    />
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="max-h-[300px] overflow-y-auto no-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
+                      {uncapturedStudents
+                        .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.rollNo.includes(searchTerm))
+                        .map(student => {
+                        const isMarked = manualPresence[student.id] || false;
+                        return (
+                          <div
+                            key={student.id}
+                            onClick={() => togglePresence(student.id)}
+                            className={`flex items-center gap-3 p-4 cursor-pointer transition-all active:scale-[0.99] ${
+                              isMarked ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-950'
+                            }`}
+                          >
+                            <img
+                              src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=818CF8&color=fff&size=150&bold=true`}
+                              alt=""
+                              className={`w-10 h-10 rounded-xl object-cover border-2 ${isMarked ? 'border-indigo-300 dark:border-indigo-700' : 'border-slate-200 dark:border-slate-700 opacity-60'}`}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`text-sm font-bold truncate ${isMarked ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{student.name}</h4>
+                              <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">ID: {student.rollNo}</p>
+                            </div>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                              isMarked
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-700'
+                            }`}>
+                              {isMarked ? <Check size={16} strokeWidth={3} /> : <div className="w-3 h-3 rounded-full border-2 border-slate-200 dark:border-slate-700" />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Action buttons */}
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handleFinalize}
+                disabled={isFinalizing}
+                className="w-full py-5 bg-emerald-600 dark:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-2xl text-[11px] uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+              >
+                {isFinalizing ? (
+                  <><Loader2 size={20} className="animate-spin" /> Confirming Attendance…</>
+                ) : (
+                  <><CheckCircle2 size={20} /> Confirm & Submit Attendance</>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setReviewMode(false);
+                  setIsManualMode(false);
+                  if (sessionActive) setIsScanning(true); else handleStartScan();
+                }}
+                className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-2xl text-[11px] uppercase tracking-widest border border-slate-200 dark:border-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+              >
+                <Camera size={18} /> Back to Camera
+              </button>
             </div>
           </>
         ) : (
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
-            <div className="relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={20} />
-              <input 
-                type="text" 
-                placeholder="Search Student ID or Name..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 shadow-inner"
-              />
+          /* ── Original Manual Mode (non-review) ── */
+          <>
+            {/* Toggle Mode Switcher */}
+            <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.8rem]">
+              <button
+                onClick={() => { setIsManualMode(false); if (!sessionActive) handleStartScan(); else setIsScanning(true); }}
+                className={`flex-1 py-4 flex items-center justify-center gap-3 rounded-[1.4rem] text-[11px] font-black uppercase tracking-widest transition-all ${!isManualMode ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500'}`}
+              >
+                <Camera size={18} /> AI Scan
+              </button>
+              <button
+                onClick={() => { setIsManualMode(true); setIsScanning(false); }}
+                className={`flex-1 py-4 flex items-center justify-center gap-3 rounded-[1.4rem] text-[11px] font-black uppercase tracking-widest transition-all ${isManualMode ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-slate-400 dark:text-slate-500 hover:text-indigo-500'}`}
+              >
+                <User size={18} /> Manual
+              </button>
             </div>
 
-            <div className="flex justify-between items-center px-2">
-               <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                 <Users size={14} className="text-indigo-500" /> Member Roster
-               </h3>
-               <button 
-                 onClick={markAllPresent}
-                 className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800/40"
-               >
-                 Mark All Present
-               </button>
-            </div>
-
-            <div className="max-h-[400px] overflow-y-auto no-scrollbar space-y-3">
-              {filteredStudents.length > 0 ? filteredStudents.map(student => (
-                <div 
-                  key={student.id} 
-                  onClick={() => togglePresence(student.id)}
-                  className={`p-4 rounded-[1.5rem] border flex items-center gap-4 transition-all tap-active cursor-pointer ${
-                    manualPresence[student.id] 
-                    ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' 
-                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950'
-                  }`}
-                >
-                  <img src={student.avatar} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-800 shadow-sm" alt="" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{student.name}</h4>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: {student.rollNo}</p>
-                  </div>
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    manualPresence[student.id] 
-                    ? 'bg-indigo-600 text-white shadow-lg' 
-                    : 'bg-slate-100 dark:bg-slate-950 text-slate-300 dark:text-slate-800'
-                  }`}>
-                    {manualPresence[student.id] ? <Check size={20} strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>}
-                  </div>
+            {/* Dynamic Display Area */}
+            {!isManualMode ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+                <Camera size={48} className="text-[#137fec] opacity-50" />
+                <p className="text-sm font-bold text-slate-400">Switching to full-screen scanner…</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-6">
+                <div className="relative group">
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-500 transition-colors" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search Student ID or Name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-14 pr-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-600 shadow-inner"
+                  />
                 </div>
-              )) : (
-                <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 text-slate-400">
-                   <AlertCircle size={40} className="opacity-20" />
-                   <p className="text-sm font-bold">No students found.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
-        {/* Sync Controls */}
-        <div className="bg-white dark:bg-slate-900 rounded-[2.8rem] border border-slate-100 dark:border-slate-800 p-8 space-y-6 shadow-sm transition-colors duration-500">
-           <div className="flex justify-between items-center">
-             <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Sparkles size={14} className="text-indigo-500" /> {recognizedStudents.size > 0 ? `${recognizedStudents.size} Recognized` : 'Recent Sync Feed'}
-             </h3>
-             <span className={`w-2 h-2 rounded-full ${sessionActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
-           </div>
-           
-           <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-             {recognizedStudents.size > 0 ? (
-               Array.from(recognizedStudents.entries()).map(([id, info]) => (
-                 <div key={id} className="flex-shrink-0 w-16 h-16 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 p-1 relative group tap-active transition-all hover:scale-105" title={`${info.name} (${info.confidence.toFixed(0)}%)`}>
-                    <img src={info.avatar} className="w-full h-full rounded-xl object-cover" alt={info.name} />
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">
-                      <CheckCircle2 size={12} className="text-white" strokeWidth={4} />
+                <div className="flex justify-between items-center px-2">
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <Users size={14} className="text-indigo-500" /> Member Roster
+                  </h3>
+                  <button
+                    onClick={markAllPresent}
+                    className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800/40"
+                  >
+                    Mark All Present
+                  </button>
+                </div>
+
+                <div className="max-h-[400px] overflow-y-auto no-scrollbar space-y-3">
+                  {filteredStudents.length > 0 ? filteredStudents.map(student => (
+                    <div
+                      key={student.id}
+                      onClick={() => togglePresence(student.id)}
+                      className={`p-4 rounded-[1.5rem] border flex items-center gap-4 transition-all tap-active cursor-pointer ${
+                        manualPresence[student.id]
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
+                        : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950'
+                      }`}
+                    >
+                      <img src={student.avatar} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-800 shadow-sm" alt="" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{student.name}</h4>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: {student.rollNo}</p>
+                      </div>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                        manualPresence[student.id]
+                        ? 'bg-indigo-600 text-white shadow-lg'
+                        : 'bg-slate-100 dark:bg-slate-950 text-slate-300 dark:text-slate-800'
+                      }`}>
+                        {manualPresence[student.id] ? <Check size={20} strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>}
+                      </div>
                     </div>
-                 </div>
-               ))
-             ) : (
-               [1, 2, 3, 4, 5, 6].map(i => (
-                 <div key={i} className="flex-shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-1 relative group tap-active transition-all opacity-30">
-                    <div className="w-full h-full rounded-xl bg-slate-200 dark:bg-slate-800"></div>
-                 </div>
-               ))
-             )}
-           </div>
-           
-           <button 
-             onClick={handleFinalize}
-             disabled={isFinalizing || (!sessionActive && recognizedStudents.size === 0 && Object.values(manualPresence).filter(v => v).length === 0)}
-             className="w-full py-5 bg-emerald-600 dark:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-2xl text-[11px] uppercase tracking-widest shadow-xl tap-active transition-all active:scale-[0.98] flex items-center justify-center gap-3"
-           >
-             {isFinalizing ? (
-               <><Loader2 size={20} className="animate-spin" /> Finalizing…</>
-             ) : (
-               <><CheckCircle2 size={20} /> Finalize and Sync</>
-             )}
-           </button>
-        </div>
+                  )) : (
+                    <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 text-slate-400">
+                      <AlertCircle size={40} className="opacity-20" />
+                      <p className="text-sm font-bold">No students found.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Sync Controls */}
+            <div className="bg-white dark:bg-slate-900 rounded-[2.8rem] border border-slate-100 dark:border-slate-800 p-8 space-y-6 shadow-sm transition-colors duration-500">
+              <div className="flex justify-between items-center">
+                <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                  <Sparkles size={14} className="text-indigo-500" /> {recognizedStudents.size > 0 ? `${recognizedStudents.size} Recognized` : 'Recent Sync Feed'}
+                </h3>
+                <span className={`w-2 h-2 rounded-full ${sessionActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+              </div>
+
+              <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                {recognizedStudents.size > 0 ? (
+                  Array.from(recognizedStudents.entries()).map(([id, info]) => (
+                    <div key={id} className="flex-shrink-0 w-16 h-16 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 p-1 relative group tap-active transition-all hover:scale-105" title={`${info.name} (${info.confidence.toFixed(0)}%)`}>
+                      <img src={info.avatar} className="w-full h-full rounded-xl object-cover" alt={info.name} />
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">
+                        <CheckCircle2 size={12} className="text-white" strokeWidth={4} />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  [1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="flex-shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-100 dark:border-slate-800 p-1 relative group tap-active transition-all opacity-30">
+                      <div className="w-full h-full rounded-xl bg-slate-200 dark:bg-slate-800"></div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <button
+                onClick={handleFinalize}
+                disabled={isFinalizing || (!sessionActive && recognizedStudents.size === 0 && Object.values(manualPresence).filter(v => v).length === 0)}
+                className="w-full py-5 bg-emerald-600 dark:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-2xl text-[11px] uppercase tracking-widest shadow-xl tap-active transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+              >
+                {isFinalizing ? (
+                  <><Loader2 size={20} className="animate-spin" /> Finalizing…</>
+                ) : (
+                  <><CheckCircle2 size={20} /> Finalize and Sync</>
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

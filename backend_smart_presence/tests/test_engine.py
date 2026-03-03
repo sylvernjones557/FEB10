@@ -1,8 +1,15 @@
-import cv2
+import pytest
 import numpy as np
-import insightface
-from insightface.app import FaceAnalysis
 
+try:
+    import cv2
+    import insightface
+    from insightface.app import FaceAnalysis
+    HAS_INSIGHTFACE = True
+except (ImportError, AttributeError):
+    HAS_INSIGHTFACE = False
+
+@pytest.mark.skipif(not HAS_INSIGHTFACE, reason="insightface/cv2 not available")
 def test():
     try:
         print("Initializing FaceAnalysis...")

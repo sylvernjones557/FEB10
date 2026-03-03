@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, TrendingUp, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
 import { MOCK_CLASSES } from '../constants';
-import { attendance } from '../services/api';
+import { data } from '../services/api';
 
 const MyClassPage: React.FC<{ user: any, studentList: any[], groupList?: any[] }> = ({ user, studentList, groupList = MOCK_CLASSES }) => {
   const classObj = groupList.find(c => c.id === user.assignedClassId);
@@ -64,7 +64,7 @@ const MyClassPage: React.FC<{ user: any, studentList: any[], groupList?: any[] }
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const weeklyData = await attendance.getWeeklyHistory(user.id);
+        const weeklyData = await data.getStaffActivity(user.id);
         if (weeklyData.week && weeklyData.week.length > 0) {
           const totalPresent = weeklyData.week.reduce((sum: number, d: any) => sum + (d.total_present || 0), 0);
           const totalStudents = weeklyData.week.reduce((sum: number, d: any) => sum + (d.total_students || 0), 0);

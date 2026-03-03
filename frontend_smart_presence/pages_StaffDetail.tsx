@@ -9,8 +9,8 @@ import {
   Clock,
   Calendar
 } from 'lucide-react';
-import { StaffMember } from '../types';
-import { BackButton } from '../constants';
+import { StaffMember } from './types';
+import { BackButton } from './constants';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface StaffDetailProps {

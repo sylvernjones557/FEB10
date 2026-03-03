@@ -1,11 +1,18 @@
 
 import asyncio
 import os
-import cv2
+import pytest
 import numpy as np
-from app.core.face_engine import face_engine
-from app.db.vector_store import vector_store
 
+try:
+    import cv2
+    from app.core.face_engine import face_engine
+    from app.db.vector_store import vector_store
+    HAS_ENGINE = True
+except (ImportError, AttributeError):
+    HAS_ENGINE = False
+
+@pytest.mark.skipif(not HAS_ENGINE, reason="insightface/cv2 not available")
 def test_face_engine():
     print("Testing FaceEngine initialization...")
     # This should trigger model download if not present
@@ -23,6 +30,7 @@ def test_face_engine():
     else:
         print("Unexpectedly found a face!")
 
+@pytest.mark.skipif(not HAS_ENGINE, reason="insightface/cv2 not available")
 def test_vector_store():
     print("Testing VectorStore...")
     # Add dummy data

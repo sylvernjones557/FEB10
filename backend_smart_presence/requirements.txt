@@ -16,10 +16,8 @@ passlib[bcrypt]==1.7.4
 argon2-cffi==23.1.0
 email-validator==2.1.0.post1
 
-# === AI & Computer Vision ===
-# Runtime package is auto-switched by setup_env.bat:
-# - CPU: onnxruntime
-# - GPU: onnxruntime-gpu (when NVIDIA/CUDA is detected)
+# === AI & Computer Vision (CPU-only) ===
+# Always use onnxruntime (CPU). Never install onnxruntime-gpu on low-power systems.
 numpy<2.0.0
 opencv-python-headless==4.8.1.78
 onnxruntime==1.16.3
@@ -31,3 +29,6 @@ chromadb==0.4.22
 # === Testing ===
 pytest==7.4.3
 httpx==0.25.2
+
+# NOTE: ultralytics/YOLO intentionally excluded — not used by backend,
+# saves ~500MB+ RAM and significant CPU at import time

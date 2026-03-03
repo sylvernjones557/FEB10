@@ -94,6 +94,24 @@ def delete_student(
     student = db.query(models.Student).filter(models.Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+
+    # Also remove face embeddings from vector store
+    try:
+        from app.db.vector_store import vector_store
+        vector_store.delete_student_faces(str(student_id))
+    except Exception as e:
+        # Log but don't block deletion if vector cleanup fails
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to clean face data for student {student_id}: {e}")
+
+    # Delete any attendance records for this student
+    try:
+        db.query(models.AttendanceRecord).filter(
+            models.AttendanceRecord.student_id == student_id
+        ).delete(synchronize_session=False)
+    except Exception:
+        pass  # Table might not exist or no records
+
     db.delete(student)
     db.commit()
-    return {"message": "Student deleted"}
+    return {"message": "Student deleted successfully", "student_id": str(student_id)}

@@ -223,11 +223,26 @@ const Enrollment: React.FC = () => {
               {/* Scanning overlay */}
               {scanStep > 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                   <div className="w-64 h-64 border-2 border-indigo-500/50 rounded-full animate-pulse flex items-center justify-center">
-                      <div className="w-full h-full border-4 border-t-indigo-500 rounded-full animate-spin"></div>
+                   {/* Modern face scanning frame */}
+                   <div className="relative w-64 h-64">
+                     {/* Outer glow ring */}
+                     <div className="absolute inset-0 rounded-[2rem] border-2 border-indigo-400/30" style={{ animation: 'face-ring-pulse 2s ease-in-out infinite' }} />
+                     {/* Corner brackets */}
+                     <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-indigo-400 rounded-tl-xl" />
+                     <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-indigo-400 rounded-tr-xl" />
+                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-indigo-400 rounded-bl-xl" />
+                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-indigo-400 rounded-br-xl" />
+                     {/* Scanning line */}
+                     <div className="absolute inset-x-2 top-2 bottom-2 overflow-hidden rounded-xl">
+                       <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-400 to-transparent" style={{ animation: 'scan 2s ease-in-out infinite' }} />
+                     </div>
+                     {/* Center crosshair dot */}
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-indigo-400/50 animate-ping" />
                    </div>
-                   <div className="mt-8 glass px-6 py-2 rounded-xl text-indigo-400 text-xs font-bold uppercase tracking-widest">
-                     {scanStep === 1 ? 'Look Center' : scanStep === 2 ? 'Turn Left' : 'Turn Right'}
+                   <div className="mt-6 bg-black/60 backdrop-blur-md px-6 py-2.5 rounded-xl border border-white/10">
+                     <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest">
+                       {scanStep === 1 ? '📷 Look Straight' : scanStep === 2 ? '← Turn Left Slightly' : 'Turn Right Slightly →'}
+                     </p>
                    </div>
                 </div>
               )}

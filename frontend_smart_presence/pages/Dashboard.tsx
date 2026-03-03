@@ -44,8 +44,9 @@ const formatClassLabel = (c: typeof MOCK_CLASSES[0]) => {
 };
 
 // Timetable Modal
-const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[] }> = ({ onClose, staffList = [] }) => {
-  const [selectedClass, setSelectedClass] = useState(MOCK_CLASSES[0].id);
+const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[]; groupList?: any[] }> = ({ onClose, staffList = [], groupList = [] }) => {
+  const classes = groupList.length > 0 ? groupList : MOCK_CLASSES;
+  const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
   const [isVisible, setIsVisible] = useState(false);
   const [timetable, setTimetable] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,8 +60,8 @@ const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[] }> = ({ 
       setLoading(true);
       try {
         const res = await data.getClassScheduleToday(selectedClass);
-        const mapped = res.map((item: any) => ({
-          period: item.id,
+        const mapped = res.map((item: any, idx: number) => ({
+          period: item.period ?? (idx + 1),
           subject: item.subject,
           teacher: item.teacher_name || 'TBD',
           time: item.time
@@ -83,7 +84,7 @@ const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[] }> = ({ 
     setTimeout(onClose, 300);
   };
 
-  const classObj = MOCK_CLASSES.find(c => c.id === selectedClass);
+  const classObj = classes.find(c => c.id === selectedClass);
   const classTeacher = staffList.find(s => s.assignedClassId === selectedClass && s.type === 'CLASS_TEACHER');
 
   const periodColors = [
@@ -147,7 +148,7 @@ const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[] }> = ({ 
                   onChange={e => setSelectedClass(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-11 pr-10 text-slate-900 dark:text-white font-bold text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none appearance-none transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
-                  {MOCK_CLASSES.map(c => (
+                  {classes.map(c => (
                     <option key={c.id} value={c.id}>{formatClassLabel(c)}</option>
                   ))}
                 </select>
@@ -248,9 +249,10 @@ interface DashboardProps {
   staffCount: number;
   onNavigate: (path: string) => void;
   staffList?: any[];
+  groupList?: any[];
 }
 
-const AdminDashboard: React.FC<DashboardProps> = ({ studentCount, staffCount, onNavigate, staffList = [] }) => {
+const AdminDashboard: React.FC<DashboardProps> = ({ studentCount, staffCount, onNavigate, staffList = [], groupList = [] }) => {
   const [stats, setStats] = useState({
     presence_index: 0,
     daily_success: 0,
@@ -321,7 +323,7 @@ const AdminDashboard: React.FC<DashboardProps> = ({ studentCount, staffCount, on
         <div className="flex-1 text-left relative z-10">
           <h3 className="text-base font-black uppercase tracking-tight leading-none">View Timetable</h3>
           <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mt-2">
-            {MOCK_CLASSES.length} Classes • Daily Schedule
+            {(groupList.length || MOCK_CLASSES.length)} Classes • Daily Schedule
           </p>
         </div>
         <ChevronRight size={22} className="text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />
@@ -375,7 +377,7 @@ const AdminDashboard: React.FC<DashboardProps> = ({ studentCount, staffCount, on
 
       {/* Timetable Modal */}
       {showTimetable && (
-        <TimetableModal onClose={() => setShowTimetable(false)} staffList={staffList} />
+        <TimetableModal onClose={() => setShowTimetable(false)} staffList={staffList} groupList={groupList} />
       )}
     </div>
   );

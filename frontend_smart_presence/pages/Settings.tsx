@@ -50,14 +50,21 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarVideoRef = useRef<HTMLVideoElement>(null);
+  const avatarStreamRef = useRef<MediaStream | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarCameraOpen, setAvatarCameraOpen] = useState(false);
+  const [avatarFacing, setAvatarFacing] = useState<'user' | 'environment'>('user');
+  const [avatarCountdown, setAvatarCountdown] = useState<number | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [useUploadFallback, setUseUploadFallback] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [anglesDone, setAnglesDone] = useState<boolean[]>([false, false, false]);
   const [regFacingMode, setRegFacingMode] = useState<'user' | 'environment'>('user');
   const [autoCapStatus, setAutoCapStatus] = useState<'scanning' | 'detected' | 'captured' | null>(null);
+  const [staffFormError, setStaffFormError] = useState<string | null>(null);
+  const [isSavingStaff, setIsSavingStaff] = useState(false);
   const { showToast } = useToast();
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,6 +78,92 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
       reader.readAsDataURL(file);
     }
   };
+
+  // ── Full-screen avatar camera logic ──
+  const openAvatarCamera = async () => {
+    setAvatarCameraOpen(true);
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: avatarFacing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+      avatarStreamRef.current = s;
+      if (avatarVideoRef.current) {
+        avatarVideoRef.current.srcObject = s;
+      }
+    } catch {
+      // Camera not available — fall back to file upload
+      setAvatarCameraOpen(false);
+      avatarInputRef.current?.click();
+    }
+  };
+
+  const closeAvatarCamera = () => {
+    if (avatarStreamRef.current) {
+      avatarStreamRef.current.getTracks().forEach(t => t.stop());
+      avatarStreamRef.current = null;
+    }
+    setAvatarCameraOpen(false);
+    setAvatarCountdown(null);
+  };
+
+  const captureAvatarPhoto = () => {
+    const video = avatarVideoRef.current;
+    if (!video || video.readyState < 2) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    setAvatarPreview(dataUrl);
+    closeAvatarCamera();
+  };
+
+  const handleAvatarCapture = () => {
+    // 3-second countdown before capture
+    setAvatarCountdown(3);
+    let count = 3;
+    const iv = setInterval(() => {
+      count -= 1;
+      if (count <= 0) {
+        clearInterval(iv);
+        setAvatarCountdown(null);
+        captureAvatarPhoto();
+      } else {
+        setAvatarCountdown(count);
+      }
+    }, 1000);
+  };
+
+  // Sync avatar video ref when camera opens
+  useEffect(() => {
+    if (avatarCameraOpen && avatarVideoRef.current && avatarStreamRef.current) {
+      avatarVideoRef.current.srcObject = avatarStreamRef.current;
+    }
+  }, [avatarCameraOpen]);
+
+  // Switch avatar camera facing mode
+  useEffect(() => {
+    if (!avatarCameraOpen) return;
+    let cancelled = false;
+    (async () => {
+      if (avatarStreamRef.current) {
+        avatarStreamRef.current.getTracks().forEach(t => t.stop());
+      }
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: avatarFacing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        });
+        if (cancelled) { s.getTracks().forEach(t => t.stop()); return; }
+        avatarStreamRef.current = s;
+        if (avatarVideoRef.current) avatarVideoRef.current.srcObject = s;
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [avatarFacing, avatarCameraOpen]);
 
   const [staffForm, setStaffForm] = useState({
     name: '', email: '', username: '', password: '', type: 'CLASS_TEACHER' as StaffType,
@@ -288,49 +381,58 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
   }, [scanStep, step, activeTab, useUploadFallback, captureFrame]);
 
   const finalizeStaff = async () => {
-    // Construct payload for API (UserCreate schema)
-    const newStaff = {
-      staff_code: staffForm.username,
-      password: staffForm.password,
-      full_name: staffForm.name,
-      email: staffForm.email,
-      role: 'STAFF',
-      type: staffForm.type,
-      primary_subject: staffForm.subject,
-      assigned_class_id: staffForm.classId,
-      avatar_url: avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(staffForm.name || 'S')}&background=6366F1&color=fff&size=150&bold=true`
-    };
-    await onAddStaff(newStaff as any);
-
-    // Submit timetable entries to backend
-    const dayMap: Record<string, number> = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5 };
+    setIsSavingStaff(true);
     try {
-      const { data: timetableApi } = await import('../services/api');
-      for (const day of timetable) {
-        const dayOfWeek = dayMap[day.day];
-        if (!dayOfWeek) continue;
-        for (const period of day.periods) {
-          if (period.subject && period.classId) {
-            await timetableApi.addTimetableEntry({
-              group_id: period.classId,
-              staff_id: undefined, // Will be filled server-side if needed
-              day_of_week: dayOfWeek,
-              period: period.period,
-              subject: period.subject,
-            });
+      // Construct payload for API (UserCreate schema)
+      const newStaff = {
+        staff_code: staffForm.username,
+        password: staffForm.password,
+        full_name: staffForm.name,
+        email: staffForm.email,
+        role: 'STAFF',
+        type: staffForm.type,
+        primary_subject: staffForm.subject,
+        assigned_class_id: staffForm.classId,
+        avatar_url: avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(staffForm.name || 'S')}&background=6366F1&color=fff&size=150&bold=true`
+      };
+      await onAddStaff(newStaff as any);
+
+      // Submit timetable entries to backend
+      const dayMap: Record<string, number> = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5 };
+      try {
+        const { data: timetableApi } = await import('../services/api');
+        for (const day of timetable) {
+          const dayOfWeek = dayMap[day.day];
+          if (!dayOfWeek) continue;
+          for (const period of day.periods) {
+            if (period.subject && period.classId) {
+              await timetableApi.addTimetableEntry({
+                group_id: period.classId,
+                staff_id: undefined, // Will be filled server-side if needed
+                day_of_week: dayOfWeek,
+                period: period.period,
+                subject: period.subject,
+              });
+            }
           }
         }
+      } catch (e) {
+        console.error('Failed to save timetable entries', e);
       }
-    } catch (e) {
-      console.error('Failed to save timetable entries', e);
-    }
 
-    setStep(4);
+      showToast('success', 'Teacher Added', `${staffForm.name} has been registered with schedule`);
+      setStep(4);
+    } catch (e: any) {
+      showToast('error', 'Failed', e?.response?.data?.detail || 'Could not save teacher.');
+    } finally {
+      setIsSavingStaff(false);
+    }
   };
 
   const guideColor = autoCapStatus === 'captured' ? '#10b981' : '#137fec';
 
   return (
+    <>
     <div className="max-w-xl mx-auto space-y-8 pb-24 page-enter">
       <div className="flex flex-col gap-4 px-1">
         <BackButton onClick={onBack} />
@@ -348,19 +450,19 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
               <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-2">Fill in the details</p>
             </div>
 
-            {/* AVATAR UPLOAD */}
+            {/* AVATAR UPLOAD / CAMERA CAPTURE */}
             {activeTab === 'STAFF' && (
               <div className="flex flex-col items-center gap-3">
                 <div
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="relative w-28 h-28 rounded-[2rem] border-[3px] border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50 dark:bg-slate-950 flex items-center justify-center cursor-pointer group transition-all duration-300 overflow-hidden shadow-inner"
+                  onClick={openAvatarCamera}
+                  className="relative w-32 h-32 rounded-[2rem] border-[3px] border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50 dark:bg-slate-950 flex items-center justify-center cursor-pointer group transition-all duration-300 overflow-hidden shadow-inner"
                 >
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center gap-1.5 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors">
-                      <ImagePlus size={28} strokeWidth={1.5} />
-                      <span className="text-[9px] font-bold uppercase tracking-widest">Upload</span>
+                      <Camera size={32} strokeWidth={1.5} />
+                      <span className="text-[9px] font-bold uppercase tracking-widest">Take Photo</span>
                     </div>
                   )}
                   {avatarPreview && (
@@ -368,6 +470,14 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
                       <Camera size={24} className="text-white" />
                     </div>
                   )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={openAvatarCamera} className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800/40 flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <Camera size={12} /> Camera
+                  </button>
+                  <button type="button" onClick={() => avatarInputRef.current?.click()} className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 active:scale-95 transition-transform">
+                    <ImagePlus size={12} /> Upload
+                  </button>
                 </div>
                 <input
                   ref={avatarInputRef}
@@ -492,10 +602,27 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
                 </>
               )}
 
+              {/* Validation error message */}
+              {staffFormError && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold mt-2">
+                  <AlertCircle size={14} /> {staffFormError}
+                </div>
+              )}
+              {scanError && activeTab === 'STUDENT' && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold mt-2">
+                  <AlertCircle size={14} /> {scanError}
+                </div>
+              )}
+
               <button onClick={async () => {
+                setStaffFormError(null);
+                setScanError(null);
                 if (activeTab === 'STUDENT') {
+                  // Validate student fields
+                  if (!studentForm.name.trim()) { setScanError('Please enter the student name.'); return; }
+                  if (!studentForm.roll.trim()) { setScanError('Please enter the student ID.'); return; }
+                  if (!studentForm.classId) { setScanError('Please select a class.'); return; }
                   // Create student in DB first, then go to face scan
-                  setScanError(null);
                   try {
                     const newMember = {
                       id: studentForm.roll,
@@ -516,6 +643,12 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
                   }
                   setStep(2);
                 } else {
+                  // Validate staff fields before proceeding to timetable
+                  if (!staffForm.name.trim()) { setStaffFormError('Please enter the teacher name.'); return; }
+                  if (!staffForm.username.trim()) { setStaffFormError('Please enter a Login ID.'); return; }
+                  if (!staffForm.password || staffForm.password.length < 6) { setStaffFormError('Password must be at least 6 characters.'); return; }
+                  if (staffForm.type === 'SUBJECT_TEACHER' && !staffForm.subject.trim()) { setStaffFormError('Please enter the primary subject.'); return; }
+                  if (staffForm.type === 'CLASS_TEACHER' && !staffForm.classId) { setStaffFormError('Please select an assigned class.'); return; }
                   setStep(2);
                 }
               }} className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95 mt-4 flex items-center justify-center gap-3">
@@ -525,62 +658,96 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
           </div>
         )}
 
-        {step === 2 && activeTab === 'STAFF' && (
-          <div className="space-y-6 animate-in slide-in-from-right-6">
-            <div className="text-center">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Teacher Schedule</h3>
-              <p className="text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest mt-2">Set class times</p>
-            </div>
-
-            <div className="max-h-[480px] overflow-y-auto pr-2 space-y-6 no-scrollbar pb-4">
-              {timetable.map((day, dIdx) => (
-                <div key={day.day} className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-[2rem] p-5 space-y-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <Calendar size={18} />
-                    <h4 className="text-sm font-black uppercase tracking-widest">{day.day}</h4>
-                  </div>
-
-                  <div className="space-y-4">
-                    {day.periods.map((p, pIdx) => (
-                      <div key={p.period} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                        <div className="flex bg-slate-50 dark:bg-slate-800/50 px-4 py-2 border-b border-slate-100 dark:border-slate-800 items-center justify-between">
-                          <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                            <Clock size={12} /> Period {p.period}
-                          </span>
-                        </div>
-                        <div className="p-4 space-y-3">
-                          <div className="relative">
-                            <BookOpen size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700" />
-                            <input
-                              placeholder="Enter Subject Name"
-                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl pl-12 pr-4 py-3.5 text-xs font-bold text-slate-900 dark:text-white focus:border-indigo-600 outline-none transition-all"
-                              value={p.subject}
-                              onChange={e => updateTimetable(dIdx, pIdx, 'subject', e.target.value)}
-                            />
-                          </div>
-                          <div className="relative">
-                            <Layers size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700" />
-                            <select
-                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl pl-12 pr-4 py-3.5 text-xs font-bold text-slate-500 dark:text-slate-400 outline-none appearance-none transition-all"
-                              value={p.classId}
-                              onChange={e => updateTimetable(dIdx, pIdx, 'classId', e.target.value)}
-                            >
-                              <option value="">Select Class</option>
-                              {groupList.map(c => <option key={c.id} value={c.id}>{formatClassLabel(c)}</option>)}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+        {step === 2 && activeTab === 'STAFF' && createPortal(
+          <div className="fixed inset-0 z-[9999] bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden">
+            {/* Header */}
+            <header className="flex-shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-3 shadow-sm">
+              <div className="flex items-center justify-between max-w-2xl mx-auto">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setStep(1)}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 active:scale-90 transition-transform"
+                  >
+                    <ArrowLeft size={20} className="text-slate-600 dark:text-slate-300" />
+                  </button>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Teacher Schedule</h3>
+                    <p className="text-slate-400 dark:text-slate-500 text-[9px] font-bold uppercase tracking-widest">{staffForm.name || 'New Teacher'}</p>
                   </div>
                 </div>
-              ))}
+                <div className="flex items-center gap-2">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800/40">
+                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">{staffForm.type === 'CLASS_TEACHER' ? 'Class Teacher' : 'Subject Teacher'}</span>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            {/* Scrollable timetable body */}
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+                {timetable.map((day, dIdx) => (
+                  <div key={day.day} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 bg-slate-50 dark:bg-slate-800/50 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800">
+                      <Calendar size={16} />
+                      <h4 className="text-xs font-black uppercase tracking-widest">{day.day}</h4>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {day.periods.map((p, pIdx) => (
+                        <div key={p.period} className="px-5 py-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Clock size={12} className="text-slate-400" />
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Period {p.period}</span>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="relative">
+                              <BookOpen size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700" />
+                              <input
+                                placeholder="Subject Name"
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl pl-10 pr-3 py-3 text-xs font-bold text-slate-900 dark:text-white focus:border-indigo-600 outline-none transition-all"
+                                value={p.subject}
+                                onChange={e => updateTimetable(dIdx, pIdx, 'subject', e.target.value)}
+                              />
+                            </div>
+                            <div className="relative">
+                              <Layers size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700" />
+                              <select
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl pl-10 pr-3 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 outline-none appearance-none transition-all"
+                                value={p.classId}
+                                onChange={e => updateTimetable(dIdx, pIdx, 'classId', e.target.value)}
+                              >
+                                <option value="">Select Class</option>
+                                {groupList.map(c => <option key={c.id} value={c.id}>{formatClassLabel(c)}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="sticky bottom-0 bg-white dark:bg-slate-900 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <button onClick={finalizeStaff} className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Save Schedule</button>
+            {/* Sticky bottom save */}
+            <div className="flex-shrink-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 pb-[max(16px,env(safe-area-inset-bottom))]">
+              <div className="max-w-2xl mx-auto">
+                <button
+                  onClick={finalizeStaff}
+                  disabled={isSavingStaff}
+                  className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-xs uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2.5"
+                >
+                  {isSavingStaff ? (
+                    <><Loader2 size={18} className="animate-spin" /> Saving…</>
+                  ) : (
+                    <><CheckCircle2 size={18} /> Save Schedule & Add Teacher</>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {step === 2 && activeTab === 'STUDENT' && createPortal(
@@ -780,7 +947,92 @@ const SettingsPage: React.FC<SettingsProps> = ({ onBack, onAddStaff, onAddStuden
           </div>
         )}
       </div>
-    </div>
+
+      {/* ── Full-screen Avatar Camera Portal ── */}
+      {avatarCameraOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black flex flex-col overflow-hidden">
+          {/* Camera feed */}
+          <div className="absolute inset-0">
+            <video
+              ref={avatarVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover ${avatarFacing === 'user' ? 'scale-x-[-1]' : ''}`}
+            />
+          </div>
+
+          {/* Gradients */}
+          <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-black/70 to-transparent pointer-events-none z-10" />
+          <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none z-10" />
+
+          {/* Header */}
+          <header className="relative z-30 flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={closeAvatarCamera}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md active:scale-90 transition-transform"
+              >
+                <ArrowLeft size={20} className="text-white" />
+              </button>
+              <span className="text-white text-[15px] font-semibold">Staff Photo</span>
+            </div>
+            <button
+              onClick={() => setAvatarFacing(prev => prev === 'user' ? 'environment' : 'user')}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md active:scale-90 transition-transform"
+              aria-label="Switch camera"
+            >
+              <SwitchCamera size={19} className="text-white" />
+            </button>
+          </header>
+
+          {/* Center face guide */}
+          <div className="flex-1 relative z-20 flex flex-col items-center justify-center pointer-events-none">
+            <div className="relative">
+              <svg width="260" height="340" viewBox="0 0 260 340" fill="none" className="drop-shadow-lg">
+                <rect x="4" y="4" width="252" height="332" rx="126" ry="140" stroke="white" strokeWidth="2.5" fill="none" strokeDasharray="12 8" className="opacity-60" />
+                <path d="M50 8 L8 8 Q4 8 4 12 L4 60" stroke="rgba(255,255,255,0.7)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                <path d="M210 8 L252 8 Q256 8 256 12 L256 60" stroke="rgba(255,255,255,0.7)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                <path d="M50 332 L8 332 Q4 332 4 328 L4 280" stroke="rgba(255,255,255,0.7)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                <path d="M210 332 L252 332 Q256 332 256 328 L256 280" stroke="rgba(255,255,255,0.7)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+              </svg>
+              {/* Countdown overlay */}
+              {avatarCountdown !== null && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-7xl font-black text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]" style={{ animation: 'slideInFromBottom 0.3s ease-out' }}>{avatarCountdown}</span>
+                </div>
+              )}
+              {/* Scanning sweep line */}
+              {avatarCountdown === null && (
+                <div className="absolute inset-x-8 top-1 bottom-1 overflow-hidden rounded-[126px]">
+                  <div className="scan-line-sweep absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-white/60 to-transparent blur-[1px]" />
+                </div>
+              )}
+            </div>
+            <div className="mt-6 px-5 py-2.5 rounded-full backdrop-blur-md bg-white/10 border border-white/20">
+              <span className="text-white text-[13px] font-medium">
+                {avatarCountdown !== null ? `Capturing in ${avatarCountdown}…` : 'Position your face in the guide'}
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom controls */}
+          <div className="relative z-30 px-5 pb-[max(20px,env(safe-area-inset-bottom))] flex flex-col items-center gap-4">
+            {/* Shutter button */}
+            <button
+              onClick={handleAvatarCapture}
+              disabled={avatarCountdown !== null}
+              className="w-[72px] h-[72px] rounded-full border-[4px] border-white/80 bg-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-all disabled:opacity-50 shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+            >
+              <div className="w-[56px] h-[56px] rounded-full bg-white" />
+            </button>
+            <p className="text-white/50 text-[11px] font-semibold uppercase tracking-widest">Tap to capture</p>
+          </div>
+        </div>,
+        document.body
+      )}
+      </div>
+    </>
   );
 };
 

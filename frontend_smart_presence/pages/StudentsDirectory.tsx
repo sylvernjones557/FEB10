@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, ShieldCheck, ShieldAlert, ChevronRight, UserCircle, X, Activity, TrendingUp, TrendingDown, Clock, Download } from 'lucide-react';
+import { Search, ShieldCheck, ShieldAlert, ChevronRight, UserCircle, X, Activity, TrendingUp, TrendingDown, Clock, Download, Trash2, AlertCircle, Loader2 } from 'lucide-react';
 import { Student } from '../types';
 import { BackButton, MOCK_CLASSES } from '../constants';
 
@@ -8,9 +8,11 @@ interface StudentsDirectoryProps {
   studentList: Student[];
   groupList?: any[];
   onBack: () => void;
+  onDeleteStudent?: (studentId: string, studentName: string) => void;
+  isAdmin?: boolean;
 }
 
-const StudentsDirectory: React.FC<StudentsDirectoryProps> = ({ studentList, groupList = MOCK_CLASSES, onBack }) => {
+const StudentsDirectory: React.FC<StudentsDirectoryProps> = ({ studentList, groupList = MOCK_CLASSES, onBack, onDeleteStudent, isAdmin = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDegree, setFilterDegree] = useState('All');
 
@@ -125,23 +127,25 @@ const StudentsDirectory: React.FC<StudentsDirectoryProps> = ({ studentList, grou
                  <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-6 rounded-[2rem] space-y-6">
                     <div className="flex items-center justify-between">
                        <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                          <Activity size={18} className="text-indigo-500" /> Attendance Metric
+                          <Activity size={18} className="text-indigo-500" /> Student Info
                        </p>
-                       <span className="text-indigo-600 font-black text-base">94.8%</span>
-                    </div>
-                    
-                    <div className="h-3 w-full bg-slate-200 dark:bg-slate-900 rounded-full overflow-hidden">
-                       <div className="h-full bg-indigo-600 rounded-full transition-all duration-1000" style={{ width: '94.8%' }}></div>
+                       <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest ${
+                         selectedStudent.faceDataRegistered 
+                           ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                           : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40'
+                       }`}>
+                         {selectedStudent.faceDataRegistered ? 'Face Registered' : 'No Face Data'}
+                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm text-center border border-slate-100 dark:border-slate-800">
-                          <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Sync Count</p>
-                          <h4 className="text-xl font-black text-slate-900 dark:text-white">142</h4>
+                          <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Roll No</p>
+                          <h4 className="text-base font-black text-slate-900 dark:text-white">{selectedStudent.rollNo || '--'}</h4>
                        </div>
                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm text-center border border-slate-100 dark:border-slate-800">
-                          <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Anomalies</p>
-                          <h4 className="text-xl font-black text-rose-500">03</h4>
+                          <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Group</p>
+                          <h4 className="text-base font-black text-slate-900 dark:text-white">{groupList.find(c => c.id === selectedStudent.classId)?.name || 'Unassigned'}</h4>
                        </div>
                     </div>
                  </div>
@@ -149,6 +153,18 @@ const StudentsDirectory: React.FC<StudentsDirectoryProps> = ({ studentList, grou
                  <button className="w-full py-5 bg-slate-950 dark:bg-white text-white dark:text-slate-950 font-black rounded-2xl text-[11px] uppercase tracking-widest tap-active flex items-center justify-center gap-3 shadow-xl">
                    Download Profile <Download size={20} strokeWidth={3} />
                  </button>
+
+                 {isAdmin && onDeleteStudent && (
+                   <button 
+                     onClick={() => {
+                       onDeleteStudent(selectedStudent.id, selectedStudent.name);
+                       setSelectedStudent(null);
+                     }}
+                     className="w-full py-5 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest tap-active flex items-center justify-center gap-3 shadow-xl transition-all active:scale-[0.98]"
+                   >
+                     <Trash2 size={20} strokeWidth={3} /> Delete Student Permanently
+                   </button>
+                 )}
               </div>
            </div>
         </div>
