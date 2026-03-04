@@ -1,0 +1,79 @@
+# ============================================
+# Smart Presence — Docker Build Ignore
+# Excludes unnecessary files from Docker context
+# to speed up builds and reduce image size
+# ============================================
+
+# ── Git ──
+.git/
+.gitignore
+
+# ── Virtual Environments ──
+backend_smart_presence/.venv/
+backend_smart_presence/venv/
+frontend_smart_presence/node_modules/
+
+# ── Python Cache ──
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.pytest_cache/
+
+# ── Test Files (not needed in production) ──
+backend_smart_presence/tests/
+backend_smart_presence/test_results_*.json
+backend_smart_presence/pytest.ini
+
+# ── Dev Scripts ──
+backend_smart_presence/scripts/
+backend_smart_presence/setup_env.bat
+backend_smart_presence/run_server.bat
+
+# ── Certificates (not needed — Docker uses HTTP internally) ──
+backend_smart_presence/certs/
+
+# ── Build Artifacts ──
+**/*.egg-info/
+**/dist/
+**/build/
+
+# ── Frontend Build (we rebuild in Docker) ──
+frontend_smart_presence/dist/
+
+# ── OS Files ──
+Thumbs.db
+.DS_Store
+
+# ── IDE ──
+.vscode/
+.idea/
+
+# ── Documentation (not needed in image) ──
+*.md
+!backend_smart_presence/README.md
+
+# ── Lock/Alt Requirements ──
+backend_smart_presence/requirements.lock.txt
+backend_smart_presence/requirements_cpu.txt
+
+# ── Model Files (auto-downloaded in container) ──
+backend_smart_presence/yolov8n.pt
+
+# ── Docker Files (prevent recursive context) ──
+Dockerfile
+docker-compose.yml
+docker_start.bat
+docker_stop.bat
+backend_smart_presence/Dockerfile
+backend_smart_presence/.dockerignore
+
+# ── MCP Server (not needed in production Docker) ──
+mcp_smart_presence/
+
+# ── Top-level ChromaDB (only backend's copy matters) ──
+chroma_store/
+
+# ── Environment Files (mounted at runtime, not baked into image) ──
+backend_smart_presence/.env
+frontend_smart_presence/.env
+frontend_smart_presence/.env.example

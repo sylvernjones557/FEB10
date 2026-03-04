@@ -1,16 +1,17 @@
 @echo off
 echo ========================================
-echo  Smart Presence — Stop Docker Backend
+echo  Smart Presence — Stop Docker Container
 echo ========================================
 echo.
 
 cd /d "%~dp0"
 
-echo Stopping backend container...
+echo Stopping Smart Presence container...
 docker compose down
 
 echo.
-echo [OK] Backend stopped.
+echo [OK] Smart Presence stopped.
 echo.
 echo To start again, run: docker_start.bat
+echo To remove all data:  docker compose down -v
 pause

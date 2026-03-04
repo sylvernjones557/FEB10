@@ -17,10 +17,17 @@ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 os.environ.setdefault("ONNXRUNTIME_PROVIDERS", "CPUExecutionProvider")
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.v1.api import api_router
 from app.core.config import settings
+
+# ── Detect Frontend (Docker unified mode) ──
+# When built with the unified Dockerfile, frontend dist is at /app/frontend/
+_frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
+_frontend_available = os.path.isdir(_frontend_dir) and os.path.isfile(os.path.join(_frontend_dir, "index.html"))
+_frontend_index = os.path.join(_frontend_dir, "index.html") if _frontend_available else None
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -44,6 +51,10 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def read_root():
+    # Docker unified mode: serve the React frontend at root
+    if _frontend_available:
+        return FileResponse(_frontend_index, media_type="text/html")
+    # Standalone backend mode: return API info
     return {
         "message": "Welcome to Smart Presence Backend",
         "status": "online",
@@ -68,4 +79,33 @@ def system_info():
         "lazy_load": settings.LAZY_LOAD_ENGINE,
         "env_omp_threads": os.environ.get("OMP_NUM_THREADS"),
         "env_cuda_visible": os.environ.get("CUDA_VISIBLE_DEVICES", "(not set)"),
+        "frontend_mode": "unified (Docker)" if _frontend_available else "standalone (API only)",
     }
+
+
+# ══════════════════════════════════════════════════════════════
+# Frontend Static Files — Docker Unified Mode
+# When the frontend dist/ folder is present (built via unified Dockerfile),
+# serve it alongside the API from the SAME port.
+# All API routes (/api/v1/*, /health, /system-info) take priority.
+# Everything else falls through to the frontend SPA.
+# ══════════════════════════════════════════════════════════════
+if _frontend_available:
+    import mimetypes
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_frontend(full_path: str):
+        """
+        SPA catch-all route:
+        1. If the path matches a real file in frontend/dist → serve it (JS, CSS, images)
+        2. Otherwise → serve index.html (React Router handles client-side routing)
+        """
+        # Try to serve the exact file (e.g., /assets/index-abc123.js)
+        file_path = os.path.join(_frontend_dir, full_path)
+        if full_path and os.path.isfile(file_path):
+            # Auto-detect MIME type for proper Content-Type header
+            mime_type, _ = mimetypes.guess_type(file_path)
+            return FileResponse(file_path, media_type=mime_type)
+
+        # Fallback: serve index.html for all unknown routes (SPA client-side routing)
+        return FileResponse(_frontend_index, media_type="text/html")

@@ -1,21 +1,30 @@
-# ============================================
-# Smart Presence — Docker Compose
-# Backend runs in Docker, Frontend stays local
-# ============================================
+# ============================================================
+# Smart Presence — Docker Compose (Unified)
+# ONE container serves both Backend API + Frontend UI
+# Database stays in cloud (Supabase) — no local DB needed
+# ============================================================
+# Usage:
+#   docker compose up -d          → Start everything
+#   docker compose down            → Stop everything
+#   docker compose logs -f         → View live logs
+#   docker compose build --no-cache → Force rebuild
+# ============================================================
 
 services:
-  backend:
+  smartpresence:
     build:
-      context: ./backend_smart_presence
+      context: .
       dockerfile: Dockerfile
-    container_name: smart_presence_backend
-    # Use host network so the container shares the host's network stack
-    # This fixes IPv6 connectivity to Supabase (Docker bridge can't route IPv6)
-    network_mode: host
+    container_name: smart_presence
+    # Port mapping — exposes container's port 8000 on the host
+    # On Windows, network_mode:host doesn't work (Docker uses a Linux VM),
+    # so we use explicit port mapping instead.
+    ports:
+      - "8000:8000"
     env_file:
       - ./backend_smart_presence/.env
     environment:
-      # CPU performance tuning
+      # ── CPU Performance Tuning ──
       - OMP_NUM_THREADS=2
       - OMP_WAIT_POLICY=PASSIVE
       - MKL_NUM_THREADS=2
@@ -23,20 +32,24 @@ services:
       - NUMEXPR_NUM_THREADS=2
       - CUDA_VISIBLE_DEVICES=
       - ONNXRUNTIME_PROVIDERS=CPUExecutionProvider
+      # ── Face Recognition Settings ──
       - FACE_DEVICE_PREFERENCE=cpu
       - FACE_MODEL_NAME=buffalo_sc
       - FACE_DET_SIZE_CPU=320
       - MAX_IMAGE_DIMENSION=640
       - ONNX_NUM_THREADS=2
+      # ── Server Settings ──
       - UVICORN_WORKERS=1
       - LAZY_LOAD_ENGINE=true
       - IMAGE_QUALITY=80
     volumes:
-      # Persist ChromaDB vector data across container restarts
+      # Persist ChromaDB face embeddings across container restarts
       - chroma_data:/app/chroma_store
-      # Persist InsightFace model downloads (so it doesn't re-download every time)
+      # Persist InsightFace model downloads (avoids re-downloading ~100MB each time)
       - insightface_models:/root/.insightface
-    # Force IPv4 DNS resolution (Supabase IPv6 is unreachable from Docker)
+      # Mount .env file so backend can read it directly (secure — not baked into image)
+      - ./backend_smart_presence/.env:/app/.env:ro
+    # Force IPv4 DNS (avoids IPv6 timeout connecting to Supabase)
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -47,7 +60,7 @@ services:
       timeout: 10s
       start_period: 40s
       retries: 3
-    # Limit resources for low-end PCs
+    # ── Resource Limits for Low-End PCs ──
     deploy:
       resources:
         limits:
