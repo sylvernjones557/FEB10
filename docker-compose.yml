@@ -1,0 +1,64 @@
+# ============================================
+# Smart Presence — Docker Compose
+# Backend runs in Docker, Frontend stays local
+# ============================================
+
+services:
+  backend:
+    build:
+      context: ./backend_smart_presence
+      dockerfile: Dockerfile
+    container_name: smart_presence_backend
+    # Use host network so the container shares the host's network stack
+    # This fixes IPv6 connectivity to Supabase (Docker bridge can't route IPv6)
+    network_mode: host
+    env_file:
+      - ./backend_smart_presence/.env
+    environment:
+      # CPU performance tuning
+      - OMP_NUM_THREADS=2
+      - OMP_WAIT_POLICY=PASSIVE
+      - MKL_NUM_THREADS=2
+      - OPENBLAS_NUM_THREADS=2
+      - NUMEXPR_NUM_THREADS=2
+      - CUDA_VISIBLE_DEVICES=
+      - ONNXRUNTIME_PROVIDERS=CPUExecutionProvider
+      - FACE_DEVICE_PREFERENCE=cpu
+      - FACE_MODEL_NAME=buffalo_sc
+      - FACE_DET_SIZE_CPU=320
+      - MAX_IMAGE_DIMENSION=640
+      - ONNX_NUM_THREADS=2
+      - UVICORN_WORKERS=1
+      - LAZY_LOAD_ENGINE=true
+      - IMAGE_QUALITY=80
+    volumes:
+      # Persist ChromaDB vector data across container restarts
+      - chroma_data:/app/chroma_store
+      # Persist InsightFace model downloads (so it doesn't re-download every time)
+      - insightface_models:/root/.insightface
+    # Force IPv4 DNS resolution (Supabase IPv6 is unreachable from Docker)
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    # Limit resources for low-end PCs
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+
+volumes:
+  chroma_data:
+    driver: local
+  insightface_models:
+    driver: local

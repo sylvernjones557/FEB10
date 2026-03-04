@@ -1,0 +1,1583 @@
+{
+  "summary": {
+    "total_tests": 71,
+    "passed": 69,
+    "failed": 2,
+    "pass_rate": "97.2%",
+    "avg_response_ms": 288.24,
+    "workflows": {
+      "System Health": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "avg_time_ms": 4.54
+      },
+      "Authentication": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "avg_time_ms": 259.57
+      },
+      "Dashboard": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "avg_time_ms": 228.09
+      },
+      "Organizations": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0,
+        "avg_time_ms": 210.98
+      },
+      "Class Management": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "avg_time_ms": 204.95
+      },
+      "Staff Management": {
+        "total": 8,
+        "passed": 7,
+        "failed": 1,
+        "avg_time_ms": 272.45
+      },
+      "Student Management": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "avg_time_ms": 354.49
+      },
+      "Timetable": {
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "avg_time_ms": 262.69
+      },
+      "Attendance Workflow": {
+        "total": 8,
+        "passed": 8,
+        "failed": 0,
+        "avg_time_ms": 556.64
+      },
+      "Face Recognition": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "avg_time_ms": 215.44
+      },
+      "Reports": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "avg_time_ms": 382.97
+      },
+      "Staff Pages": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "avg_time_ms": 205.97
+      },
+      "MCP Prompts": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "avg_time_ms": 595.6
+      },
+      "Edge Cases": {
+        "total": 8,
+        "passed": 7,
+        "failed": 1,
+        "avg_time_ms": 127.91
+      }
+    },
+    "duration_seconds": 21.19,
+    "timestamp": "2026-03-03T20:03:35.270622"
+  },
+  "detailed_results": [
+    {
+      "workflow": "System Health",
+      "test": "server_root",
+      "method": "GET",
+      "url": "/",
+      "status_code": 200,
+      "response_time_ms": 6.24,
+      "response_body": {
+        "message": "Welcome to Smart Presence Backend",
+        "status": "online",
+        "version": "1.0.0",
+        "mode": "CPU-optimized (low-power)",
+        "docs_url": "/api/v1/docs"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:14.083482"
+    },
+    {
+      "workflow": "System Health",
+      "test": "health_check",
+      "method": "GET",
+      "url": "/health",
+      "status_code": 200,
+      "response_time_ms": 3.7,
+      "response_body": {
+        "status": "ok",
+        "device": "cpu",
+        "mode": "low-power"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:14.087814"
+    },
+    {
+      "workflow": "System Health",
+      "test": "system_info",
+      "method": "GET",
+      "url": "/system-info",
+      "status_code": 200,
+      "response_time_ms": 3.69,
+      "response_body": {
+        "device": "CPU-only",
+        "face_model": "buffalo_sc",
+        "det_size": 320,
+        "max_image_dim": 640,
+        "onnx_threads": 2,
+        "lazy_load": true,
+        "env_omp_threads": "2",
+        "env_cuda_visible": ""
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:14.092021"
+    },
+    {
+      "workflow": "Authentication",
+      "test": "login_valid_credentials",
+      "method": "POST",
+      "url": "/api/v1/login/access-token",
+      "status_code": 200,
+      "response_time_ms": 934.71,
+      "response_body": {
+        "token_present": true,
+        "token_type": "bearer"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:15.026734"
+    },
+    {
+      "workflow": "Authentication",
+      "test": "login_invalid_credentials",
+      "method": "POST",
+      "url": "/api/v1/login/access-token",
+      "status_code": 400,
+      "response_time_ms": 180.96,
+      "response_body": {
+        "detail": "Incorrect staff code or password"
+      },
+      "passed": true,
+      "notes": "Should reject invalid credentials",
+      "timestamp": "2026-03-03T20:03:15.207693"
+    },
+    {
+      "workflow": "Authentication",
+      "test": "login_empty_fields",
+      "method": "POST",
+      "url": "/api/v1/login/access-token",
+      "status_code": 422,
+      "response_time_ms": 4.21,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "username"
+            ],
+            "msg": "Field required",
+            "input": null,
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "password"
+            ],
+            "msg": "Field required",
+            "input": null,
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "Should reject empty credentials",
+      "timestamp": "2026-03-03T20:03:15.212962"
+    },
+    {
+      "workflow": "Authentication",
+      "test": "staff_me_profile",
+      "method": "GET",
+      "url": "/api/v1/staff/me",
+      "status_code": 200,
+      "response_time_ms": 156.92,
+      "response_body": {
+        "name": "Administrator",
+        "email": "admin@smartpresence.edu",
+        "staff_code": "admin",
+        "role": "ADMIN",
+        "type": "SUBJECT_TEACHER",
+        "primary_subject": null,
+        "assigned_class_id": null,
+        "avatar_url": null,
+        "full_name": "Administrator",
+        "id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "is_superuser": true,
+        "created_at": "2026-02-17T04:52:29.607312Z",
+        "updated_at": "2026-02-24T04:18:45.850531Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:15.370401"
+    },
+    {
+      "workflow": "Authentication",
+      "test": "unauthorized_access",
+      "method": "GET",
+      "url": "/api/v1/staff/me",
+      "status_code": 401,
+      "response_time_ms": 21.07,
+      "response_body": {
+        "detail": "Not authenticated"
+      },
+      "passed": true,
+      "notes": "Should return 401 without token",
+      "timestamp": "2026-03-03T20:03:15.391468"
+    },
+    {
+      "workflow": "Dashboard",
+      "test": "stats_institutional",
+      "method": "GET",
+      "url": "/api/v1/stats/institutional",
+      "status_code": 200,
+      "response_time_ms": 335.59,
+      "response_body": {
+        "total_students": 19,
+        "total_staff": 5,
+        "total_classes": 6,
+        "today_attendance_rate": 0,
+        "today_present": 0,
+        "today_total": 0,
+        "sessions_today": 0
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:15.894324"
+    },
+    {
+      "workflow": "Dashboard",
+      "test": "classes_live",
+      "method": "GET",
+      "url": "/api/v1/classes/live",
+      "status_code": 200,
+      "response_time_ms": 208.71,
+      "response_body": [],
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:16.103036"
+    },
+    {
+      "workflow": "Dashboard",
+      "test": "staff_list",
+      "method": "GET",
+      "url": "/api/v1/staff/",
+      "status_code": 200,
+      "response_time_ms": 199.03,
+      "response_body": {
+        "count": 7,
+        "sample": [
+          {
+            "name": "Administrator",
+            "email": "admin@smartpresence.edu",
+            "staff_code": "admin",
+            "role": "ADMIN",
+            "type": "SUBJECT_TEACHER",
+            "primary_subject": null,
+            "assigned_class_id": null,
+            "avatar_url": null,
+            "full_name": "Administrator",
+            "id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "is_superuser": true,
+            "created_at": "2026-02-17T04:52:29.607312Z",
+            "updated_at": "2026-02-24T04:18:45.850531Z"
+          },
+          {
+            "name": "Asha Raman",
+            "email": "asha@school.edu",
+            "staff_code": "STF001",
+            "role": "STAFF",
+            "type": "SUBJECT_TEACHER",
+            "primary_subject": null,
+            "assigned_class_id": null,
+            "avatar_url": null,
+            "full_name": "Asha Raman",
+            "id": "33333333-3333-3333-3333-333333333331",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "is_superuser": false,
+            "created_at": "2026-02-17T04:42:13.801903Z",
+            "updated_at": "2026-02-17T04:42:13.801903Z"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:16.302618"
+    },
+    {
+      "workflow": "Dashboard",
+      "test": "student_list",
+      "method": "GET",
+      "url": "/api/v1/students/",
+      "status_code": 200,
+      "response_time_ms": 203.03,
+      "response_body": {
+        "count": 19
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:16.506171"
+    },
+    {
+      "workflow": "Dashboard",
+      "test": "group_list",
+      "method": "GET",
+      "url": "/api/v1/groups/",
+      "status_code": 200,
+      "response_time_ms": 194.07,
+      "response_body": {
+        "count": 6,
+        "groups": [
+          {
+            "name": "Class 1",
+            "code": "C1",
+            "id": "22222222-2222-2222-2222-222222222221",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "created_at": "2026-02-17T04:42:13.650710Z",
+            "updated_at": "2026-02-17T04:42:13.650710Z"
+          },
+          {
+            "name": "Class 2",
+            "code": "C2",
+            "id": "22222222-2222-2222-2222-222222222222",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "created_at": "2026-02-17T04:42:13.650710Z",
+            "updated_at": "2026-02-17T04:42:13.650710Z"
+          },
+          {
+            "name": "Class 3",
+            "code": "C3",
+            "id": "22222222-2222-2222-2222-222222222223",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "created_at": "2026-02-17T04:42:13.650710Z",
+            "updated_at": "2026-02-17T04:42:13.650710Z"
+          },
+          {
+            "name": "Class 4",
+            "code": "C4",
+            "id": "22222222-2222-2222-2222-222222222224",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "created_at": "2026-02-17T04:42:13.650710Z",
+            "updated_at": "2026-02-17T04:42:13.650710Z"
+          },
+          {
+            "name": "Class 5",
+            "code": "C5",
+            "id": "22222222-2222-2222-2222-222222222225",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "created_at": "2026-02-17T04:42:13.650710Z",
+            "updated_at": "2026-02-17T04:42:13.650710Z"
+          },
+          {
+            "name": "Test Class",
+            "code": "TC1",
+            "id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
+            "organization_id": "11111111-1111-1111-1111-111111111111",
+            "is_active": true,
+            "created_at": "2026-02-17T05:02:07.386074Z",
+            "updated_at": "2026-02-17T05:02:07.386074Z"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:16.700772"
+    },
+    {
+      "workflow": "Organizations",
+      "test": "organization_list",
+      "method": "GET",
+      "url": "/api/v1/organizations/",
+      "status_code": 200,
+      "response_time_ms": 200.69,
+      "response_body": [
+        {
+          "name": "Green Valley School",
+          "id": "11111111-1111-1111-1111-111111111111",
+          "created_at": "2026-02-17T04:42:13.328022Z"
+        }
+      ],
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:16.902003"
+    },
+    {
+      "workflow": "Organizations",
+      "test": "organization_get",
+      "method": "GET",
+      "url": "/api/v1/organizations/11111111-1111-1111-1111-111111111111",
+      "status_code": 200,
+      "response_time_ms": 221.27,
+      "response_body": {
+        "name": "Green Valley School",
+        "id": "11111111-1111-1111-1111-111111111111",
+        "created_at": "2026-02-17T04:42:13.328022Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:17.123798"
+    },
+    {
+      "workflow": "Class Management",
+      "test": "class_directory_render",
+      "method": "GET",
+      "url": "/api/v1/groups/",
+      "status_code": 200,
+      "response_time_ms": 0,
+      "response_body": {
+        "class_count": 6
+      },
+      "passed": true,
+      "notes": "Data loaded during dashboard init",
+      "timestamp": "2026-03-03T20:03:17.124337"
+    },
+    {
+      "workflow": "Class Management",
+      "test": "group_students",
+      "method": "GET",
+      "url": "/api/v1/groups/22222222-2222-2222-2222-222222222221/students",
+      "status_code": 200,
+      "response_time_ms": 231.35,
+      "response_body": {
+        "count": 4
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:17.355692"
+    },
+    {
+      "workflow": "Class Management",
+      "test": "group_timetable",
+      "method": "GET",
+      "url": "/api/v1/groups/22222222-2222-2222-2222-222222222221/timetable",
+      "status_code": 200,
+      "response_time_ms": 241.1,
+      "response_body": {
+        "entries": 6
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:17.596796"
+    },
+    {
+      "workflow": "Class Management",
+      "test": "class_schedule_today",
+      "method": "GET",
+      "url": "/api/v1/classes/22222222-2222-2222-2222-222222222221/schedule/today",
+      "status_code": 200,
+      "response_time_ms": 353.74,
+      "response_body": {
+        "periods_today": 3,
+        "schedule": [
+          {
+            "id": "244b202b-a099-4e23-b18d-326bb09532bf",
+            "period": 1,
+            "subject": "Science",
+            "teacher_name": "Priya Sharma",
+            "staff_id": "33333333-3333-3333-3333-333333333333",
+            "time": "09:00 - 09:45",
+            "start_time": "09:00:00",
+            "end_time": "09:45:00"
+          },
+          {
+            "id": "3791ea41-7ebf-4ff8-ae01-ae40b72bbd4b",
+            "period": 2,
+            "subject": "Math",
+            "teacher_name": "Asha Raman",
+            "staff_id": "33333333-3333-3333-3333-333333333331",
+            "time": "10:00 - 10:45",
+            "start_time": "10:00:00",
+            "end_time": "10:45:00"
+          },
+          {
+            "id": "efc0b5b9-87d3-4c05-932f-0f9311055ecb",
+            "period": 3,
+            "subject": "English",
+            "teacher_name": "Vikram Das",
+            "staff_id": "33333333-3333-3333-3333-333333333332",
+            "time": "11:00 - 11:45",
+            "start_time": "11:00:00",
+            "end_time": "11:45:00"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:17.951070"
+    },
+    {
+      "workflow": "Class Management",
+      "test": "group_get_detail",
+      "method": "GET",
+      "url": "/api/v1/groups/22222222-2222-2222-2222-222222222221",
+      "status_code": 200,
+      "response_time_ms": 198.57,
+      "response_body": {
+        "name": "Class 1",
+        "code": "C1",
+        "id": "22222222-2222-2222-2222-222222222221",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "created_at": "2026-02-17T04:42:13.650710Z",
+        "updated_at": "2026-02-17T04:42:13.650710Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:18.149636"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_directory_render",
+      "method": "GET",
+      "url": "/api/v1/staff/",
+      "status_code": 200,
+      "response_time_ms": 0,
+      "response_body": {
+        "staff_count": 7
+      },
+      "passed": true,
+      "notes": "Data loaded during dashboard init",
+      "timestamp": "2026-03-03T20:03:18.149636"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_get_detail",
+      "method": "GET",
+      "url": "/api/v1/staff/d65da212-5b6c-4910-b7b7-073925e5ce5c",
+      "status_code": 200,
+      "response_time_ms": 197.98,
+      "response_body": {
+        "name": "Administrator",
+        "email": "admin@smartpresence.edu",
+        "staff_code": "admin",
+        "role": "ADMIN",
+        "type": "SUBJECT_TEACHER",
+        "primary_subject": null,
+        "assigned_class_id": null,
+        "avatar_url": null,
+        "full_name": "Administrator",
+        "id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "is_superuser": true,
+        "created_at": "2026-02-17T04:52:29.607312Z",
+        "updated_at": "2026-02-24T04:18:45.850531Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:18.347615"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "attendance_weekly_history",
+      "method": "GET",
+      "url": "/api/v1/attendance/history/weekly/d65da212-5b6c-4910-b7b7-073925e5ce5c",
+      "status_code": 200,
+      "response_time_ms": 207.88,
+      "response_body": {
+        "staff_id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "week": []
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:18.556034"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_create (Settings Add Teacher)",
+      "method": "POST",
+      "url": "/api/v1/staff/",
+      "status_code": 200,
+      "response_time_ms": 465.09,
+      "response_body": {
+        "name": "Test Teacher MCP",
+        "email": "test_teacher_8398@test.com",
+        "staff_code": "test_teacher_8398",
+        "role": "STAFF",
+        "type": "SUBJECT_TEACHER",
+        "primary_subject": "Mathematics",
+        "assigned_class_id": null,
+        "avatar_url": null,
+        "full_name": "Test Teacher MCP",
+        "id": "836c8d33-a8fb-46ae-a874-f68be30e4e06",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "is_superuser": false,
+        "created_at": "2026-03-03T14:33:19.954095Z",
+        "updated_at": "2026-03-03T14:33:19.954095Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:19.021126"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_update",
+      "method": "PATCH",
+      "url": "/api/v1/staff/836c8d33-a8fb-46ae-a874-f68be30e4e06",
+      "status_code": 200,
+      "response_time_ms": 382.04,
+      "response_body": {
+        "name": "Updated Teacher MCP",
+        "email": "test_teacher_8398@test.com",
+        "staff_code": "test_teacher_8398",
+        "role": "STAFF",
+        "type": "SUBJECT_TEACHER",
+        "primary_subject": "Physics",
+        "assigned_class_id": null,
+        "avatar_url": null,
+        "full_name": "Test Teacher MCP",
+        "id": "836c8d33-a8fb-46ae-a874-f68be30e4e06",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "is_superuser": false,
+        "created_at": "2026-03-03T14:33:19.954095Z",
+        "updated_at": "2026-03-03T14:33:20.418081Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:19.403721"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_create_validation_short_password",
+      "method": "POST",
+      "url": "/api/v1/staff/",
+      "status_code": 200,
+      "response_time_ms": 448.11,
+      "response_body": {
+        "name": "Bad",
+        "email": null,
+        "staff_code": "bad_test",
+        "role": "STAFF",
+        "type": "SUBJECT_TEACHER",
+        "primary_subject": null,
+        "assigned_class_id": null,
+        "avatar_url": null,
+        "full_name": "Bad",
+        "id": "1162d3dd-0083-4ce0-a8b9-faf926b1aafd",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "is_superuser": false,
+        "created_at": "2026-03-03T14:33:20.801151Z",
+        "updated_at": "2026-03-03T14:33:20.801151Z"
+      },
+      "passed": false,
+      "notes": "Should reject password < 6 chars",
+      "timestamp": "2026-03-03T20:03:19.851830"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_create_duplicate_code",
+      "method": "POST",
+      "url": "/api/v1/staff/",
+      "status_code": 400,
+      "response_time_ms": 190.78,
+      "response_body": {
+        "detail": "Staff code already exists."
+      },
+      "passed": true,
+      "notes": "Should reject duplicate staff_code",
+      "timestamp": "2026-03-03T20:03:20.045119"
+    },
+    {
+      "workflow": "Staff Management",
+      "test": "staff_delete (cleanup)",
+      "method": "DELETE",
+      "url": "/api/v1/staff/836c8d33-a8fb-46ae-a874-f68be30e4e06",
+      "status_code": 200,
+      "response_time_ms": 287.72,
+      "response_body": {
+        "message": "Staff deleted"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:20.332837"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_list",
+      "method": "GET",
+      "url": "/api/v1/students/",
+      "status_code": 200,
+      "response_time_ms": 193.3,
+      "response_body": {
+        "count": 19
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:20.526136"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_filter_by_group",
+      "method": "GET",
+      "url": "/api/v1/students/?group_id=22222222-2222-2222-2222-222222222221",
+      "status_code": 200,
+      "response_time_ms": 198.86,
+      "response_body": {
+        "count": 4
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:20.725559"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_create (Settings Add Member)",
+      "method": "POST",
+      "url": "/api/v1/students/",
+      "status_code": 200,
+      "response_time_ms": 408.84,
+      "response_body": {
+        "name": "Test Student MCP",
+        "roll_no": "MCP8400",
+        "email": "test_student_8400@test.com",
+        "external_id": "EXT-MCP-8400",
+        "avatar_url": null,
+        "id": "b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "face_data_registered": false,
+        "is_active": true,
+        "created_at": "2026-03-03T14:33:22.138223Z",
+        "updated_at": "2026-03-03T14:33:22.138223Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:21.134394"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_get_detail",
+      "method": "GET",
+      "url": "/api/v1/students/b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+      "status_code": 200,
+      "response_time_ms": 189.23,
+      "response_body": {
+        "name": "Test Student MCP",
+        "roll_no": "MCP8400",
+        "email": "test_student_8400@test.com",
+        "external_id": "EXT-MCP-8400",
+        "avatar_url": null,
+        "id": "b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "face_data_registered": false,
+        "is_active": true,
+        "created_at": "2026-03-03T14:33:22.138223Z",
+        "updated_at": "2026-03-03T14:33:22.138223Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:21.324332"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_update",
+      "method": "PATCH",
+      "url": "/api/v1/students/b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+      "status_code": 200,
+      "response_time_ms": 382.05,
+      "response_body": {
+        "name": "Updated Student MCP",
+        "roll_no": "UPDATED001",
+        "email": "test_student_8400@test.com",
+        "external_id": "EXT-MCP-8400",
+        "avatar_url": null,
+        "id": "b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "face_data_registered": false,
+        "is_active": true,
+        "created_at": "2026-03-03T14:33:22.138223Z",
+        "updated_at": "2026-03-03T14:33:22.721731Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:21.706377"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_create_missing_group",
+      "method": "POST",
+      "url": "/api/v1/students/",
+      "status_code": 422,
+      "response_time_ms": 167.59,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "group_id"
+            ],
+            "msg": "Field required",
+            "input": {
+              "name": "No Group Student"
+            },
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "Should reject student without group_id",
+      "timestamp": "2026-03-03T20:03:21.873967"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_delete",
+      "method": "DELETE",
+      "url": "/api/v1/students/b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+      "status_code": 200,
+      "response_time_ms": 1107.23,
+      "response_body": {
+        "message": "Student deleted successfully",
+        "student_id": "b6ae2436-9c14-47e6-b681-d211d8e4d20a"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:22.981194"
+    },
+    {
+      "workflow": "Student Management",
+      "test": "student_get_after_delete",
+      "method": "GET",
+      "url": "/api/v1/students/b6ae2436-9c14-47e6-b681-d211d8e4d20a",
+      "status_code": 404,
+      "response_time_ms": 188.85,
+      "response_body": {
+        "detail": "Student not found"
+      },
+      "passed": true,
+      "notes": "Should return 404 for deleted student",
+      "timestamp": "2026-03-03T20:03:23.170555"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_list_all",
+      "method": "GET",
+      "url": "/api/v1/timetable/",
+      "status_code": 200,
+      "response_time_ms": 213.59,
+      "response_body": {
+        "count": 11
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:23.384141"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_filter_group",
+      "method": "GET",
+      "url": "/api/v1/timetable/?group_id=22222222-2222-2222-2222-222222222221",
+      "status_code": 200,
+      "response_time_ms": 212.4,
+      "response_body": {
+        "count": 6
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:23.596545"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_create",
+      "method": "POST",
+      "url": "/api/v1/timetable/",
+      "status_code": 200,
+      "response_time_ms": 439.3,
+      "response_body": {
+        "day_of_week": 1,
+        "period": 99,
+        "subject": "MCP Test Subject",
+        "start_time": "14:00:00",
+        "end_time": "14:45:00",
+        "id": "8387bc7d-f207-4bd7-841c-c9cad7bd8116",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "staff_id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "created_at": "2026-03-03T14:33:25.018437Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:24.035841"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_get",
+      "method": "GET",
+      "url": "/api/v1/timetable/8387bc7d-f207-4bd7-841c-c9cad7bd8116",
+      "status_code": 200,
+      "response_time_ms": 192.37,
+      "response_body": {
+        "day_of_week": 1,
+        "period": 99,
+        "subject": "MCP Test Subject",
+        "start_time": "14:00:00",
+        "end_time": "14:45:00",
+        "id": "8387bc7d-f207-4bd7-841c-c9cad7bd8116",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "staff_id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "created_at": "2026-03-03T14:33:25.018437Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:24.228207"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_update",
+      "method": "PATCH",
+      "url": "/api/v1/timetable/8387bc7d-f207-4bd7-841c-c9cad7bd8116",
+      "status_code": 200,
+      "response_time_ms": 389.1,
+      "response_body": {
+        "day_of_week": 1,
+        "period": 99,
+        "subject": "Updated Subject MCP",
+        "start_time": "14:00:00",
+        "end_time": "14:45:00",
+        "id": "8387bc7d-f207-4bd7-841c-c9cad7bd8116",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "staff_id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "created_at": "2026-03-03T14:33:25.018437Z"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:24.617925"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_delete",
+      "method": "DELETE",
+      "url": "/api/v1/timetable/8387bc7d-f207-4bd7-841c-c9cad7bd8116",
+      "status_code": 200,
+      "response_time_ms": 228.41,
+      "response_body": {
+        "message": "Timetable entry deleted"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:24.847027"
+    },
+    {
+      "workflow": "Timetable",
+      "test": "timetable_create_missing_fields",
+      "method": "POST",
+      "url": "/api/v1/timetable/",
+      "status_code": 422,
+      "response_time_ms": 163.64,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "day_of_week"
+            ],
+            "msg": "Field required",
+            "input": {
+              "subject": "No Group"
+            },
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "period"
+            ],
+            "msg": "Field required",
+            "input": {
+              "subject": "No Group"
+            },
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "group_id"
+            ],
+            "msg": "Field required",
+            "input": {
+              "subject": "No Group"
+            },
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "Should reject without group_id + period + day",
+      "timestamp": "2026-03-03T20:03:25.012169"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_status_initial",
+      "method": "GET",
+      "url": "/api/v1/attendance/status",
+      "status_code": 200,
+      "response_time_ms": 155.55,
+      "response_body": {
+        "active": false,
+        "state": "IDLE",
+        "session": null,
+        "present_count": 0,
+        "present_list": []
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:25.167716"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_start_session",
+      "method": "POST",
+      "url": "/api/v1/attendance/start",
+      "status_code": 200,
+      "response_time_ms": 417.27,
+      "response_body": {
+        "message": "Session started",
+        "session_id": "dd22fda4-35a7-48a3-be5c-d25d18ca198e",
+        "group_id": "22222222-2222-2222-2222-222222222221",
+        "state": "SCANNING"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:25.585510"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_status_scanning",
+      "method": "GET",
+      "url": "/api/v1/attendance/status",
+      "status_code": 200,
+      "response_time_ms": 164.46,
+      "response_body": {
+        "active": true,
+        "state": "SCANNING",
+        "session": {
+          "created_by": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "started_at": "2026-03-03T14:33:25.546883"
+        },
+        "present_count": 0,
+        "present_list": []
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:25.749974"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "recognition_recognize (scan frame)",
+      "method": "POST",
+      "url": "/api/v1/recognition/recognize",
+      "status_code": 200,
+      "response_time_ms": 2481.42,
+      "response_body": {
+        "match": false,
+        "matches": [],
+        "unrecognized": [],
+        "frame_size": [
+          1,
+          1
+        ],
+        "detail": "No faces detected"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:28.232395"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_stop",
+      "method": "POST",
+      "url": "/api/v1/attendance/stop",
+      "status_code": 200,
+      "response_time_ms": 168.15,
+      "response_body": {
+        "message": "Scanning stopped",
+        "state": "VERIFYING"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:28.401049"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_verify",
+      "method": "POST",
+      "url": "/api/v1/attendance/verify",
+      "status_code": 200,
+      "response_time_ms": 172.76,
+      "response_body": {
+        "message": "Adjustments applied",
+        "present_count": 1,
+        "present_list": [
+          "7c87f0d5-8043-44f2-bba2-33193494abbd"
+        ]
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:28.573806"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_finalize",
+      "method": "POST",
+      "url": "/api/v1/attendance/finalize",
+      "status_code": 200,
+      "response_time_ms": 740.21,
+      "response_body": {
+        "message": "Session finalized",
+        "session_id": "dd22fda4-35a7-48a3-be5c-d25d18ca198e",
+        "present_count": 1,
+        "total_students": 4,
+        "present_details": [
+          {
+            "id": "7c87f0d5-8043-44f2-bba2-33193494abbd",
+            "name": "Ravi Kumar"
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:29.314015"
+    },
+    {
+      "workflow": "Attendance Workflow",
+      "test": "attendance_status_after_finalize",
+      "method": "GET",
+      "url": "/api/v1/attendance/status",
+      "status_code": 200,
+      "response_time_ms": 153.34,
+      "response_body": {
+        "active": false,
+        "state": "IDLE",
+        "session": null,
+        "present_count": 0,
+        "present_list": []
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:29.467867"
+    },
+    {
+      "workflow": "Face Recognition",
+      "test": "recognition_register_face (blank image)",
+      "method": "POST",
+      "url": "/api/v1/recognition/register-face",
+      "status_code": 400,
+      "response_time_ms": 195.53,
+      "response_body": {
+        "detail": "No face detected in image. Ensure face is clearly visible."
+      },
+      "passed": true,
+      "notes": "400=no face detected (expected), 200=face found",
+      "timestamp": "2026-03-03T20:03:30.202587"
+    },
+    {
+      "workflow": "Face Recognition",
+      "test": "recognition_recognize (no faces)",
+      "method": "POST",
+      "url": "/api/v1/recognition/recognize",
+      "status_code": 200,
+      "response_time_ms": 164.17,
+      "response_body": {
+        "match": false,
+        "matches": [],
+        "unrecognized": [],
+        "frame_size": [
+          100,
+          100
+        ],
+        "detail": "No faces detected"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:30.366753"
+    },
+    {
+      "workflow": "Face Recognition",
+      "test": "cleanup_test_student",
+      "method": "DELETE",
+      "url": "/api/v1/students/c52cc222-6e2c-42aa-8aaa-b04eb1850995",
+      "status_code": 200,
+      "response_time_ms": 286.61,
+      "response_body": {
+        "message": "Student deleted successfully",
+        "student_id": "c52cc222-6e2c-42aa-8aaa-b04eb1850995"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:30.653361"
+    },
+    {
+      "workflow": "Reports",
+      "test": "institutional_stats_for_reports",
+      "method": "GET",
+      "url": "/api/v1/stats/institutional",
+      "status_code": 200,
+      "response_time_ms": 382.97,
+      "response_body": {
+        "total_students": 19,
+        "total_staff": 6,
+        "total_classes": 6,
+        "today_attendance_rate": 25.0,
+        "today_present": 1,
+        "today_total": 4,
+        "sessions_today": 1
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:31.036877"
+    },
+    {
+      "workflow": "Staff Pages",
+      "test": "staff_home_timetable",
+      "method": "GET",
+      "url": "/api/v1/timetable/",
+      "status_code": 200,
+      "response_time_ms": 207.24,
+      "response_body": {
+        "count": 11
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:31.245379"
+    },
+    {
+      "workflow": "Staff Pages",
+      "test": "timetable_filter_by_staff",
+      "method": "GET",
+      "url": "/api/v1/timetable/?staff_id=d65da212-5b6c-4910-b7b7-073925e5ce5c",
+      "status_code": 200,
+      "response_time_ms": 191.5,
+      "response_body": {
+        "entries": 0
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:31.436879"
+    },
+    {
+      "workflow": "Staff Pages",
+      "test": "my_class_weekly_attendance",
+      "method": "GET",
+      "url": "/api/v1/attendance/history/weekly/d65da212-5b6c-4910-b7b7-073925e5ce5c",
+      "status_code": 200,
+      "response_time_ms": 233.01,
+      "response_body": {
+        "staff_id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "week": [
+          {
+            "date": "2026-03-03",
+            "sessions_count": 1,
+            "total_present": 1,
+            "total_students": 4
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:31.669890"
+    },
+    {
+      "workflow": "Staff Pages",
+      "test": "staff_subjects_timetable",
+      "method": "GET",
+      "url": "/api/v1/timetable/",
+      "status_code": 200,
+      "response_time_ms": 192.11,
+      "response_body": {
+        "entries": 11
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:31.862001"
+    },
+    {
+      "workflow": "MCP Prompts",
+      "test": "system_health_check_workflow",
+      "method": "MULTI",
+      "url": "health + system-info + stats",
+      "status_code": 200,
+      "response_time_ms": 422.96,
+      "response_body": {
+        "health": {
+          "status": "ok",
+          "device": "cpu",
+          "mode": "low-power"
+        },
+        "system_info": {
+          "device": "CPU-only",
+          "face_model": "buffalo_sc",
+          "det_size": 320,
+          "max_image_dim": 640,
+          "onnx_threads": 2,
+          "lazy_load": true,
+          "env_omp_threads": "2",
+          "env_cuda_visible": ""
+        },
+        "stats_summary": {
+          "total_students": 19
+        }
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:32.285956"
+    },
+    {
+      "workflow": "MCP Prompts",
+      "test": "dashboard_overview_workflow",
+      "method": "MULTI",
+      "url": "stats + live + staff + students + groups",
+      "status_code": 200,
+      "response_time_ms": 1189.71,
+      "response_body": {
+        "stats": 200,
+        "live": 200,
+        "staff": 200,
+        "students": 200,
+        "groups": 200
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:33.476668"
+    },
+    {
+      "workflow": "MCP Prompts",
+      "test": "class_schedule_lookup_workflow",
+      "method": "GET",
+      "url": "/api/v1/classes/22222222-2222-2222-2222-222222222221/schedule/today",
+      "status_code": 200,
+      "response_time_ms": 349.45,
+      "response_body": [
+        {
+          "id": "244b202b-a099-4e23-b18d-326bb09532bf",
+          "period": 1,
+          "subject": "Science",
+          "teacher_name": "Priya Sharma",
+          "staff_id": "33333333-3333-3333-3333-333333333333",
+          "time": "09:00 - 09:45",
+          "start_time": "09:00:00",
+          "end_time": "09:45:00"
+        },
+        {
+          "id": "3791ea41-7ebf-4ff8-ae01-ae40b72bbd4b",
+          "period": 2,
+          "subject": "Math",
+          "teacher_name": "Asha Raman",
+          "staff_id": "33333333-3333-3333-3333-333333333331",
+          "time": "10:00 - 10:45",
+          "start_time": "10:00:00",
+          "end_time": "10:45:00"
+        },
+        {
+          "id": "efc0b5b9-87d3-4c05-932f-0f9311055ecb",
+          "period": 3,
+          "subject": "English",
+          "teacher_name": "Vikram Das",
+          "staff_id": "33333333-3333-3333-3333-333333333332",
+          "time": "11:00 - 11:45",
+          "start_time": "11:00:00",
+          "end_time": "11:45:00"
+        }
+      ],
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:33.826118"
+    },
+    {
+      "workflow": "MCP Prompts",
+      "test": "weekly_report_workflow",
+      "method": "MULTI",
+      "url": "weekly_history + staff_get",
+      "status_code": 200,
+      "response_time_ms": 420.27,
+      "response_body": {
+        "history": {
+          "staff_id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+          "week": [
+            {
+              "date": "2026-03-03",
+              "sessions_count": 1,
+              "total_present": 1,
+              "total_students": 4
+            }
+          ]
+        },
+        "staff": "Administrator"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:34.246385"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "invalid_staff_uuid",
+      "method": "GET",
+      "url": "/api/v1/staff/00000000-0000-0000-0000-000000000000",
+      "status_code": 404,
+      "response_time_ms": 189.71,
+      "response_body": {
+        "detail": "Staff not found"
+      },
+      "passed": true,
+      "notes": "Should return 404 for non-existent ID",
+      "timestamp": "2026-03-03T20:03:34.437094"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "invalid_student_uuid",
+      "method": "GET",
+      "url": "/api/v1/students/00000000-0000-0000-0000-000000000000",
+      "status_code": 404,
+      "response_time_ms": 189.94,
+      "response_body": {
+        "detail": "Student not found"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:34.627031"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "invalid_group_uuid",
+      "method": "GET",
+      "url": "/api/v1/groups/00000000-0000-0000-0000-000000000000",
+      "status_code": 404,
+      "response_time_ms": 189.35,
+      "response_body": {
+        "detail": "Group not found"
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:34.816380"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "malformed_json_body",
+      "method": "POST",
+      "url": "/api/v1/staff/",
+      "status_code": 422,
+      "response_time_ms": 19.15,
+      "response_body": {
+        "detail": [
+          {
+            "type": "json_invalid",
+            "loc": [
+              "body",
+              0
+            ],
+            "msg": "JSON decode error",
+            "input": {},
+            "ctx": {
+              "error": "Expecting value"
+            }
+          }
+        ]
+      },
+      "passed": true,
+      "notes": "Should reject malformed JSON",
+      "timestamp": "2026-03-03T20:03:34.835534"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "invalid_bearer_token",
+      "method": "GET",
+      "url": "/api/v1/staff/me",
+      "status_code": 403,
+      "response_time_ms": 4.24,
+      "response_body": {
+        "detail": "Could not validate credentials"
+      },
+      "passed": false,
+      "notes": "Should return 401 for invalid token",
+      "timestamp": "2026-03-03T20:03:34.839776"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "method_not_allowed",
+      "method": "PUT",
+      "url": "/health",
+      "status_code": 405,
+      "response_time_ms": 27.13,
+      "response_body": {
+        "detail": "Method Not Allowed"
+      },
+      "passed": true,
+      "notes": "Should return 405 for wrong HTTP method",
+      "timestamp": "2026-03-03T20:03:34.866907"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "pagination_limit",
+      "method": "GET",
+      "url": "/api/v1/students/?skip=0&limit=2",
+      "status_code": 200,
+      "response_time_ms": 195.78,
+      "response_body": {
+        "count": 2
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:35.062683"
+    },
+    {
+      "workflow": "Edge Cases",
+      "test": "pagination_large_skip",
+      "method": "GET",
+      "url": "/api/v1/students/?skip=99999",
+      "status_code": 200,
+      "response_time_ms": 207.94,
+      "response_body": {
+        "count": 0
+      },
+      "passed": true,
+      "notes": "",
+      "timestamp": "2026-03-03T20:03:35.270622"
+    }
+  ]
+}

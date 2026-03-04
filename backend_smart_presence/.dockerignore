@@ -1,0 +1,48 @@
+# Virtual environment — never copy this into Docker
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Test files — not needed in production
+tests/
+test_results_*.json
+pytest.ini
+.pytest_cache/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Scripts (dev-only)
+scripts/
+setup_env.bat
+run_server.bat
+
+# Certs (not needed — Docker uses HTTP internally)
+certs/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Lock files and alternate requirements
+requirements.lock.txt
+requirements_cpu.txt
+
+# Model files that get auto-downloaded inside container
+yolov8n.pt
+
+# Docs
+README.md
+*.md
