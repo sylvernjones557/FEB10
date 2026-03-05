@@ -4,6 +4,17 @@ import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
+# ── Force IPv4 for Supabase connectivity ──
+# Systems without IPv6 fail when Python tries IPv6 first → timeout.
+# Patch socket.getaddrinfo early to prefer IPv4 results globally.
+import socket as _socket
+_orig_getaddrinfo = _socket.getaddrinfo
+def _ipv4_first_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    results = _orig_getaddrinfo(host, port, family, type, proto, flags)
+    results.sort(key=lambda x: x[0] != _socket.AF_INET)
+    return results
+_socket.getaddrinfo = _ipv4_first_getaddrinfo
+
 # ── CPU Performance: Set thread limits BEFORE importing any numerical libraries ──
 # This must happen before numpy, onnxruntime, cv2, etc. are imported
 _cpu_threads = os.getenv("ONNX_NUM_THREADS", "2")

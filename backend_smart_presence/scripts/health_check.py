@@ -3,7 +3,7 @@ import requests
 import json
 import sys
 
-BASE = "http://localhost:8000"
+BASE = "http://127.0.0.1:8000"
 API = f"{BASE}/api/v1"
 PASS = 0
 FAIL = 0

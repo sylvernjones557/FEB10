@@ -15,10 +15,19 @@ import sys
 import os
 import logging
 import argparse
+import socket as _socket
 from pathlib import Path
 from typing import Any, Optional
 
 import httpx
+
+# ── Force IPv4 for systems without IPv6 ────────────────────────────────────
+_orig_getaddrinfo = _socket.getaddrinfo
+def _ipv4_first_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    results = _orig_getaddrinfo(host, port, family, type, proto, flags)
+    results.sort(key=lambda x: x[0] != _socket.AF_INET)
+    return results
+_socket.getaddrinfo = _ipv4_first_getaddrinfo
 
 # ── Configuration ──────────────────────────────────────────────────────────
 
@@ -28,6 +37,7 @@ API_PREFIX = "/api/v1"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [MCP] %(message)s")
 logger = logging.getLogger("smart-presence-mcp")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 # ── Load Manifests ─────────────────────────────────────────────────────────
@@ -195,8 +205,8 @@ async def handle_jsonrpc(request: dict) -> dict:
             })
 
         elif method == "initialized":
-            # Client acknowledgment — no response needed
-            return None
+            # Client acknowledgment — respond per MCP spec
+            return jsonrpc_result(req_id, {})
 
         elif method == "ping":
             return jsonrpc_result(req_id, {})
@@ -340,8 +350,12 @@ def jsonrpc_error(req_id: Any, code: int, message: str) -> dict:
 # ── STDIO Transport ────────────────────────────────────────────────────────
 
 async def run_stdio():
-    """Run the MCP server over stdin/stdout (default transport)."""
+    """Run the MCP server over stdin/stdout.
+    Uses thread-based blocking reads for Windows compatibility
+    (asyncio ProactorEventLoop can't do connect_read_pipe on Windows).
+    """
     import asyncio
+    import threading
 
     logger.info("Smart Presence MCP Server started (stdio transport)")
     logger.info(f"Backend URL: {BACKEND_URL}")
@@ -349,31 +363,42 @@ async def run_stdio():
     logger.info(f"Resources: {len(RESOURCES_MANIFEST.get('resources', []))}")
     logger.info(f"Prompts: {len(PROMPTS_MANIFEST.get('prompts', []))}")
 
-    reader = asyncio.StreamReader()
-    protocol = asyncio.StreamReaderProtocol(reader)
-    await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin.buffer)
+    loop = asyncio.get_event_loop()
+    input_stream = sys.stdin.buffer
+    output_stream = sys.stdout.buffer
 
-    writer_transport, writer_protocol = await asyncio.get_event_loop().connect_write_pipe(
-        asyncio.streams.FlowControlMixin, sys.stdout.buffer
-    )
-    writer = asyncio.StreamWriter(writer_transport, writer_protocol, None, asyncio.get_event_loop())
+    def _read_message():
+        """Read one JSON-RPC message from stdin (blocking). Returns None on EOF."""
+        while True:
+            header_line = input_stream.readline()
+            if not header_line:
+                return None
+            header = header_line.decode("utf-8").strip()
+            if header.startswith("Content-Length:"):
+                content_length = int(header.split(":")[1].strip())
+                # Read until empty line
+                while True:
+                    sep = input_stream.readline()
+                    if not sep or sep.strip() == b"":
+                        break
+                body = input_stream.read(content_length)
+                if not body:
+                    return None
+                return json.loads(body.decode("utf-8"))
+
+    def _write_message(response: dict):
+        """Write one JSON-RPC response to stdout (blocking)."""
+        response_bytes = json.dumps(response).encode("utf-8")
+        header = f"Content-Length: {len(response_bytes)}\r\n\r\n"
+        output_stream.write(header.encode("utf-8"))
+        output_stream.write(response_bytes)
+        output_stream.flush()
 
     while True:
-        # Read Content-Length header
-        header_line = await reader.readline()
-        if not header_line:
+        # Read from stdin in a thread to avoid blocking the event loop
+        request = await loop.run_in_executor(None, _read_message)
+        if request is None:
             break
-        header = header_line.decode("utf-8").strip()
-        if not header.startswith("Content-Length:"):
-            continue
-        content_length = int(header.split(":")[1].strip())
-
-        # Read empty line
-        await reader.readline()
-
-        # Read body
-        body = await reader.readexactly(content_length)
-        request = json.loads(body.decode("utf-8"))
 
         logger.info(f"← {request.get('method', 'unknown')}")
 
@@ -381,12 +406,7 @@ async def run_stdio():
         if response is None:
             continue
 
-        response_bytes = json.dumps(response).encode("utf-8")
-        response_header = f"Content-Length: {len(response_bytes)}\r\n\r\n"
-        writer.write(response_header.encode("utf-8"))
-        writer.write(response_bytes)
-        await writer.drain()
-
+        _write_message(response)
         logger.info(f"→ response (id={response.get('id')})")
 
 

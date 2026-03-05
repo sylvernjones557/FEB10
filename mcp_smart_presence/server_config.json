@@ -6,7 +6,7 @@
     "version": "2.0.0",
     "description": "MCP Server for Smart Presence — AI-powered attendance system with face recognition, timetable scheduling, staff/student management. CPU-optimized for low-power deployments.",
     "vendor": "SmartPresence",
-    "homepage": "http://localhost:3000"
+    "homepage": "http://127.0.0.1:3000"
   },
   "capabilities": {
     "tools": true,
@@ -40,9 +40,9 @@
       "bundler": "Vite 6.4.1",
       "styling": "Tailwind CSS",
       "httpClient": "Axios",
-      "host": "localhost",
+      "host": "127.0.0.1",
       "port": 3000,
-      "baseUrl": "https://localhost:3000"
+      "baseUrl": "http://127.0.0.1:3000"
     },
     "auth": {
       "method": "JWT Bearer Token",
