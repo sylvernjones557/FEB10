@@ -1,82 +1,71 @@
-# Smart Presence
+# 🛡️ Smart Presence by Sylvester Jones
 
-AI-powered attendance system with face recognition, timetable scheduling, and staff/student management. 
+[![Developer](https://img.shields.io/badge/Developer-Sylvester--Jones-blue?style=for-the-badge&logo=github)](https://github.com/sylvernjones557)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-100%25--Offline-orange?style=for-the-badge)](https://github.com/sylvernjones557/FEB10)
 
-### 🚀 100% Offline & Local-First
-This application is designed to run entirely on **Client Hardware**. We have removed all cloud dependencies (Supabase/Cloud Databases) in favor of a robust local stack.
+**Smart Presence** is a cutting-edge, AI-powered attendance system designed for total privacy, zero cloud dependency, and high-performance execution on consumer hardware.
 
----
-
-## 🏗️ Architecture & Technology
-
-| Layer | Technology | Storage |
-|-------|------------|---------|
-| **Frontend** | React 19 + Vite | Local Browser Cache |
-| **Backend** | FastAPI (Python) | CPU-Only Mode |
-| **Database** | **SQLite** | `backend_smart_presence/db/sqlite/` |
-| **Vector Store**| **ChromaDB** | `backend_smart_presence/db/chroma/` |
-| **AI Engine** | InsightFace + ONNX | Local Model Execution (CPU) |
-| **Automation** | MCP Server | Optional AI Gateway |
+Created and Maintained by **[Sylvester Jones (@sylvernjones557)](https://github.com/sylvernjones557)**.
 
 ---
 
-## 📂 Portability & Data Sharing
-**Important Note for Developers:**
-
-By default, the local databases (`.db` files and Chroma folders) are listed in `.gitignore`. This is to prevent large, sensitive user data from being committed to GitHub.
-
-*   **Sharing across systems:** If you want to move your attendance data to another computer, you must manually copy the `backend_smart_presence/db/` folder to the target machine.
-*   **Fresh Installs:** If you clone this repo on a new system, the backend will automatically initialize a **fresh, empty SQLite database** and run the seed script to create demo data (`admin/admin`).
+## 🌟 Why Smart Presence?
+Traditional attendance systems are slow, cloud-dependent, and invasive. **Smart Presence** flips the script:
+- **Zero Cloud**: No Supabase, no Firebase, no AWS. Your data stays on *your* hardware.
+- **AI-Native**: Powered by a custom-tuned **InsightFace** engine running on local **CPU**.
+- **Agentic Ready**: The world's first attendance system with a built-in **Model Context Protocol (MCP)** bridge, allowing LLMs to interact with your data as a local tool.
 
 ---
 
-## 🛠️ Installation & Setup
+## 🏗️ Technical Masterpiece
+Build with a focus on resilient, "Survivor" infrastructure:
 
-### 1. Backend Setup (CPU-Optimized)
-1. Navigate to the backend folder: `cd backend_smart_presence`
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate  # Windows
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Start the server (Forces CPU-only mode):
-   ```bash
-   run_server.bat
-   ```
-   *The server runs on http://127.0.0.1:8000*
-
-### 2. Frontend Setup
-1. Navigate to the frontend folder: `cd frontend_smart_presence`
-2. Install Node packages: `npm install`
-3. Start the dev server: `npm run dev`
-   *The frontend runs on https://localhost:3000 (HTTPS required for camera access).*
-
-### 3. MCP Server (AI Interface)
-1. Navigate to `mcp_smart_presence`
-2. Run `python mcp_server.py`
-   *This enables AI assistants to interact with your local data through the Model Context Protocol.*
+| Component | Technology | Role |
+| :--- | :--- | :--- |
+| **User Interface** | React 19 + TypeScript + Vite | Premium Admin & Staff Dashboard |
+| **Processing** | FastAPI + Uvicorn | High-performance Python bridge |
+| **Logic** | CPU-Only ML Engine | Ultra-fast face matching (No GPU needed) |
+| **Storage** | SQLite + ChromaDB | Relational data & Vector embeddings |
+| **Automation** | MCP Gateway | 42+ Tools for AI Agent integration |
 
 ---
 
-## ⚙️ Configuration (.env)
-The system is pre-configured for low-power CPU usage:
-- `FACE_DEVICE_PREFERENCE=cpu`: Disables GPU to save power/ram.
-- `ONNX_NUM_THREADS=2`: Prevents system thrashing.
-- `DATABASE_URL`: Points to the local SQLite file.
+## 📂 Project Structure
+```text
+FEB10/
+├── frontend_smart_presence/   # The high-end React UI
+├── backend_smart_presence/    # FastAPI + ML Engine + Local DBs
+├── mcp_smart_presence/        # The AI Gateway (Feature Add-on)
+└── diagrams/                  # Visual architecture by Sylvester Jones
+```
 
 ---
 
-## 🔒 Security & Privacy
-Since data never leaves your machine:
-- No biometric data is sent to the cloud.
-- Passwords are hashed locally using Argon2.
-- JWT tokens are used for session management between the local Frontend and Backend.
+## 🛠️ Getting Started
+### 1️⃣ Backend Setup
+```bash
+cd backend_smart_presence
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+run_server.bat
+```
+### 2️⃣ Frontend Setup
+```bash
+cd frontend_smart_presence
+npm install
+npm run dev
+```
 
 ---
 
-## 📜 License
-Educational use only. Built for local institutional management.
+## 🤝 Open Source & Contributions
+This project is released under the **MIT License**. We believe in open, secure, and privacy-respecting technology.
+
+**Connect with the Developer:**
+- **GitHub**: [sylvernjones557](https://github.com/sylvernjones557)
+- **Project Link**: [Smart Presence](https://github.com/sylvernjones557/FEB10)
+
+---
+*Built with ❤️ by Sylvester Jones for the next generation of privacy-conscious institutions.*
