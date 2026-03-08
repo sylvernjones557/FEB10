@@ -4,26 +4,13 @@ import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
-# ── Force IPv4 for Supabase connectivity ──
-# Systems without IPv6 fail when Python tries IPv6 first → timeout.
-# Patch socket.getaddrinfo early to prefer IPv4 results globally.
-import socket as _socket
-_orig_getaddrinfo = _socket.getaddrinfo
-def _ipv4_first_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-    results = _orig_getaddrinfo(host, port, family, type, proto, flags)
-    results.sort(key=lambda x: x[0] != _socket.AF_INET)
-    return results
-_socket.getaddrinfo = _ipv4_first_getaddrinfo
-
 # ── CPU Performance: Set thread limits BEFORE importing any numerical libraries ──
-# This must happen before numpy, onnxruntime, cv2, etc. are imported
 _cpu_threads = os.getenv("ONNX_NUM_THREADS", "2")
 os.environ.setdefault("OMP_NUM_THREADS", _cpu_threads)
 os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
 os.environ.setdefault("MKL_NUM_THREADS", _cpu_threads)
 os.environ.setdefault("OPENBLAS_NUM_THREADS", _cpu_threads)
 os.environ.setdefault("NUMEXPR_NUM_THREADS", _cpu_threads)
-# Disable CUDA/GPU globally at environment level
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 os.environ.setdefault("ONNXRUNTIME_PROVIDERS", "CPUExecutionProvider")
 
@@ -35,21 +22,19 @@ from app.api.v1.api import api_router
 from app.core.config import settings
 
 # ── Detect Frontend (Docker unified mode) ──
-# When built with the unified Dockerfile, frontend dist is at /app/frontend/
 _frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
 _frontend_available = os.path.isdir(_frontend_dir) and os.path.isfile(os.path.join(_frontend_dir, "index.html"))
 _frontend_index = os.path.join(_frontend_dir, "index.html") if _frontend_available else None
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Smart Presence Backend API - CPU-optimized for low-power systems. Powered by Supabase & InsightFace.",
+    description="Smart Presence Backend API - CPU-optimized for low-power systems. Local SQLite + InsightFace.",
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url=f"{settings.API_V1_STR}/docs",
     redoc_url=f"{settings.API_V1_STR}/redoc",
 )
 
-# Robust CORS for frontend and tools
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -60,12 +45,95 @@ app.add_middleware(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+
+@app.on_event("startup")
+def on_startup():
+    """Auto-create SQLite tables and seed initial data on first run."""
+    from app.db.base import Base
+    from app.db.session import engine, SessionLocal
+    from app.models.organization import Organization
+    from app.models.group import Group
+    from app.models.staff import Staff
+    from app.models.timetable import Timetable
+    from app.core import security
+
+    Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+    try:
+        # Only seed if the database is empty (first run)
+        if db.query(Organization).first():
+            return
+
+        # ── Organization ──
+        org = Organization(id="11111111-1111-1111-1111-111111111111", name="Green Valley School")
+        db.add(org)
+        db.flush()
+
+        # ── Groups (Classes 1-5) ──
+        class_ids = {
+            1: "22222222-2222-2222-2222-222222222221",
+            2: "22222222-2222-2222-2222-222222222222",
+            3: "22222222-2222-2222-2222-222222222223",
+            4: "22222222-2222-2222-2222-222222222224",
+            5: "22222222-2222-2222-2222-222222222225",
+        }
+        for i in range(1, 6):
+            db.add(Group(id=class_ids[i], organization_id=org.id, name=f"Class {i}", code=f"C{i}"))
+        db.flush()
+
+        # ── Staff ──
+        staff_ids = {
+            "STF001": "33333333-3333-3333-3333-333333333331",
+            "STF002": "33333333-3333-3333-3333-333333333332",
+            "STF003": "33333333-3333-3333-3333-333333333333",
+        }
+        db.add(Staff(id=staff_ids["STF001"], organization_id=org.id, name="Asha Raman",  email="asha@school.edu",   staff_code="STF001", role="STAFF", hashed_password=security.get_password_hash("password123"), is_active=True))
+        db.add(Staff(id=staff_ids["STF002"], organization_id=org.id, name="Vikram Das",  email="vikram@school.edu", staff_code="STF002", role="STAFF", hashed_password=security.get_password_hash("password123"), is_active=True))
+        db.add(Staff(id=staff_ids["STF003"], organization_id=org.id, name="Priya Sharma", email="priya@school.edu", staff_code="STF003", role="ADMIN", hashed_password=security.get_password_hash("password123"), is_active=True))
+        # Admin superuser
+        db.add(Staff(organization_id=org.id, staff_code="admin", name="Administrator", email="admin@smartpresence.edu",
+                     hashed_password=security.get_password_hash("admin"), role="ADMIN", is_superuser=True, is_active=True))
+        db.flush()
+
+        # ── Timetable ──
+        tt = [
+            # Class 1 - Monday
+            (class_ids[1], 1, 1, "Math",    staff_ids["STF001"], "09:00", "09:45"),
+            (class_ids[1], 1, 2, "English",  staff_ids["STF002"], "10:00", "10:45"),
+            (class_ids[1], 1, 3, "Science",  staff_ids["STF003"], "11:00", "11:45"),
+            # Class 2 - Monday
+            (class_ids[2], 1, 1, "English",  staff_ids["STF002"], "09:00", "09:45"),
+            (class_ids[2], 1, 2, "Math",     staff_ids["STF001"], "10:00", "10:45"),
+            (class_ids[2], 1, 3, "Art",      staff_ids["STF003"], "11:00", "11:45"),
+            # Class 1 - Tuesday
+            (class_ids[1], 2, 1, "Science",  staff_ids["STF003"], "09:00", "09:45"),
+            (class_ids[1], 2, 2, "Math",     staff_ids["STF001"], "10:00", "10:45"),
+            (class_ids[1], 2, 3, "English",  staff_ids["STF002"], "11:00", "11:45"),
+            # Class 3 - Monday
+            (class_ids[3], 1, 1, "Science",  staff_ids["STF003"], "09:00", "09:45"),
+            (class_ids[3], 1, 2, "Math",     staff_ids["STF001"], "10:00", "10:45"),
+        ]
+        from datetime import time as dt_time
+        for gid, dow, period, subject, sid, st, et in tt:
+            sh, sm = map(int, st.split(":"))
+            eh, em = map(int, et.split(":"))
+            db.add(Timetable(group_id=gid, day_of_week=dow, period=period, subject=subject,
+                             staff_id=sid, start_time=dt_time(sh, sm), end_time=dt_time(eh, em)))
+
+        db.commit()
+        print("[startup] SQLite database seeded with initial data.")
+    except Exception as e:
+        db.rollback()
+        print(f"[startup] Seed error (may already exist): {e}")
+    finally:
+        db.close()
+
+
 @app.get("/")
 def read_root():
-    # Docker unified mode: serve the React frontend at root
     if _frontend_available:
         return FileResponse(_frontend_index, media_type="text/html")
-    # Standalone backend mode: return API info
     return {
         "message": "Welcome to Smart Presence Backend",
         "status": "online",
@@ -80,9 +148,10 @@ def health_check():
 
 @app.get("/system-info")
 def system_info():
-    """Returns current CPU optimization settings for debugging."""
+    import platform as _platform
     return {
         "device": "CPU-only",
+        "database": "SQLite (local)",
         "face_model": settings.FACE_MODEL_NAME,
         "det_size": settings.FACE_DET_SIZE_CPU,
         "max_image_dim": settings.MAX_IMAGE_DIMENSION,
@@ -91,32 +160,19 @@ def system_info():
         "env_omp_threads": os.environ.get("OMP_NUM_THREADS"),
         "env_cuda_visible": os.environ.get("CUDA_VISIBLE_DEVICES", "(not set)"),
         "frontend_mode": "unified (Docker)" if _frontend_available else "standalone (API only)",
+        "python_version": _platform.python_version(),
+        "platform": _platform.platform(),
     }
 
 
-# ══════════════════════════════════════════════════════════════
-# Frontend Static Files — Docker Unified Mode
-# When the frontend dist/ folder is present (built via unified Dockerfile),
-# serve it alongside the API from the SAME port.
-# All API routes (/api/v1/*, /health, /system-info) take priority.
-# Everything else falls through to the frontend SPA.
-# ══════════════════════════════════════════════════════════════
+# ── Frontend Static Files (Docker Unified Mode) ──
 if _frontend_available:
     import mimetypes
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_frontend(full_path: str):
-        """
-        SPA catch-all route:
-        1. If the path matches a real file in frontend/dist → serve it (JS, CSS, images)
-        2. Otherwise → serve index.html (React Router handles client-side routing)
-        """
-        # Try to serve the exact file (e.g., /assets/index-abc123.js)
         file_path = os.path.join(_frontend_dir, full_path)
         if full_path and os.path.isfile(file_path):
-            # Auto-detect MIME type for proper Content-Type header
             mime_type, _ = mimetypes.guess_type(file_path)
             return FileResponse(file_path, media_type=mime_type)
-
-        # Fallback: serve index.html for all unknown routes (SPA client-side routing)
         return FileResponse(_frontend_index, media_type="text/html")

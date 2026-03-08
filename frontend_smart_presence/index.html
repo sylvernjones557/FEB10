@@ -1,37 +1,39 @@
-
 <!DOCTYPE html>
 <html lang="en" class="light">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Smart Presence | Institutional Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              institutional: {
-                dark: '#020617',
-                card: '#0F172A',
-                accent: '#4F46E5'
-              }
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        institutional: {
+                            dark: '#020617',
+                            card: '#0F172A',
+                            accent: '#4F46E5'
+                        }
+                    }
+                }
             }
-          }
         }
-      }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #4F46E5;
             --slate-50: #F8FAFC;
             --slate-900: #0F172A;
         }
-        
+
         * {
             -webkit-tap-highlight-color: transparent;
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.1s ease;
@@ -72,37 +74,49 @@
         }
 
         @keyframes slideUpFade {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .tap-active {
             transition: transform 0.1s ease-out;
         }
+
         .tap-active:active {
             transform: scale(0.96);
         }
 
-        input, select {
+        input,
+        select {
             font-size: 16px !important;
             padding: 12px 16px;
         }
 
-        ::-webkit-scrollbar { width: 0px; }
-        
+        ::-webkit-scrollbar {
+            width: 0px;
+        }
+
         .safe-bottom {
             padding-bottom: env(safe-area-inset-bottom);
         }
 
         .no-scrollbar::-webkit-scrollbar {
-          display: none;
+            display: none;
         }
+
         .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
@@ -113,10 +127,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/index.css">
 </head>
+
 <body class="school-grid min-h-screen">
     <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-03-03 19:49:21",
+  "timestamp": "2026-03-07 10:32:59",
   "mode": "CPU-only",
   "python_version": "3.11.8 (tags/v3.11.8:db85d51, Feb  6 2024, 22:03:32) [MSC v.1937 64 bit (AMD64)]",
   "total_tests": 24,
   "passed": 24,
   "failed": 0,
-  "avg_response_ms": 206.28,
+  "avg_response_ms": 6.82,
   "results": [
     {
       "test": "Root endpoint",
       "method": "GET",
       "url": "/",
       "status_code": 200,
-      "response_time_ms": 4.52,
+      "response_time_ms": 4.03,
       "response_body": {
         "message": "Welcome to Smart Presence Backend",
         "status": "online",
@@ -27,7 +27,7 @@
       "method": "GET",
       "url": "/health",
       "status_code": 200,
-      "response_time_ms": 2.53,
+      "response_time_ms": 2.05,
       "response_body": {
         "status": "ok",
         "device": "cpu",
@@ -40,16 +40,20 @@
       "method": "GET",
       "url": "/system-info",
       "status_code": 200,
-      "response_time_ms": 3.0,
+      "response_time_ms": 2.0,
       "response_body": {
         "device": "CPU-only",
+        "database": "SQLite (local)",
         "face_model": "buffalo_sc",
         "det_size": 320,
         "max_image_dim": 640,
         "onnx_threads": 2,
         "lazy_load": true,
         "env_omp_threads": "2",
-        "env_cuda_visible": ""
+        "env_cuda_visible": "",
+        "frontend_mode": "standalone (API only)",
+        "python_version": "3.11.8",
+        "platform": "Windows-10-10.0.26200-SP0"
       },
       "pass": true
     },
@@ -58,12 +62,12 @@
       "method": "GET",
       "url": "/api/v1/openapi.json",
       "status_code": 200,
-      "response_time_ms": 2.02,
+      "response_time_ms": 22.35,
       "response_body": {
         "openapi": "3.1.0",
         "info": {
           "title": "Smart Presence Backend",
-          "description": "Smart Presence Backend API - CPU-optimized for low-power systems. Powered by Supabase & InsightFace.",
+          "description": "Smart Presence Backend API - CPU-optimized for low-power systems. Local SQLite + InsightFace.",
           "version": "1.0.0"
         },
         "paths": {
@@ -1944,7 +1948,6 @@
           "/system-info": {
             "get": {
               "summary": "System Info",
-              "description": "Returns current CPU optimization settings for debugging.",
               "operationId": "system_info_system_info_get",
               "responses": {
                 "200": {
@@ -3234,7 +3237,7 @@
       "method": "POST",
       "url": "/api/v1/login/access-token",
       "status_code": 400,
-      "response_time_ms": 154.15,
+      "response_time_ms": 3.76,
       "response_body": {
         "detail": "Incorrect staff code or password"
       },
@@ -3245,7 +3248,7 @@
       "method": "POST",
       "url": "/api/v1/login/access-token",
       "status_code": 422,
-      "response_time_ms": 3.03,
+      "response_time_ms": 3.62,
       "response_body": {
         "detail": [
           {
@@ -3277,9 +3280,9 @@
       "method": "POST",
       "url": "/api/v1/login/access-token",
       "status_code": 200,
-      "response_time_ms": 207.24,
+      "response_time_ms": 56.96,
       "response_body": {
-        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzMyMzg3NTYsInN1YiI6ImFkbWluIn0.FpMX9nsSV5qVAsRJ-KEhzkFIVyFc82G4BuRmbnYyHC8",
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzM1NTA5NzksInN1YiI6ImFkbWluIn0.04ngDblyN0dWQrcRffH9pfpqAG3C3AUvdgtCsYzT_CM",
         "token_type": "bearer"
       },
       "pass": true
@@ -3289,7 +3292,7 @@
       "method": "GET",
       "url": "/api/v1/staff/me",
       "status_code": 200,
-      "response_time_ms": 154.48,
+      "response_time_ms": 4.02,
       "response_body": {
         "name": "Administrator",
         "email": "admin@smartpresence.edu",
@@ -3299,13 +3302,13 @@
         "primary_subject": null,
         "assigned_class_id": null,
         "avatar_url": null,
-        "full_name": "Administrator",
-        "id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
+        "full_name": null,
+        "id": "d01eced5-9722-4c99-85c6-bae974e3b60e",
         "organization_id": "11111111-1111-1111-1111-111111111111",
         "is_active": true,
         "is_superuser": true,
-        "created_at": "2026-02-17T04:52:29.607312Z",
-        "updated_at": "2026-02-24T04:18:45.850531Z"
+        "created_at": "2026-03-06T14:42:09",
+        "updated_at": "2026-03-06T14:42:09"
       },
       "pass": true
     },
@@ -3314,25 +3317,8 @@
       "method": "GET",
       "url": "/api/v1/staff/",
       "status_code": 200,
-      "response_time_ms": 194.65,
+      "response_time_ms": 4.02,
       "response_body": [
-        {
-          "name": "Administrator",
-          "email": "admin@smartpresence.edu",
-          "staff_code": "admin",
-          "role": "ADMIN",
-          "type": "SUBJECT_TEACHER",
-          "primary_subject": null,
-          "assigned_class_id": null,
-          "avatar_url": null,
-          "full_name": "Administrator",
-          "id": "d65da212-5b6c-4910-b7b7-073925e5ce5c",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "is_active": true,
-          "is_superuser": true,
-          "created_at": "2026-02-17T04:52:29.607312Z",
-          "updated_at": "2026-02-24T04:18:45.850531Z"
-        },
         {
           "name": "Asha Raman",
           "email": "asha@school.edu",
@@ -3342,13 +3328,13 @@
           "primary_subject": null,
           "assigned_class_id": null,
           "avatar_url": null,
-          "full_name": "Asha Raman",
+          "full_name": null,
           "id": "33333333-3333-3333-3333-333333333331",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
           "is_superuser": false,
-          "created_at": "2026-02-17T04:42:13.801903Z",
-          "updated_at": "2026-02-17T04:42:13.801903Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
           "name": "Vikram Das",
@@ -3359,13 +3345,13 @@
           "primary_subject": null,
           "assigned_class_id": null,
           "avatar_url": null,
-          "full_name": "Vikram Das",
+          "full_name": null,
           "id": "33333333-3333-3333-3333-333333333332",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
           "is_superuser": false,
-          "created_at": "2026-02-17T04:42:13.801903Z",
-          "updated_at": "2026-02-17T04:42:13.801903Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
           "name": "Priya Sharma",
@@ -3376,64 +3362,47 @@
           "primary_subject": null,
           "assigned_class_id": null,
           "avatar_url": null,
-          "full_name": "Priya Sharma",
+          "full_name": null,
           "id": "33333333-3333-3333-3333-333333333333",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
           "is_superuser": false,
-          "created_at": "2026-02-17T04:42:13.801903Z",
-          "updated_at": "2026-02-17T04:42:13.801903Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
-          "name": "Justin Sophia",
-          "email": "justin@smartpresence.edu",
-          "staff_code": "justin",
-          "role": "STAFF",
-          "type": "CLASS_TEACHER",
-          "primary_subject": "",
-          "assigned_class_id": "22222222-2222-2222-2222-222222222224",
-          "avatar_url": "https://ui-avatars.com/api/?name=Justin%20Sophia&background=6366F1&color=fff&size=150&bold=true",
-          "full_name": "Justin Sophia",
-          "id": "bf628f08-70d1-4a15-8062-579b05637311",
+          "name": "Administrator",
+          "email": "admin@smartpresence.edu",
+          "staff_code": "admin",
+          "role": "ADMIN",
+          "type": "SUBJECT_TEACHER",
+          "primary_subject": null,
+          "assigned_class_id": null,
+          "avatar_url": null,
+          "full_name": null,
+          "id": "d01eced5-9722-4c99-85c6-bae974e3b60e",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
-          "is_superuser": false,
-          "created_at": "2026-02-19T14:11:44.843697Z",
-          "updated_at": "2026-02-19T14:11:44.843697Z"
+          "is_superuser": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
-          "name": "jojo",
-          "email": "jojo@smartpresence.edu",
-          "staff_code": "jojo",
+          "name": "Bad",
+          "email": null,
+          "staff_code": "bad_test",
           "role": "STAFF",
           "type": "SUBJECT_TEACHER",
-          "primary_subject": "jdjd",
-          "assigned_class_id": "22222222-2222-2222-2222-222222222221",
-          "avatar_url": "https://ui-avatars.com/api/?name=jojo&background=6366F1&color=fff&size=150&bold=true",
-          "full_name": "jojo",
-          "id": "56823d65-9908-47bf-a097-69263141b727",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "is_active": true,
-          "is_superuser": false,
-          "created_at": "2026-03-01T07:56:35.023431Z",
-          "updated_at": "2026-03-01T07:56:35.023431Z"
-        },
-        {
-          "name": "Test Class Staff",
-          "email": "testclass@smartpresence.edu",
-          "staff_code": "testclass",
-          "role": "STAFF",
-          "type": "CLASS_TEACHER",
           "primary_subject": null,
-          "assigned_class_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
+          "assigned_class_id": null,
           "avatar_url": null,
-          "full_name": "Test Class Staff",
-          "id": "3b543be4-8e28-4fab-b56c-6d8ad8856060",
+          "full_name": "Bad",
+          "id": "10721577-591a-41c1-8b52-c859e225ff60",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
           "is_superuser": false,
-          "created_at": "2026-03-02T04:08:38.844140Z",
-          "updated_at": "2026-03-02T04:08:38.844140Z"
+          "created_at": "2026-03-06T14:58:53",
+          "updated_at": "2026-03-06T14:58:53"
         }
       ],
       "pass": true
@@ -3443,12 +3412,17 @@
       "method": "GET",
       "url": "/api/v1/organizations/",
       "status_code": 200,
-      "response_time_ms": 193.45,
+      "response_time_ms": 3.55,
       "response_body": [
         {
           "name": "Green Valley School",
           "id": "11111111-1111-1111-1111-111111111111",
-          "created_at": "2026-02-17T04:42:13.328022Z"
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Test Org CRUD",
+          "id": "5a29aded-9e50-4189-860d-94819ead472a",
+          "created_at": "2026-03-06T15:15:43"
         }
       ],
       "pass": true
@@ -3458,7 +3432,7 @@
       "method": "GET",
       "url": "/api/v1/groups/",
       "status_code": 200,
-      "response_time_ms": 193.8,
+      "response_time_ms": 4.18,
       "response_body": [
         {
           "name": "Class 1",
@@ -3466,8 +3440,8 @@
           "id": "22222222-2222-2222-2222-222222222221",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
-          "created_at": "2026-02-17T04:42:13.650710Z",
-          "updated_at": "2026-02-17T04:42:13.650710Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
           "name": "Class 2",
@@ -3475,8 +3449,8 @@
           "id": "22222222-2222-2222-2222-222222222222",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
-          "created_at": "2026-02-17T04:42:13.650710Z",
-          "updated_at": "2026-02-17T04:42:13.650710Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
           "name": "Class 3",
@@ -3484,8 +3458,8 @@
           "id": "22222222-2222-2222-2222-222222222223",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
-          "created_at": "2026-02-17T04:42:13.650710Z",
-          "updated_at": "2026-02-17T04:42:13.650710Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
           "name": "Class 4",
@@ -3493,8 +3467,8 @@
           "id": "22222222-2222-2222-2222-222222222224",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
-          "created_at": "2026-02-17T04:42:13.650710Z",
-          "updated_at": "2026-02-17T04:42:13.650710Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         },
         {
           "name": "Class 5",
@@ -3502,17 +3476,8 @@
           "id": "22222222-2222-2222-2222-222222222225",
           "organization_id": "11111111-1111-1111-1111-111111111111",
           "is_active": true,
-          "created_at": "2026-02-17T04:42:13.650710Z",
-          "updated_at": "2026-02-17T04:42:13.650710Z"
-        },
-        {
-          "name": "Test Class",
-          "code": "TC1",
-          "id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "is_active": true,
-          "created_at": "2026-02-17T05:02:07.386074Z",
-          "updated_at": "2026-02-17T05:02:07.386074Z"
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
         }
       ],
       "pass": true
@@ -3522,275 +3487,8 @@
       "method": "GET",
       "url": "/api/v1/students/",
       "status_code": 200,
-      "response_time_ms": 201.56,
-      "response_body": [
-        {
-          "name": "Ravi Kumar",
-          "roll_no": "001",
-          "email": "ravi@school.edu",
-          "external_id": null,
-          "avatar_url": null,
-          "id": "7c87f0d5-8043-44f2-bba2-33193494abbd",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "22222222-2222-2222-2222-222222222221",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-02-17T04:53:55.628077Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "jones",
-          "roll_no": "23-uca-098",
-          "email": null,
-          "external_id": "23-uca-098",
-          "avatar_url": null,
-          "id": "f5947f80-289e-43a1-963e-f80dd206e3aa",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "22222222-2222-2222-2222-222222222223",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-02-19T14:12:07.409946Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "JONES",
-          "roll_no": "23-uca-028",
-          "email": null,
-          "external_id": "23-uca-028",
-          "avatar_url": null,
-          "id": "110f6097-03c8-4627-8ba4-ae14c05d88a1",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-02-24T03:50:51.375203Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "jones jones",
-          "roll_no": "6263",
-          "email": null,
-          "external_id": "6263",
-          "avatar_url": null,
-          "id": "daff5fdb-12cd-4d1e-be21-853d85b33a41",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-02-24T04:25:33.933267Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "Sylvester",
-          "roll_no": "23uib78",
-          "email": null,
-          "external_id": "23uib78",
-          "avatar_url": null,
-          "id": "ad35a49e-9576-4469-a0b9-4e40fdf20e7d",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T05:34:33.741271Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "Sylvester ",
-          "roll_no": "456",
-          "email": null,
-          "external_id": "456",
-          "avatar_url": null,
-          "id": "e32bfb72-462c-402f-b4d3-e54ace3d384b",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T05:37:33.667673Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "hdj",
-          "roll_no": "7373",
-          "email": null,
-          "external_id": "7373",
-          "avatar_url": null,
-          "id": "6a4e745f-f4f9-4ded-bddd-70c053ef4e33",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "22222222-2222-2222-2222-222222222221",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T05:41:17.769071Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "Sylvester ",
-          "roll_no": "345",
-          "email": null,
-          "external_id": "345",
-          "avatar_url": null,
-          "id": "0376a6cf-78c0-47b1-9763-2425fc140bbe",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:09:29.267074Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "arockia",
-          "roll_no": "heh",
-          "email": null,
-          "external_id": "heh",
-          "avatar_url": null,
-          "id": "31e48228-a888-46c0-aea1-47dc737624bf",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:30:16.264039Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "lijo",
-          "roll_no": "234",
-          "email": null,
-          "external_id": "234",
-          "avatar_url": null,
-          "id": "6d1ae4dc-373e-49e1-8ec4-62bd73251329",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:31:38.758283Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "lino",
-          "roll_no": "677",
-          "email": null,
-          "external_id": "677",
-          "avatar_url": null,
-          "id": "89e5298b-299a-4c0a-8f98-513181c48a30",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:39:34.735260Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "",
-          "roll_no": null,
-          "email": null,
-          "external_id": "",
-          "avatar_url": null,
-          "id": "2ee75691-7e7a-4f42-aad1-db492ffa181f",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "22222222-2222-2222-2222-222222222221",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:40:16.847056Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "ghf",
-          "roll_no": "568",
-          "email": null,
-          "external_id": "568",
-          "avatar_url": null,
-          "id": "dff4ffca-79c3-4684-9ced-496111707e15",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:40:41.540140Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "lijo",
-          "roll_no": "657",
-          "email": null,
-          "external_id": "657",
-          "avatar_url": null,
-          "id": "5982dc47-c32b-48b1-b2bb-435097b5d457",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T06:46:22.665560Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "jone1",
-          "roll_no": "6363",
-          "email": null,
-          "external_id": "6363",
-          "avatar_url": null,
-          "id": "14ec2143-6b5d-4b10-807a-4886a9b9afe4",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T07:01:32.517481Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "hssb",
-          "roll_no": "733",
-          "email": null,
-          "external_id": "733",
-          "avatar_url": null,
-          "id": "1094fc75-bf0a-4f43-a63a-d0da5dfebe46",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T07:07:45.475157Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "jones test 1 ",
-          "roll_no": "566",
-          "email": null,
-          "external_id": "566",
-          "avatar_url": null,
-          "id": "ca93a368-c424-4738-b533-3cb7715f6a12",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T07:55:33.926654Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "test-1-jones",
-          "roll_no": "123",
-          "email": null,
-          "external_id": "123",
-          "avatar_url": null,
-          "id": "6a529dc9-f806-49cc-a9df-d048ff87fa9c",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "bc1946a2-b486-40cf-b90c-264166bd69f4",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-01T13:55:38.121573Z",
-          "updated_at": "2026-03-02T04:29:44.650465Z"
-        },
-        {
-          "name": "",
-          "roll_no": null,
-          "email": null,
-          "external_id": "",
-          "avatar_url": null,
-          "id": "77ad1dcd-5077-456b-9184-8354f24a1884",
-          "organization_id": "11111111-1111-1111-1111-111111111111",
-          "group_id": "22222222-2222-2222-2222-222222222221",
-          "face_data_registered": false,
-          "is_active": true,
-          "created_at": "2026-03-03T03:04:30.692849Z",
-          "updated_at": "2026-03-03T03:04:30.692849Z"
-        }
-      ],
+      "response_time_ms": 3.39,
+      "response_body": [],
       "pass": true
     },
     {
@@ -3798,29 +3496,29 @@
       "method": "GET",
       "url": "/api/v1/timetable/",
       "status_code": 200,
-      "response_time_ms": 196.2,
+      "response_time_ms": 5.0,
       "response_body": [
-        {
-          "day_of_week": 1,
-          "period": 1,
-          "subject": "English",
-          "start_time": "09:00:00",
-          "end_time": "09:45:00",
-          "id": "d91554ae-a804-46d5-865b-c347f781904b",
-          "group_id": "22222222-2222-2222-2222-222222222222",
-          "staff_id": "33333333-3333-3333-3333-333333333332",
-          "created_at": "2026-02-17T04:42:13.947454Z"
-        },
         {
           "day_of_week": 1,
           "period": 1,
           "subject": "Math",
           "start_time": "09:00:00",
           "end_time": "09:45:00",
-          "id": "618f15cf-92cb-453c-8d39-b3115acca69b",
+          "id": "11b17b90-4c74-4602-b1df-24ff891afbbc",
           "group_id": "22222222-2222-2222-2222-222222222221",
           "staff_id": "33333333-3333-3333-3333-333333333331",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 1,
+          "subject": "English",
+          "start_time": "09:00:00",
+          "end_time": "09:45:00",
+          "id": "c1a3f4e7-391a-4b0c-b2fe-940ebcdc8efa",
+          "group_id": "22222222-2222-2222-2222-222222222222",
+          "staff_id": "33333333-3333-3333-3333-333333333332",
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 1,
@@ -3828,21 +3526,10 @@
           "subject": "Science",
           "start_time": "09:00:00",
           "end_time": "09:45:00",
-          "id": "78132779-1a4f-41c1-a494-35a8d698fc78",
+          "id": "13b33565-75a9-4098-a1c8-9f055dcf5d03",
           "group_id": "22222222-2222-2222-2222-222222222223",
           "staff_id": "33333333-3333-3333-3333-333333333333",
-          "created_at": "2026-02-17T04:42:13.947454Z"
-        },
-        {
-          "day_of_week": 1,
-          "period": 2,
-          "subject": "Math",
-          "start_time": "10:00:00",
-          "end_time": "10:45:00",
-          "id": "3e47b0f7-8e6a-4d10-b362-707f2f28bb59",
-          "group_id": "22222222-2222-2222-2222-222222222223",
-          "staff_id": "33333333-3333-3333-3333-333333333331",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 1,
@@ -3850,10 +3537,10 @@
           "subject": "English",
           "start_time": "10:00:00",
           "end_time": "10:45:00",
-          "id": "2beadb6d-a907-4fa7-bcd9-9f52824942af",
+          "id": "f32d280a-e850-4c1d-b35d-99a98dc2e114",
           "group_id": "22222222-2222-2222-2222-222222222221",
           "staff_id": "33333333-3333-3333-3333-333333333332",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 1,
@@ -3861,10 +3548,32 @@
           "subject": "Math",
           "start_time": "10:00:00",
           "end_time": "10:45:00",
-          "id": "a35855d0-02c2-4f92-927e-0205649af8d8",
+          "id": "aca78534-a4e9-4b8b-9fab-349972e9eb75",
           "group_id": "22222222-2222-2222-2222-222222222222",
           "staff_id": "33333333-3333-3333-3333-333333333331",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 2,
+          "subject": "Math",
+          "start_time": "10:00:00",
+          "end_time": "10:45:00",
+          "id": "65238c4f-17b5-405b-aea1-4c7a191765a4",
+          "group_id": "22222222-2222-2222-2222-222222222223",
+          "staff_id": "33333333-3333-3333-3333-333333333331",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 3,
+          "subject": "Science",
+          "start_time": "11:00:00",
+          "end_time": "11:45:00",
+          "id": "bc627ac8-f1cd-4f4a-b9db-ce294e3d3549",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333333",
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 1,
@@ -3872,21 +3581,10 @@
           "subject": "Art",
           "start_time": "11:00:00",
           "end_time": "11:45:00",
-          "id": "d2250c81-007b-4044-8bef-57aa4a3505df",
+          "id": "7c3edce2-5404-40d8-ba9f-f3177932b12f",
           "group_id": "22222222-2222-2222-2222-222222222222",
           "staff_id": "33333333-3333-3333-3333-333333333333",
-          "created_at": "2026-02-17T04:42:13.947454Z"
-        },
-        {
-          "day_of_week": 1,
-          "period": 3,
-          "subject": "Science",
-          "start_time": "11:00:00",
-          "end_time": "11:45:00",
-          "id": "849aed4b-9226-448d-a4fe-f2c7fa4c30bb",
-          "group_id": "22222222-2222-2222-2222-222222222221",
-          "staff_id": "33333333-3333-3333-3333-333333333333",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 2,
@@ -3894,10 +3592,10 @@
           "subject": "Science",
           "start_time": "09:00:00",
           "end_time": "09:45:00",
-          "id": "244b202b-a099-4e23-b18d-326bb09532bf",
+          "id": "b211b292-88d3-4afc-970a-56a54ae63d2d",
           "group_id": "22222222-2222-2222-2222-222222222221",
           "staff_id": "33333333-3333-3333-3333-333333333333",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 2,
@@ -3905,10 +3603,10 @@
           "subject": "Math",
           "start_time": "10:00:00",
           "end_time": "10:45:00",
-          "id": "3791ea41-7ebf-4ff8-ae01-ae40b72bbd4b",
+          "id": "a42681b6-e331-415b-b269-0bd17a5dbad6",
           "group_id": "22222222-2222-2222-2222-222222222221",
           "staff_id": "33333333-3333-3333-3333-333333333331",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
         },
         {
           "day_of_week": 2,
@@ -3916,10 +3614,10 @@
           "subject": "English",
           "start_time": "11:00:00",
           "end_time": "11:45:00",
-          "id": "efc0b5b9-87d3-4c05-932f-0f9311055ecb",
+          "id": "f0376c61-3dac-4840-8b36-b73ee0ec5691",
           "group_id": "22222222-2222-2222-2222-222222222221",
           "staff_id": "33333333-3333-3333-3333-333333333332",
-          "created_at": "2026-02-17T04:42:13.947454Z"
+          "created_at": "2026-03-06T14:42:09"
         }
       ],
       "pass": true
@@ -3929,11 +3627,11 @@
       "method": "GET",
       "url": "/api/v1/stats/institutional",
       "status_code": 200,
-      "response_time_ms": 321.67,
+      "response_time_ms": 4.67,
       "response_body": {
-        "total_students": 19,
-        "total_staff": 5,
-        "total_classes": 6,
+        "total_students": 0,
+        "total_staff": 3,
+        "total_classes": 5,
         "today_attendance_rate": 0,
         "today_present": 0,
         "today_total": 0,
@@ -3946,7 +3644,7 @@
       "method": "GET",
       "url": "/api/v1/classes/live",
       "status_code": 200,
-      "response_time_ms": 199.52,
+      "response_time_ms": 4.02,
       "response_body": [],
       "pass": true
     },
@@ -3955,7 +3653,7 @@
       "method": "GET",
       "url": "/api/v1/staff/me",
       "status_code": 401,
-      "response_time_ms": 2.99,
+      "response_time_ms": 2.95,
       "response_body": {
         "detail": "Not authenticated"
       },
@@ -3966,7 +3664,7 @@
       "method": "GET",
       "url": "/api/v1/students/",
       "status_code": 401,
-      "response_time_ms": 2.0,
+      "response_time_ms": 1.51,
       "response_body": {
         "detail": "Not authenticated"
       },
@@ -3977,7 +3675,7 @@
       "method": "GET",
       "url": "/api/v1/organizations/",
       "status_code": 401,
-      "response_time_ms": 3.51,
+      "response_time_ms": 2.52,
       "response_body": {
         "detail": "Not authenticated"
       },
@@ -3988,7 +3686,7 @@
       "method": "GET",
       "url": "/api/v1/staff/me",
       "status_code": 403,
-      "response_time_ms": 2.51,
+      "response_time_ms": 2.53,
       "response_body": {
         "detail": "Could not validate credentials"
       },
@@ -3999,7 +3697,7 @@
       "method": "POST",
       "url": "/api/v1/students/",
       "status_code": 422,
-      "response_time_ms": 158.6,
+      "response_time_ms": 4.01,
       "response_body": {
         "detail": [
           {
@@ -4031,7 +3729,7 @@
       "method": "POST",
       "url": "/api/v1/groups/",
       "status_code": 422,
-      "response_time_ms": 152.21,
+      "response_time_ms": 3.51,
       "response_body": {
         "detail": [
           {
@@ -4063,7 +3761,7 @@
       "method": "POST",
       "url": "/api/v1/attendance/start",
       "status_code": 422,
-      "response_time_ms": 150.59,
+      "response_time_ms": 3.0,
       "response_body": {
         "detail": [
           {
@@ -4085,7 +3783,7 @@
       "method": "POST",
       "url": "/api/v1/recognition/recognize",
       "status_code": 200,
-      "response_time_ms": 2253.92,
+      "response_time_ms": 10.51,
       "response_body": {
         "match": false,
         "matches": [],
@@ -4103,7 +3801,7 @@
       "method": "POST",
       "url": "/api/v1/recognition/register-face",
       "status_code": 404,
-      "response_time_ms": 192.59,
+      "response_time_ms": 5.52,
       "response_body": {
         "detail": "Student not found"
       },

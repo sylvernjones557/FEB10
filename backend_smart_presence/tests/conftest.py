@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import pytest
 from uuid import uuid4
 from typing import Generator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
@@ -16,23 +16,30 @@ from app.core import security
 # Load environment variables from .env for tests
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
-# Use the same Supabase DB for tests, or override with TEST_DATABASE_URL
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "postgresql://postgres:OCT%40142310_jones@db.gnvarelitiufeevowaru.supabase.co:5432/postgres",
-)
+# Use in-memory SQLite for tests (fast, isolated)
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///")
 
 engine = create_engine(
     TEST_DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"sslmode": "require"},
+    connect_args={"check_same_thread": False},
 )
+
+# Enable foreign keys for SQLite
+@event.listens_for(engine, "connect")
+def _set_sqlite_pragma(dbapi_conn, connection_record):
+    cursor = dbapi_conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @pytest.fixture(scope="session")
 def db_engine():
+    Base.metadata.create_all(bind=engine)
     yield engine
+    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")

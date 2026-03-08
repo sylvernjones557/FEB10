@@ -461,9 +461,7 @@
       "contents": {
         "envFile": ".env",
         "settings": [
-          { "key": "DATABASE_URL", "type": "string", "required": true, "description": "PostgreSQL connection URL (Supabase)" },
-          { "key": "SUPABASE_URL", "type": "url", "required": true, "description": "Supabase project URL" },
-          { "key": "SUPABASE_SERVICE_ROLE_KEY", "type": "string", "required": true, "description": "Supabase service role key" },
+          { "key": "DATABASE_URL", "type": "string", "required": true, "description": "SQLite connection URL (local file)" },
           { "key": "SECRET_KEY", "type": "string", "required": false, "default": "CHANGE_THIS_TO_A_SECRET_KEY_PLEASE", "description": "JWT signing secret" },
           { "key": "FACE_DEVICE_PREFERENCE", "type": "string", "default": "cpu", "enum": ["cpu", "gpu"], "description": "Face engine runtime device" },
           { "key": "FACE_DET_SIZE_CPU", "type": "integer", "default": 320, "description": "Detection input size for CPU mode (px)" },
@@ -475,7 +473,7 @@
           { "key": "LAZY_LOAD_ENGINE", "type": "boolean", "default": true, "description": "Lazy-load face engine on first request" },
           { "key": "IMAGE_QUALITY", "type": "integer", "default": 80, "description": "JPEG re-encoding quality (1-100)" },
           { "key": "FACE_MATCH_THRESHOLD", "type": "float", "default": 0.5, "description": "Cosine distance threshold for face matching" },
-          { "key": "CHROMA_DB_PATH", "type": "string", "default": "./chroma_store", "description": "ChromaDB storage directory" }
+          { "key": "CHROMA_DB_PATH", "type": "string", "default": "./db/chroma", "description": "ChromaDB storage directory" }
         ]
       }
     },

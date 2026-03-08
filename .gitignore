@@ -24,8 +24,13 @@ build/
 .vite/
 
 # Database / Vector store
+backend_smart_presence/db/sqlite/
+backend_smart_presence/db/chroma/
 chroma_store/
 *.sqlite3
+*.db
+*.db-shm
+*.db-wal
 
 # AI model files (downloaded at runtime)
 yolov8n.pt

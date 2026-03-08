@@ -1,0 +1,205 @@
+# Smart Presence System - Technical Diagrams
+
+This document contains the complete architectural and structural diagrams for the Smart Presence application. 
+The system is designed as a **Local-First, Offline-Ready Architecture** with an **Optional Intelligent Automation Layer**.
+
+---
+
+## 1. System Architecture (High-Level)
+> [!NOTE]
+> The **Core Bridge** (Browser -> Frontend -> Backend -> DB) is the essential path. 
+> The **Intelligent Layer** (LLM -> MCP) is a "hollow" add-on feature for autonomous operations.
+
+```mermaid
+graph TB
+    %% Core Infrastructure Styling
+    classDef core fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef database fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef intelligent fill:#ffffff,stroke:#999,stroke-width:2px,stroke-dasharray: 5 5;
+
+    subgraph Client["Client Interface"]
+        Browser["🌐 Web Browser\n(Standard UI)"]:::core
+        AI_LLM["🧠 AI Assistant / LLM\n(User's LLM)"]:::intelligent
+    end
+
+    subgraph CoreApp["CORE APPLICATION (Offline Loop)"]
+        direction TB
+        Frontend["⚛️ React Frontend\n(Vite @ :3000)"]:::core
+        Backend["🚀 FastAPI Backend\n(Uvicorn @ :8000)"]:::core
+        
+        subgraph Engine["Local ML Engine"]
+            InsightFace["InsightFace (CPU)"]:::core
+            ONNX["ONNX Runtime"]:::core
+        end
+    end
+
+    subgraph AddonLayer["INTELLIGENT AUTOMATION (Add-on Feature)"]
+        direction TB
+        MCP["🔌 MCP Server\n(JSON-RPC Gateway)"]:::intelligent
+    end
+
+    subgraph DataLayer["LOCAL DATA (Persistence)"]
+        direction LR
+        SQLite[("📂 SQLite DB\n(Relational)")]:::database
+        ChromaDB[("🧬 ChromaDB\n(Vector Store)")]:::database
+    end
+
+    %% Core Path
+    Browser -->|HTTPS| Frontend
+    Frontend -->|REST API| Backend
+    Backend -->|SQL| SQLite
+    Backend -->|Embeddings| InsightFace
+    InsightFace -->|Vectors| ChromaDB
+
+    %% Add-on Path (Hollowed)
+    AI_LLM -.->|stdio / RPC| MCP
+    MCP -.->|Internal API calls| Backend
+
+    linkStyle 5,6 stroke:#999,stroke-width:1px,stroke-dasharray: 3;
+```
+
+---
+
+## 2. Use Case Diagram
+Distinguishing between human actors and the autonomous AI agent.
+
+```mermaid
+flowchart LR
+    subgraph HumanActors ["Core Users"]
+        Admin((Admin))
+        Staff((Staff / Teacher))
+    end
+
+    subgraph AI_Layer ["Automation Add-on"]
+        AI_Agent((AI Agent\nvia MCP))
+    end
+
+    subgraph System ["Smart Presence Portal"]
+        direction TB
+        UC_Auth["Login & Security"]
+        UC_Register["Face Registration"]
+        UC_Attend["Attendance Tracking"]
+        UC_Stats["Reporting & Analytics"]
+        UC_Auto["Autonomous Workflows"]
+    end
+
+    Admin --- UC_Auth
+    Admin --- UC_Stats
+    Staff --- UC_Auth
+    Staff --- UC_Register
+    Staff --- UC_Attend
+    
+    %% AI Agent is a side feature
+    AI_Agent -.- UC_Auto
+    UC_Auto -.-> UC_Attend
+    UC_Auto -.-> UC_Register
+
+    style AI_Layer fill:#fff,stroke:#999,stroke-dasharray: 5 5
+    style AI_Agent fill:#fff,stroke:#999
+```
+
+---
+
+## 3. Data Flow Diagram (Level 1)
+Focusing on how data stays local while enabling the MCP "Feature".
+
+```mermaid
+graph TB
+    User((User))
+    
+    subgraph Core_Processes ["Local Processing"]
+        P1["1.0 Auth & Session"]
+        P2["2.0 Staff/Student Mgmt"]
+        P3["3.0 Face Recognition"]
+        P4["4.0 Attendance Engine"]
+    end
+
+    subgraph Feature_Addon ["Intelligent Layer"]
+        P5["5.0 MCP Command Gateway"]
+    end
+
+    D1[("SQLite DB")]
+    D2[("ChromaDB Vector Store")]
+
+    User -->|Credentials/Images| P1
+    P1 <--> D1
+    User -->|Student Data| P2
+    P2 --> D1
+    P2 -->|Enroll Face| P3
+    P3 <--> D2
+    User -->|Start Attendance| P4
+    P4 -->|Mark Record| D1
+    
+    %% Addon connectivity
+    P5 -.->|Execute Tool| P2
+    P5 -.->|Execute Tool| P4
+    P5 -.->|Query Status| D1
+```
+
+---
+
+## 4. Entity Relationship Diagram (ERD)
+The schema remains entirely local within the SQLite and ChromaDB instances.
+
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ GROUPS : "manages"
+    ORGANIZATIONS ||--o{ STAFF : "employs"
+    GROUPS ||--o{ STUDENTS : "contains"
+    GROUPS ||--o{ ATTENDANCE_SESSIONS : "records"
+    STUDENTS ||--o{ ATTENDANCE_RECORDS : "marked in"
+    ATTENDANCE_SESSIONS ||--o{ ATTENDANCE_RECORDS : "contains"
+    
+    STUDENTS ||--o| FACE_VECTORS : "local embeddings"
+    
+    STAFF {
+        uuid id PK
+        string staff_code UK
+        string role "ADMIN/STAFF"
+        string hashed_password
+    }
+    
+    ATTENDANCE_SESSIONS {
+        uuid id PK
+        string status "SCANNING/COMPLETED"
+        datetime started_at
+    }
+
+    FACE_VECTORS {
+        string student_id FK
+        vector embedding "512-dim"
+    }
+```
+
+---
+
+## 5. Sequence Diagram: Attendance Workflow
+Showing the flow from Browser to Local DB, with the AI-MCP bridge as an optional parallel path.
+
+```mermaid
+sequenceDiagram
+    participant U as Staff / AI Agent
+    participant FE as React UI
+    participant MCP as MCP Feature (Add-on)
+    participant BE as FastAPI Backend
+    participant ML as Local Face Engine
+    participant DB as SQLite / Chroma
+
+    Note over U, DB: Human-led Path
+    U->>FE: Open Scanner
+    FE->>BE: POST /recognition/recognize
+    BE->>ML: Match Face (CPU)
+    ML->>DB: Query Vector
+    DB-->>ML: Match Found
+    BE->>DB: Save Record (SQLite)
+    BE-->>FE: Success
+
+    rect rgba(200, 200, 200, 0.1)
+    Note over U, DB: AI-Led Path (Optional Add-on)
+    U-)+MCP: Autonomous Prompt
+    MCP-)+BE: execute_workflow('take_attendance')
+    BE->>DB: Verify State
+    BE-->>MCP: Completed
+    MCP--)-U: Final Summary Report
+    end
+```

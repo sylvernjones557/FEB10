@@ -2,7 +2,7 @@
 import os
 from typing import Any, Optional
 
-from pydantic import AnyHttpUrl, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -12,15 +12,14 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "Smart Presence Backend"
 
-    # PostgreSQL (Supabase)
-    DATABASE_URL: str = Field(..., env="DATABASE_URL")
-
-    # Supabase config
-    SUPABASE_URL: AnyHttpUrl = Field(..., env="SUPABASE_URL")
-    SUPABASE_SERVICE_ROLE_KEY: str = Field(..., env="SUPABASE_SERVICE_ROLE_KEY")
+    # SQLite (local file — no internet needed)
+    DATABASE_URL: str = Field(
+        default="sqlite:///./db/sqlite/smart_presence.db",
+        env="DATABASE_URL"
+    )
 
     # AI & Vector DB
-    CHROMA_DB_PATH: str = "./chroma_store"
+    CHROMA_DB_PATH: str = "./db/chroma"
 
     # Face match threshold (cosine distance)
     FACE_MATCH_THRESHOLD: float = 0.5

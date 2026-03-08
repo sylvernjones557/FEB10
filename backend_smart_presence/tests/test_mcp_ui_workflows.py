@@ -117,6 +117,38 @@ def safe_json(resp: requests.Response) -> Any:
     except Exception:
         return resp.text[:500]
 
+
+# ── Pytest fixtures for running individual tests via pytest ──
+import pytest
+
+@pytest.fixture
+def token():
+    """Authenticate and return a JWT token for use by workflow tests."""
+    r = requests.post(f"{API}/login/access-token",
+                      data={"username": ADMIN_USER, "password": ADMIN_PASS}, timeout=10)
+    return r.json().get("access_token", "")
+
+@pytest.fixture
+def admin_user(token):
+    r = requests.get(f"{API}/staff/me", headers=auth_headers(token), timeout=10)
+    return r.json() if r.status_code == 200 else {}
+
+@pytest.fixture
+def groups(token):
+    r = requests.get(f"{API}/groups/", headers=auth_headers(token), timeout=10)
+    return r.json() if r.status_code == 200 else []
+
+@pytest.fixture
+def staff_list(token):
+    r = requests.get(f"{API}/staff/", headers=auth_headers(token), timeout=10)
+    return r.json() if r.status_code == 200 else []
+
+@pytest.fixture
+def students(token):
+    r = requests.get(f"{API}/students/", headers=auth_headers(token), timeout=10)
+    return r.json() if r.status_code == 200 else []
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # WORKFLOW 1: System Health (MCP tools: health_check, system_info, server_root)
 # ══════════════════════════════════════════════════════════════════════════

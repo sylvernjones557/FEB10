@@ -8,8 +8,8 @@ from app.core.config import settings
 class VectorStore:
     def __init__(self):
         # Initialize persistent client (Local ChromaDB)
-        # Note: Embeddings are stored locally in 'chroma_store' for privacy and speed.
-        # User metadata acts as the bridge to Supabase (PostgreSQL).
+        # Embeddings are stored locally in 'chroma_store' for privacy and speed.
+        # User metadata links to the local SQLite database.
         self.client = chromadb.PersistentClient(path=settings.CHROMA_DB_PATH)
         
         # Get or create collection for student faces
