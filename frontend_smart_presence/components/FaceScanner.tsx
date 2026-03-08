@@ -93,13 +93,13 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
       if (!video || !canvas) return resolve(null);
       const sw = video.videoWidth || 640;
       const sh = video.videoHeight || 480;
-      const tw = Math.min(sw, 640);
+      const tw = Math.min(sw, 480); // Reduced from 640 for faster mobile/ngrok upload
       const th = Math.max(1, Math.round((sh / sw) * tw));
       if (canvas.width !== tw || canvas.height !== th) { canvas.width = tw; canvas.height = th; }
       const ctx = canvas.getContext('2d', { alpha: false });
       if (!ctx) return resolve(null);
       ctx.drawImage(video, 0, 0, tw, th);
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.72);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6); // Reduced quality for speed
     });
   }, []);
 
@@ -140,7 +140,8 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
 
     const tick = async () => {
       if (cancelled) return;
-      const delay = document.visibilityState === 'visible' ? 1100 : 2000;
+      // Increased delay for mobile/ngrok stability
+      const delay = document.visibilityState === 'visible' ? 1600 : 3000;
       if (!scanningRef.current || busyRef.current || !videoRef.current || videoRef.current.readyState < 2) {
         tid = window.setTimeout(tick, delay);
         return;
@@ -197,7 +198,7 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
 
         // Forward NEW matches to parent (skip already-recognized students)
         if (result.match && result.matches.length > 0) {
-          const newMatches = result.matches.filter((m: any) => 
+          const newMatches = result.matches.filter((m: any) =>
             !alreadyRecognizedIds || !alreadyRecognizedIds.has(m.student_id)
           );
           if (newMatches.length > 0) {
@@ -218,7 +219,8 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
         setDetectedFaces([]);
       } finally {
         busyRef.current = false;
-        tid = window.setTimeout(tick, 1100);
+        // Increased delay for mobile/ngrok stability (1.6s instead of 1.1s)
+        tid = window.setTimeout(tick, 1600);
       }
     };
 
@@ -263,22 +265,20 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
                 style={boxStyle}
               >
                 {/* Glow effect behind box */}
-                <div className={`absolute -inset-1 rounded-2xl blur-md opacity-40 ${
-                  isAlreadyCaptured
+                <div className={`absolute -inset-1 rounded-2xl blur-md opacity-40 ${isAlreadyCaptured
                     ? 'bg-emerald-400'
                     : isRecognized
                       ? 'bg-blue-500 animate-pulse'
                       : 'bg-amber-400/50'
-                }`} />
+                  }`} />
 
                 {/* Main bounding box */}
-                <div className={`absolute inset-0 rounded-xl ${
-                  isAlreadyCaptured
+                <div className={`absolute inset-0 rounded-xl ${isAlreadyCaptured
                     ? 'border-2 border-emerald-400 bg-emerald-400/5'
                     : isRecognized
                       ? 'border-2 border-blue-400 bg-blue-400/5'
                       : 'border border-dashed border-amber-400/70 bg-amber-400/5'
-                }`} />
+                  }`} />
 
                 {/* Animated corner brackets */}
                 {(isRecognized || isAlreadyCaptured) && (
