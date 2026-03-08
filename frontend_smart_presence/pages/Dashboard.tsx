@@ -14,18 +14,25 @@ import {
 } from 'lucide-react';
 import { data } from '../services/api';
 import { MOCK_CLASSES } from '../constants';
+import { haptics } from '../services/haptics';
 
-export const QuickAction = ({ label, icon: Icon, onClick, color }: any) => (
-  <button
-    onClick={onClick}
-    className="group glass-card p-5 rounded-[2.5rem] flex flex-col items-center text-center gap-3 tap-active transition-all hover:bg-white dark:hover:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
-  >
-    <div className={`w-14 h-14 rounded-full ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-300`}>
-      <Icon size={26} strokeWidth={2.5} />
-    </div>
-    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{label}</span>
-  </button>
-);
+export const QuickAction = ({ label, icon: Icon, onClick, color }: any) => {
+  const handleClick = () => {
+    haptics.impactLight();
+    if (onClick) onClick();
+  };
+  return (
+    <button
+      onClick={handleClick}
+      className="group glass-card p-5 rounded-[2.5rem] flex flex-col items-center text-center gap-3 tap-active transition-all hover:bg-white dark:hover:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
+    >
+      <div className={`w-14 h-14 rounded-full ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-300`}>
+        <Icon size={26} strokeWidth={2.5} />
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{label}</span>
+    </button>
+  );
+};
 
 export const SummaryCard = ({ title, value, color, icon: Icon }: any) => (
   <div className="group bg-white dark:bg-slate-900/60 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50 shadow-[0_10px_40px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col items-start relative overflow-hidden transition-all hover:border-indigo-500/30">

@@ -27,6 +27,8 @@ const notifColors = {
   error: { dot: 'bg-red-500', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400' },
 };
 
+import { haptics } from '../services/haptics';
+
 const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, onNavigate }) => {
   const items = user?.role === 'ADMIN' ? NAV_ITEMS.ADMIN : NAV_ITEMS.STAFF;
   const isAuth = !!user;
@@ -56,6 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
   }, [isDarkMode]);
 
   const handleNavClick = (item: any) => {
+    haptics.selection();
     onNavigate(item.path);
   };
 
@@ -237,11 +240,11 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
                       ? 'bg-indigo-600/15 dark:bg-indigo-500/20 shadow-[0_8px_16px_-4px_rgba(79,70,229,0.2)] group-hover:shadow-[0_0_22px_rgba(79,70,229,0.15)] dark:group-hover:shadow-[0_0_26px_rgba(79,70,229,0.25)] group-hover:scale-[1.06]'
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 group-hover:shadow-[0_0_18px_rgba(79,70,229,0.12)] dark:group-hover:shadow-[0_0_22px_rgba(79,70,229,0.22)] group-hover:scale-[1.06]'
                       } group-hover:rotate-[2deg]`}>
-                      {React.cloneElement(item.icon as React.ReactElement, {
+                      {React.createElement(item.icon as any, {
                         size: 24,
                         strokeWidth: isActive ? 3 : 2,
                         className: `transition-transform duration-300 group-hover:scale-[1.12] group-hover:brightness-110 drop-shadow-none group-hover:drop-shadow-[0_0_10px_rgba(79,70,229,0.45)] dark:group-hover:drop-shadow-[0_0_12px_rgba(79,70,229,0.65)]`
-                      } as any)}
+                      })}
                     </div>
                     <span className={`glow-label text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${isActive ? 'opacity-100 translate-y-0 text-indigo-700 dark:text-indigo-300' : 'opacity-40 translate-y-0.5 group-hover:opacity-70 group-hover:text-slate-600'
                       }`}>

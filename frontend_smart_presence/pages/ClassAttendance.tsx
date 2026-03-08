@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  CheckCircle2, 
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  CheckCircle2,
   ChevronRight,
   Calendar,
   Layers,
@@ -23,6 +23,7 @@ import FaceScanner, { FaceMatch } from '../components/FaceScanner';
 import { MOCK_CLASSES, BackButton, isTestClass } from '../constants';
 import { Student } from '../types';
 import { attendance as attendanceApi } from '../services/api';
+import { haptics } from '../services/haptics';
 
 interface ClassAttendanceProps {
   isManualDay: boolean;
@@ -73,8 +74,8 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
 
   // Filter for search in manual mode
   const filteredStudents = useMemo(() => {
-    return classStudents.filter(s => 
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    return classStudents.filter(s =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.rollNo.includes(searchTerm)
     );
   }, [classStudents, searchTerm]);
@@ -82,8 +83,8 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
   // Current count based on mode — in review mode, count both AI-recognized + manual marks (deduplicated)
   const currentCount = reviewMode
     ? new Set([...Array.from(recognizedStudents.keys()), ...Object.entries(manualPresence).filter(([, v]) => v).map(([id]) => id)]).size
-    : isManualMode 
-      ? Object.values(manualPresence).filter(v => v).length 
+    : isManualMode
+      ? Object.values(manualPresence).filter(v => v).length
       : recognizedStudents.size;
 
   const totalCapacity = classStudents.length || 42;
@@ -146,6 +147,7 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
         const next = new Map(prev);
         for (const m of matches) {
           if (!next.has(m.student_id)) {
+            haptics.notificationSuccess();
             // Look up student info from local list
             const student = studentList.find(s => s.id === m.student_id);
             next.set(m.student_id, {
@@ -162,6 +164,7 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
 
   /** Finalize the session — stop scanning, verify, then finalize on backend */
   const handleFinalize = async () => {
+    haptics.impactMedium();
     setIsFinalizing(true);
     setFinalizeMsg(null);
     setSessionError(null);
@@ -180,6 +183,7 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
 
       // Finalize
       const result = await attendanceApi.finalize();
+      haptics.notificationSuccess();
       const presentCount = result.present_count || 0;
       const totalStudents = result.total_students || 0;
 
@@ -238,28 +242,25 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
           {groupList.map(cls => {
             const testCls = isTestClass(cls);
             return (
-              <button 
+              <button
                 key={cls.id}
                 onClick={() => setSelectedClass(cls)}
-                className={`p-7 rounded-[2.5rem] border shadow-sm flex items-center justify-between group tap-active transition-all duration-300 ${
-                  testCls
-                    ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/40'
-                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'
-                }`}
+                className={`p-7 rounded-[2.5rem] border shadow-sm flex items-center justify-between group tap-active transition-all duration-300 ${testCls
+                  ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/40'
+                  : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'
+                  }`}
               >
                 <div className="flex items-center gap-6">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105 shadow-sm ${
-                    testCls
-                      ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white'
-                      : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500'
-                  }`}>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105 shadow-sm ${testCls
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white'
+                    : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white dark:group-hover:bg-indigo-500'
+                    }`}>
                     {testCls ? <Sparkles size={24} /> : <Layers size={24} />}
                   </div>
                   <div className="text-left">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{cls.name}</h3>
-                    <p className={`text-[10px] font-bold uppercase mt-2.5 ${
-                      testCls ? 'text-amber-500 dark:text-amber-400' : 'text-indigo-500 dark:text-indigo-400'
-                    }`}>
+                    <p className={`text-[10px] font-bold uppercase mt-2.5 ${testCls ? 'text-amber-500 dark:text-amber-400' : 'text-indigo-500 dark:text-indigo-400'
+                      }`}>
                       {testCls ? 'All Students • No Schedule Limits' : `Code ${cls.code || cls.id}`}
                     </p>
                   </div>
@@ -410,11 +411,10 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
             )}
             <button
               onClick={handleToggleScan}
-              className={`flex-1 h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-[13px] tracking-wide transition-all active:scale-95 ${
-                isScanning
-                  ? 'bg-amber-500 text-white shadow-[0_4px_14px_0_rgba(245,158,11,0.35)]'
-                  : 'bg-[#137fec] text-white shadow-[0_4px_14px_0_rgba(19,127,236,0.39)]'
-              }`}
+              className={`flex-1 h-12 flex items-center justify-center gap-2 rounded-xl font-bold text-[13px] tracking-wide transition-all active:scale-95 ${isScanning
+                ? 'bg-amber-500 text-white shadow-[0_4px_14px_0_rgba(245,158,11,0.35)]'
+                : 'bg-[#137fec] text-white shadow-[0_4px_14px_0_rgba(19,127,236,0.39)]'
+                }`}
             >
               {isScanning ? <><Pause size={16} fill="currentColor" strokeWidth={0} /> Pause</> : <><Play size={16} fill="currentColor" strokeWidth={0} /> {sessionActive ? 'Resume' : 'Start'}</>}
             </button>
@@ -555,34 +555,32 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
                       {uncapturedStudents
                         .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.rollNo.includes(searchTerm))
                         .map(student => {
-                        const isMarked = manualPresence[student.id] || false;
-                        return (
-                          <div
-                            key={student.id}
-                            onClick={() => togglePresence(student.id)}
-                            className={`flex items-center gap-3 p-4 cursor-pointer transition-all active:scale-[0.99] ${
-                              isMarked ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-950'
-                            }`}
-                          >
-                            <img
-                              src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=818CF8&color=fff&size=150&bold=true`}
-                              alt=""
-                              className={`w-10 h-10 rounded-xl object-cover border-2 ${isMarked ? 'border-indigo-300 dark:border-indigo-700' : 'border-slate-200 dark:border-slate-700 opacity-60'}`}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <h4 className={`text-sm font-bold truncate ${isMarked ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{student.name}</h4>
-                              <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">ID: {student.rollNo}</p>
-                            </div>
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                              isMarked
+                          const isMarked = manualPresence[student.id] || false;
+                          return (
+                            <div
+                              key={student.id}
+                              onClick={() => togglePresence(student.id)}
+                              className={`flex items-center gap-3 p-4 cursor-pointer transition-all active:scale-[0.99] ${isMarked ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50 dark:hover:bg-slate-950'
+                                }`}
+                            >
+                              <img
+                                src={student.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=818CF8&color=fff&size=150&bold=true`}
+                                alt=""
+                                className={`w-10 h-10 rounded-xl object-cover border-2 ${isMarked ? 'border-indigo-300 dark:border-indigo-700' : 'border-slate-200 dark:border-slate-700 opacity-60'}`}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`text-sm font-bold truncate ${isMarked ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{student.name}</h4>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">ID: {student.rollNo}</p>
+                              </div>
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isMarked
                                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-700'
-                            }`}>
-                              {isMarked ? <Check size={16} strokeWidth={3} /> : <div className="w-3 h-3 rounded-full border-2 border-slate-200 dark:border-slate-700" />}
+                                }`}>
+                                {isMarked ? <Check size={16} strokeWidth={3} /> : <div className="w-3 h-3 rounded-full border-2 border-slate-200 dark:border-slate-700" />}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   </div>
                 </div>
@@ -669,22 +667,20 @@ const ClassAttendance: React.FC<ClassAttendanceProps> = ({ isManualDay, preSelec
                     <div
                       key={student.id}
                       onClick={() => togglePresence(student.id)}
-                      className={`p-4 rounded-[1.5rem] border flex items-center gap-4 transition-all tap-active cursor-pointer ${
-                        manualPresence[student.id]
+                      className={`p-4 rounded-[1.5rem] border flex items-center gap-4 transition-all tap-active cursor-pointer ${manualPresence[student.id]
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'
                         : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950'
-                      }`}
+                        }`}
                     >
                       <img src={student.avatar} className="w-12 h-12 rounded-xl object-cover border-2 border-white dark:border-slate-800 shadow-sm" alt="" />
                       <div className="flex-1">
                         <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{student.name}</h4>
                         <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">ID: {student.rollNo}</p>
                       </div>
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                        manualPresence[student.id]
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${manualPresence[student.id]
                         ? 'bg-indigo-600 text-white shadow-lg'
                         : 'bg-slate-100 dark:bg-slate-950 text-slate-300 dark:text-slate-800'
-                      }`}>
+                        }`}>
                         {manualPresence[student.id] ? <Check size={20} strokeWidth={3} /> : <div className="w-4 h-4 rounded-full border-2 border-slate-200 dark:border-slate-800"></div>}
                       </div>
                     </div>

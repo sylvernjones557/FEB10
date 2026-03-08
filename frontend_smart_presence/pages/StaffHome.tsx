@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { PlayCircle, MapPin, CalendarDays, Layers, Users, Sparkles, Table2, X, Clock, ChevronDown } from 'lucide-react';
+import { PlayCircle, MapPin, CalendarDays, Layers, Users, Sparkles, Table2, X, Clock, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { QuickAction, SummaryCard } from './Dashboard';
 import { isTestClass } from '../constants';
 import { data as dataApi } from '../services/api';
@@ -20,11 +20,11 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
   const hours = now.getHours();
   const today = now.toLocaleDateString('en-US', { weekday: 'long' });
   const todayDate = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  
+
   const assignedGroupId = user?.assignedClassId || '';
-  const assignedGroup = groupList.find((g: any) => g.id === assignedGroupId);
-  const groupDisplayName = assignedGroup ? assignedGroup.name : (assignedGroupId || 'Unassigned');
-  const isReady = Boolean(assignedGroupId);
+  const assignedGroup = (groupList || []).find((g: any) => g.id === assignedGroupId) || null;
+  const groupDisplayName = assignedGroup ? assignedGroup.name : (assignedGroupId ? `Class ${assignedGroupId.substring(0, 4)}` : 'Unassigned');
+  const isReady = Boolean(assignedGroupId && assignedGroup);
   const isTest = isTestClass(assignedGroup);
 
   const handleStartAttendance = () => {
@@ -67,13 +67,12 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
   return (
     <div className="space-y-8 page-enter">
       {/* Dynamic Hero Banner */}
-      <div 
+      <div
         onClick={handleStartAttendance}
-        className={`p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden transition-all duration-500 ${
-          isReady 
-          ? 'bg-indigo-600 tap-active group cursor-pointer shadow-indigo-500/30' 
+        className={`p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden transition-all duration-500 ${isReady
+          ? 'bg-indigo-600 tap-active group cursor-pointer shadow-indigo-500/30'
           : 'bg-slate-900 dark:bg-slate-900 border border-slate-800 cursor-default opacity-90'
-        }`}
+          }`}
       >
         <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 blur-3xl rounded-full"></div>
         <div className="relative z-10">
@@ -83,23 +82,23 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
               {isTest ? 'Test Mode • All Students' : isReady ? 'Ready for Session' : 'No Group Assigned'}
             </p>
           </div>
-          
+
           <h2 className="text-3xl font-black tracking-tight leading-none uppercase mb-8">
             {isReady ? 'Start Attendance' : 'Awaiting Assignment'}
           </h2>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/10 px-5 py-4 rounded-2xl border border-white/5 backdrop-blur-md">
-               <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1 flex items-center gap-2">
-                 <CalendarDays size={14} /> {todayDate}
-               </p>
-               <p className="font-bold text-base tracking-tight">{today}</p>
+              <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1 flex items-center gap-2">
+                <CalendarDays size={14} /> {todayDate}
+              </p>
+              <p className="font-bold text-base tracking-tight">{today}</p>
             </div>
-              <div className="bg-white/10 px-5 py-4 rounded-2xl border border-white/5 backdrop-blur-md">
-               <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1 flex items-center gap-2">
-                 <MapPin size={14} /> Group
-               </p>
-               <p className="font-bold text-base tracking-tight">{groupDisplayName}</p>
+            <div className="bg-white/10 px-5 py-4 rounded-2xl border border-white/5 backdrop-blur-md">
+              <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1 flex items-center gap-2">
+                <MapPin size={14} /> Group
+              </p>
+              <p className="font-bold text-base tracking-tight">{groupDisplayName}</p>
             </div>
           </div>
 
@@ -112,8 +111,8 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <SummaryCard title="Groups" value={isReady ? 1 : 0} color="bg-indigo-600" />
-        <SummaryCard title="Status" value={isReady ? 'Ready' : 'Unassigned'} color="bg-emerald-600" />
+        <SummaryCard title="Groups" value={isReady ? 1 : 0} color="bg-indigo-600" icon={Layers} />
+        <SummaryCard title="Status" value={isReady ? 'Ready' : 'Unassigned'} color="bg-emerald-600" icon={CheckCircle2} />
       </div>
 
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-sm transition-all">
@@ -123,7 +122,7 @@ const StaffHome: React.FC<StaffHomeProps> = ({ user, onNavigate, groupList = [] 
 
         <div className="space-y-4">
           {isReady ? (
-            <div 
+            <div
               onClick={handleStartAttendance}
               className="flex items-center justify-between p-6 border rounded-3xl transition-all bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 tap-active cursor-pointer"
             >

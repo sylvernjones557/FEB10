@@ -22,8 +22,40 @@ import StaffChat from './pages/StaffChat';
 import MyClassPage from './pages/MyClassPage';
 
 import { auth as authApi, data } from './services/api';
+import { X, LayoutDashboard, Layers, GraduationCap, Settings, BookOpen, Users, MessageSquare } from 'lucide-react';
 
 // Fetch real timetable from DB for a staff member
+// Error Boundary to prevent total app crashes
+interface EBProps { children: React.ReactNode; }
+interface EBState { hasError: boolean; }
+class ErrorBoundary extends React.Component<any, any> {
+  public state: any = { hasError: false };
+
+  public static getDerivedStateFromError(_: Error): any {
+    return { hasError: true };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-white text-slate-900 text-center">
+          <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mb-6 border border-rose-100">
+            <X size={32} className="text-rose-500" strokeWidth={3} />
+          </div>
+          <h2 className="text-2xl font-black uppercase mb-4 tracking-tighter">System Error</h2>
+          <p className="text-slate-400 text-sm mb-8 max-w-xs mx-auto leading-relaxed">The application encountered an unexpected runtime error.</p>
+          <button onClick={() => window.location.reload()} className="px-10 py-5 bg-indigo-600 rounded-[2rem] font-black uppercase tracking-widest text-[11px] text-white tap-active shadow-xl shadow-indigo-600/20">Restart Application</button>
+        </div>
+      );
+    }
+    return (this.props as any).children;
+  }
+}
+
 const fetchStaffTimetable = async (assignedClassId: string): Promise<DaySchedule[]> => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   try {
@@ -160,6 +192,7 @@ const AppContent: React.FC = () => {
   };
 
   const handleLogin = async (username: string, password: string) => {
+    setIsLoading(true); // Show spinner during login transition
     try {
       await authApi.login(username, password);
       const user = await authApi.me();
@@ -197,9 +230,11 @@ const AppContent: React.FC = () => {
         staffUser.role === 'ADMIN' ? 'Welcome to the Admin Dashboard.' : 'Welcome back to Smart Presence.',
         5000
       );
-    } catch (e) {
-      toast.showToast('error', 'Login Failed', 'Invalid credentials. Please try again.');
+    } catch (e: any) {
+      toast.showToast('error', 'Login Failed', e.response?.data?.detail || 'Invalid credentials. Please try again.');
       console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -232,8 +267,15 @@ const AppContent: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (!authState.isAuthenticated || isLoading) {
-      if (isLoading) return null; // Don't flash login while restoring session
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      );
+    }
+
+    if (!authState.isAuthenticated) {
       return <Login onLogin={handleLogin} />;
     }
 
@@ -292,9 +334,9 @@ const AppContent: React.FC = () => {
       // Admin Pages
       case '/dashboard': return <AdminDashboard studentCount={studentList.length} staffCount={staffList.length} onNavigate={handleNavigate} staffList={staffList} groupList={groupList} />;
       case '/classes': return <ClassDirectory classList={groupList.length ? groupList : MOCK_CLASSES} staffList={staffList} studentList={studentList} onBack={handleBack} onClassClick={(id) => setSelectedClassId(id)} />;
-      case '/students': return <StudentsDirectory 
-        studentList={studentList} 
-        groupList={groupList.length ? groupList : MOCK_CLASSES} 
+      case '/students': return <StudentsDirectory
+        studentList={studentList}
+        groupList={groupList.length ? groupList : MOCK_CLASSES}
         onBack={handleBack}
         isAdmin={authState.user?.role === 'ADMIN'}
         onDeleteStudent={(studentId: string, studentName: string) => {
@@ -379,9 +421,11 @@ const AppContent: React.FC = () => {
 
 // Wrap with ToastProvider so useToast works
 const App: React.FC = () => (
-  <ToastProvider>
-    <AppContent />
-  </ToastProvider>
+  <ErrorBoundary>
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  </ErrorBoundary>
 );
 
 export default App;
