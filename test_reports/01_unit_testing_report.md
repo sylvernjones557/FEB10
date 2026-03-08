@@ -1,7 +1,7 @@
 # Unit Testing Report
 
 **Project:** Smart Presence System  
-**Date:** 2026-03-07  
+**Date:** 2026-03-08  
 **Framework:** pytest 7.4.3 + FastAPI TestClient  
 **Database:** In-memory SQLite (isolated per test)  
 **Python:** 3.11.8 | **Platform:** Windows 10

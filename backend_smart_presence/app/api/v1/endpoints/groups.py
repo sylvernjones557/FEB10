@@ -102,6 +102,17 @@ def read_group_students(
     group = db.query(models.Group).filter(models.Group.id == group_id).first()
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
+        
+    # Check if this is the Test Class (addon feature)
+    name = (group.name or "").lower()
+    code = (group.code or "").lower()
+    if "test" in name or code in ("test", "tst"):
+        # For Test Class, show EVERY student in the organization
+        return db.query(models.Student).filter(
+            models.Student.organization_id == group.organization_id,
+            models.Student.is_active == True
+        ).all()
+        
     students = db.query(models.Student).filter(models.Student.group_id == group_id).all()
     return students
 
