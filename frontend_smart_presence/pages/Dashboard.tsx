@@ -18,20 +18,28 @@ import { MOCK_CLASSES } from '../constants';
 export const QuickAction = ({ label, icon: Icon, onClick, color }: any) => (
   <button
     onClick={onClick}
-    className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center text-center gap-3 tap-active transition-all hover:border-indigo-500"
+    className="group glass-card p-5 rounded-[2.5rem] flex flex-col items-center text-center gap-3 tap-active transition-all hover:bg-white dark:hover:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
   >
-    <div className={`w-14 h-14 rounded-2xl ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center ${color.replace('bg-', 'text-')}`}>
-      <Icon size={28} strokeWidth={2.5} />
+    <div className={`w-14 h-14 rounded-full ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-300`}>
+      <Icon size={26} strokeWidth={2.5} />
     </div>
-    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</span>
+    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{label}</span>
   </button>
 );
 
-export const SummaryCard = ({ title, value, color }: any) => (
-  <div className="bg-white dark:bg-slate-900 p-7 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-start relative overflow-hidden transition-all">
-    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${color}`}></div>
-    <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{title}</span>
-    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{value}</h3>
+export const SummaryCard = ({ title, value, color, icon: Icon }: any) => (
+  <div className="group bg-white dark:bg-slate-900/60 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50 shadow-[0_10px_40px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col items-start relative overflow-hidden transition-all hover:border-indigo-500/30">
+    <div className={`absolute right-0 top-0 bottom-0 w-1 ${color} opacity-20`}></div>
+    <div className="flex items-center justify-between w-full mb-3">
+      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">{title}</span>
+      <div className={`p-2 rounded-xl ${color} bg-opacity-5 dark:bg-opacity-10 ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform`}>
+        <Icon size={16} strokeWidth={2.5} />
+      </div>
+    </div>
+    <h3 className="text-3xl font-black text-slate-900 dark:text-white mt-1 tracking-tight flex items-baseline gap-1">
+      {value}
+      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest ml-1">Total</span>
+    </h3>
   </div>
 );
 
@@ -331,20 +339,27 @@ const AdminDashboard: React.FC<DashboardProps> = ({ studentCount, staffCount, on
 
       <div className="grid grid-cols-2 gap-4">
         <button onClick={() => onNavigate('/students')} className="text-left tap-active">
-          <SummaryCard title="Students" value={studentCount} color="bg-indigo-600" />
+          <SummaryCard title="Students" value={studentCount} color="bg-indigo-600" icon={Users} />
         </button>
         <button onClick={() => onNavigate('/staff')} className="text-left tap-active">
-          <SummaryCard title="Teachers" value={staffCount} color="bg-emerald-600" />
+          <SummaryCard title="Teachers" value={staffCount} color="bg-emerald-600" icon={GraduationCap} />
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-[12px] font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-3">
-            <Clock size={20} className="text-indigo-600" />
-            Live Classes
-          </h3>
-          <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Now</span>
+      <div className="bg-white dark:bg-slate-900/60 p-8 rounded-[3.5rem] border border-slate-100 dark:border-slate-800/50 shadow-[0_15px_50px_rgba(0,0,0,0.02)] dark:shadow-none">
+        <div className="flex justify-between items-center mb-6 px-1">
+          <div className="flex flex-col">
+            <h3 className="text-[12px] font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                <Clock size={16} className="text-indigo-600 dark:text-indigo-400" />
+              </div>
+              Live Learning
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full">
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Active Now</span>
+          </div>
         </div>
 
         <div className="space-y-4">

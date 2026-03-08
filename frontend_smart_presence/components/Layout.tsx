@@ -68,9 +68,13 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 transition-colors duration-500 overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 transition-colors duration-500 overflow-x-hidden relative">
+      {/* Decorative Background Elements */}
+      <div className="floating-blob -top-20 -left-20"></div>
+      <div className="floating-blob -bottom-20 -right-20" style={{ animationDelay: '-10s' }}></div>
+
       {isAuth && (
-        <header className="sticky top-0 z-[100] bg-white/80 dark:bg-slate-950/80 nav-blur border-b border-slate-200 dark:border-slate-800/60 px-5 h-20 flex items-center justify-between transition-all duration-300">
+        <header className="sticky top-0 z-[100] bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl border-b border-slate-100 dark:border-slate-800/40 px-5 h-20 flex items-center justify-between transition-all duration-300">
           <div
             onClick={() => onNavigate(user?.role === 'ADMIN' ? '/dashboard' : '/staff-home')}
             className="flex items-center gap-3 cursor-pointer group tap-active"
@@ -215,10 +219,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
       </footer>
 
       {isAuth && (
-        <div className="fixed bottom-0 left-0 right-0 pointer-events-none flex items-end justify-center px-4 pb-10 z-[200] safe-bottom">
-          <div className="w-full max-w-sm flex flex-col items-center pointer-events-none transition-transform duration-500 hover:scale-[1.02]">
-            {/* Superior Curved Parallax Floating Navbar */}
-            <nav className="w-full h-[96px] bg-white/90 dark:bg-slate-900/90 nav-blur border border-slate-200/40 dark:border-slate-800/40 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1),0_10px_30px_-10px_rgba(79,70,229,0.15)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5),0_10px_30px_-10px_rgba(79,70,229,0.2)] rounded-[3.5rem] flex items-center justify-around px-3 pointer-events-auto backdrop-saturate-150">
+        <div className="fixed bottom-0 left-0 right-0 pointer-events-none flex items-end justify-center px-4 pb-8 z-[200] safe-bottom">
+          <div className="w-full max-w-sm flex flex-col items-center pointer-events-none transition-all duration-500">
+            {/* Superior Curved Glassmorphic Floating Navbar */}
+            <nav className="w-full h-[88px] glass-card shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1),0_10px_30px_-10px_rgba(79,70,229,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-[2.5rem] flex items-center justify-around px-2 pointer-events-auto">
               {items.map((item) => {
                 const isActive = activePath === item.path;
                 return (
