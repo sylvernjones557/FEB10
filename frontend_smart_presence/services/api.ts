@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Base URL configuration (Vite environment variable or default)
-// Backend runs plain HTTP; browsers treat 127.0.0.1 as a secure context.
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+// For Ngrok/PWA: Relative paths ensure the frontend talks to the same host it was loaded from.
+const API_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 const api = axios.create({
     baseURL: API_URL,

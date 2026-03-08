@@ -21,8 +21,8 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.core.config import settings
 
-# ── Detect Frontend (Docker unified mode) ──
-_frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend")
+# ── Detect Frontend (Unified Serving Mode) ──
+_frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "frontend_smart_presence", "dist")
 _frontend_available = os.path.isdir(_frontend_dir) and os.path.isfile(os.path.join(_frontend_dir, "index.html"))
 _frontend_index = os.path.join(_frontend_dir, "index.html") if _frontend_available else None
 
