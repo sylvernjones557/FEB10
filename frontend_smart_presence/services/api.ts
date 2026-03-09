@@ -154,6 +154,14 @@ export const data = {
     getClassScheduleToday: async (classId: string) => {
         const response = await api.get(`/classes/${classId}/schedule/today`);
         return response.data;
+    },
+    getStaffStats: async (staffId: string) => {
+        // Mocking stats for the UI - normally this would hit a real endpoint
+        return {
+            classes_today: 3,
+            attendance_rate: 94.2,
+            total_sessions: 128
+        };
     }
 };
 

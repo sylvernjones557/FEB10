@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, RefreshCw, ArrowLeft, CheckCircle2, ChevronRight, SwitchCamera, User, Scan } from 'lucide-react';
 import { recognition } from '../services/api';
+import { haptics } from '../services/haptics';
 
 export interface FaceMatch {
   student_id: string;
@@ -115,7 +116,9 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
       setStream(ms);
       if (videoRef.current) videoRef.current.srcObject = ms;
       setStatusText('Ready');
+      haptics.impactLight();
     } catch (err: any) {
+      haptics.notificationError();
       console.error('Camera error:', err);
       if (err.name === 'NotAllowedError') setError('Camera permission denied. Enable it in browser settings.');
       else setError('Could not access camera. Check your device.');
@@ -202,6 +205,7 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
             !alreadyRecognizedIds || !alreadyRecognizedIds.has(m.student_id)
           );
           if (newMatches.length > 0) {
+            haptics.notificationSuccess();
             onDetect(newMatches.length, newMatches.map((m: any) => ({
               student_id: m.student_id,
               distance: m.distance,
@@ -266,18 +270,18 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
               >
                 {/* Glow effect behind box */}
                 <div className={`absolute -inset-1 rounded-2xl blur-md opacity-40 ${isAlreadyCaptured
-                    ? 'bg-emerald-400'
-                    : isRecognized
-                      ? 'bg-blue-500 animate-pulse'
-                      : 'bg-amber-400/50'
+                  ? 'bg-emerald-400'
+                  : isRecognized
+                    ? 'bg-blue-500 animate-pulse'
+                    : 'bg-amber-400/50'
                   }`} />
 
                 {/* Main bounding box */}
                 <div className={`absolute inset-0 rounded-xl ${isAlreadyCaptured
-                    ? 'border-2 border-emerald-400 bg-emerald-400/5'
-                    : isRecognized
-                      ? 'border-2 border-blue-400 bg-blue-400/5'
-                      : 'border border-dashed border-amber-400/70 bg-amber-400/5'
+                  ? 'border-2 border-emerald-400 bg-emerald-400/5'
+                  : isRecognized
+                    ? 'border-2 border-blue-400 bg-blue-400/5'
+                    : 'border border-dashed border-amber-400/70 bg-amber-400/5'
                   }`} />
 
                 {/* Animated corner brackets */}

@@ -11,10 +11,16 @@ import {
   Activity,
   Globe,
   Lock,
-  ChevronRight
+  Calendar,
+  Filter,
+  Search,
+  ChevronRight,
+  ShieldCheck,
+  AlertCircle
 } from 'lucide-react';
 import { BackButton } from '../constants';
 import { data } from '../services/api';
+import { haptics } from '../services/haptics';
 
 const InstitutionalReport: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [stats, setStats] = useState({
@@ -24,6 +30,8 @@ const InstitutionalReport: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     avg_latency: 0,
     daily_success: 0
   });
+  const [activeTab, setActiveTab] = useState<'analytics' | 'history'>('analytics');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -37,90 +45,173 @@ const InstitutionalReport: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     fetchStats();
   }, []);
 
+  const handleTabChange = (tab: 'analytics' | 'history') => {
+    haptics.selection();
+    setActiveTab(tab);
+  };
+
+  const attendanceLog = [
+    { id: 1, name: 'Rahul Sharma', class: 'BCA 2nd Year', time: '10:15 AM', status: 'verified', method: 'face' },
+    { id: 2, name: 'Priya Verma', class: 'BCA 2nd Year', time: '10:17 AM', status: 'verified', method: 'face' },
+    { id: 3, name: 'Amit Patel', class: 'BCA 2nd Year', time: '10:20 AM', status: 'flagged', method: 'manual' },
+    { id: 4, name: 'Sanya Gupta', class: 'BCA 2nd Year', time: '10:22 AM', status: 'verified', method: 'face' },
+    { id: 5, name: 'Vikram Singh', class: 'BCA 2nd Year', time: '10:25 AM', status: 'verified', method: 'face' },
+  ];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <BackButton onClick={onBack} />
-        <div className="text-right">
-          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Institutional Analytics</p>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Global Report</h2>
+    <div className="space-y-8 page-enter font-main">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <BackButton onClick={onBack} />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleTabChange('analytics')}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'analytics' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-100 dark:bg-slate-900 text-slate-400'}`}
+            >
+              Analytics
+            </button>
+            <button
+              onClick={() => handleTabChange('history')}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-100 dark:bg-slate-900 text-slate-400'}`}
+            >
+              Live Logs
+            </button>
+          </div>
+        </div>
+
+        <div className="text-left">
+          <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-2">Operational Intelligence</p>
+          <h2 className="text-4xl font-display font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+            {activeTab === 'analytics' ? 'Executive Report' : 'Attendance Stream'}
+          </h2>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.8rem] border border-slate-100 dark:border-slate-800 shadow-sm space-y-10 relative overflow-hidden transition-all duration-500">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[80px] rounded-full translate-x-20 -translate-y-20"></div>
+      {activeTab === 'analytics' ? (
+        <div className="space-y-6">
+          {/* Main Hero Card */}
+          <div className="glass-card p-8 rounded-[3rem] relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 blur-[100px] rounded-full translate-x-20 -translate-y-20 group-hover:bg-indigo-500/20 transition-all duration-700"></div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-600/20">
-              <Globe size={32} strokeWidth={2.5} />
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-600/40 transform -rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                  <Globe size={40} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-display font-black text-slate-900 dark:text-white leading-none">Global Accuracy</h3>
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                      System Health: <span className="text-emerald-500">Excellent ({stats.presence_index}%)</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center md:items-end">
+                <div className="text-4xl font-display font-black text-emerald-500 tracking-tighter flex items-center gap-2">
+                  +{stats.net_increase}% <TrendingUp size={32} />
+                </div>
+                <p className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] mt-2">Dossier Growth Index</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 relative z-10">
+              {[
+                { label: 'Verified Enrollment', value: stats.total_enrollment, sub: 'Total Souls', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-500/5' },
+                { label: 'Network Latency', value: `${stats.avg_latency}s`, sub: 'Real-time Sync', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/5' },
+                { label: 'Recognition Rate', value: `${stats.daily_success}%`, sub: 'Peak Efficacy', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/5' }
+              ].map((stat) => (
+                <div key={stat.label} className={`p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800/50 flex flex-col gap-4 bg-white/40 dark:bg-slate-900/40 hover:scale-[1.02] transition-all`}>
+                  <div className="flex items-center justify-between">
+                    <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
+                      <stat.icon size={20} strokeWidth={2.5} />
+                    </div>
+                    <ArrowUpRight size={16} className="text-slate-300 dark:text-slate-700" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
+                    <p className="text-2xl font-display font-black text-slate-900 dark:text-white mt-1 tabular-nums">{stat.value}</p>
+                    <p className="text-[9px] font-bold text-slate-400 mt-1 opacity-60 uppercase tracking-widest">{stat.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button onClick={() => haptics.impactMedium()} className="w-full mt-10 py-5 bg-indigo-600 text-white font-display font-black rounded-2xl text-[12px] uppercase tracking-[0.3em] shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-3 tap-active hover:bg-indigo-700 transition-all saturate-[1.2]">
+              <Download size={20} /> Generate Intelligence Dossier
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Filters & Search */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+              <input
+                type="text"
+                placeholder="Search dossiers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-16 bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] pl-14 pr-6 text-slate-900 dark:text-white font-bold text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+              />
+            </div>
+            <button className="h-16 px-8 bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] flex items-center gap-3 text-slate-400 font-black text-[10px] uppercase tracking-widest tap-active hover:text-indigo-500">
+              <Filter size={18} /> Filters
+            </button>
+          </div>
+
+          {/* Timeline View */}
+          <div className="space-y-4">
+            {attendanceLog.map((log, idx) => (
+              <div
+                key={log.id}
+                className="glass-card p-6 rounded-[2rem] flex items-center justify-between group hover:scale-[1.01] active:scale-[0.99]"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="flex items-center gap-5">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
+                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(log.name)}&background=random&color=fff&bold=true`} alt={log.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white dark:border-slate-950 flex items-center justify-center ${log.status === 'verified' ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                      {log.status === 'verified' ? <ShieldCheck size={12} className="text-white" /> : <AlertCircle size={12} className="text-white" />}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-base font-display font-black text-slate-900 dark:text-white leading-tight">{log.name}</h4>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-2">
+                      {log.class} • <Clock size={12} /> {log.time}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div className="hidden sm:flex flex-col items-end">
+                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${log.method === 'face' ? 'bg-indigo-500/10 text-indigo-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                      {log.method === 'face' ? 'Biometric' : 'Manual Entry'}
+                    </span>
+                    <p className="text-[8px] font-bold text-slate-400 dark:text-slate-600 mt-1 uppercase">Methodology</p>
+                  </div>
+                  <ChevronRight size={20} className="text-slate-300 dark:text-slate-700 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-900/40 p-10 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center space-y-4">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
+              <Calendar size={28} className="text-slate-400" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-none">Presence Index</h3>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
-                <Activity size={12} className="text-emerald-500" /> System Efficacy: {stats.presence_index}%
-              </p>
+              <p className="text-sm font-display font-black text-slate-400 uppercase tracking-widest">End of Daily Dossier</p>
+              <p className="text-[10px] font-bold text-slate-300 dark:text-slate-600 mt-1">Only displaying logs for March 09, 2026</p>
             </div>
           </div>
-          <div className="text-left sm:text-right">
-            <div className="flex items-center gap-2 justify-start sm:justify-end text-emerald-500 font-black text-2xl tracking-tighter">
-              +{stats.net_increase}% <TrendingUp size={24} />
-            </div>
-            <p className="text-[8px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] mt-1">Net Performance Increase</p>
-          </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
-          {[
-            { label: 'Total Enrollment', value: `${stats.total_enrollment} Souls`, icon: Users, color: 'text-indigo-600 dark:text-indigo-400' },
-            { label: 'Avg Sync Latency', value: `${stats.avg_latency} Seconds`, icon: Clock, color: 'text-amber-500 dark:text-amber-400' },
-            { label: 'Daily Success', value: `${stats.daily_success}% Rate`, icon: CheckCircle2, color: 'text-emerald-500 dark:text-emerald-400' }
-          ].map((stat) => (
-            <div key={stat.label} className="bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/80 p-6 rounded-3xl flex flex-col gap-4 group hover:border-indigo-500/30 transition-all duration-300 shadow-inner">
-              <div className="flex items-center justify-between">
-                <stat.icon size={20} className={stat.color} />
-                <ArrowUpRight size={16} className="text-slate-300 dark:text-slate-700 group-hover:text-indigo-500" />
-              </div>
-              <div>
-                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.label}</p>
-                <p className="text-lg font-black text-slate-900 dark:text-white mt-1 tracking-tight">{stat.value}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-4 relative z-10">
-          <button className="w-full py-5 bg-indigo-600 dark:bg-indigo-600 text-white font-black rounded-[1.8rem] text-[11px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/20 flex items-center justify-center gap-3 tap-active hover:bg-indigo-700 transition-colors">
-            <Download size={18} /> Export Performance Dossier
-          </button>
-        </div>
-      </div>
-
-      {/* Historical Vault Access - LOCKED STATE */}
-      <div className="bg-slate-50 dark:bg-slate-900/40 p-8 rounded-[2.8rem] text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-200 dark:border-slate-800 relative overflow-hidden group">
-        <div className="relative z-10 flex items-center justify-between opacity-60 grayscale group-hover:grayscale-0 transition-all duration-500">
-          <div className="flex items-center gap-5">
-            <div className="w-14 h-14 bg-slate-200 dark:bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-100 dark:border-slate-700">
-              <FileText size={28} className="text-slate-400 dark:text-slate-600" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-lg font-black tracking-tight leading-none uppercase">Archived Analytics</h4>
-                <span className="px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase rounded-md tracking-widest">LOCKED</span>
-              </div>
-              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-2 flex items-center gap-2">
-                Coming Soon in Next Governance Cycle
-              </p>
-            </div>
-          </div>
-          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-            <Lock size={20} className="text-slate-400 dark:text-slate-600" />
-          </div>
-        </div>
-
-        {/* Subtle overlay */}
-        <div className="absolute inset-0 bg-white/5 dark:bg-black/5 pointer-events-none"></div>
-      </div>
+      )}
     </div>
   );
 };

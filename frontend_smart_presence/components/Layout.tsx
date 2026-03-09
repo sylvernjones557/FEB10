@@ -93,7 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={() => { haptics.impactLight(); setIsDarkMode(!isDarkMode); }}
               className="w-10 h-10 flex items-center justify-center text-slate-500 tap-active bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
               aria-label="Toggle Theme"
             >
@@ -101,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children, user, onLogout, activePath, o
             </button>
 
             <button
-              onClick={toggleNotifPanel}
+              onClick={() => { haptics.impactMedium(); toggleNotifPanel(); }}
               className="relative w-10 h-10 flex items-center justify-center text-slate-500 tap-active bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
             >
               <Bell size={18} strokeWidth={2.5} />

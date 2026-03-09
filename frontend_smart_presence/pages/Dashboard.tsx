@@ -10,7 +10,9 @@ import {
   CalendarDays,
   Table2,
   X,
-  ChevronDown
+  ChevronDown,
+  TrendingUp,
+  LayoutGrid
 } from 'lucide-react';
 import { data } from '../services/api';
 import { MOCK_CLASSES } from '../constants';
@@ -24,41 +26,32 @@ export const QuickAction = ({ label, icon: Icon, onClick, color }: any) => {
   return (
     <button
       onClick={handleClick}
-      className="group glass-card p-5 rounded-[2.5rem] flex flex-col items-center text-center gap-3 tap-active transition-all hover:bg-white dark:hover:bg-slate-900 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
+      className="group glass-card p-6 rounded-[2.5rem] flex flex-col items-center text-center gap-4 tap-active active:scale-95"
     >
-      <div className={`w-14 h-14 rounded-full ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-300`}>
-        <Icon size={26} strokeWidth={2.5} />
+      <div className={`w-16 h-16 rounded-[1.8rem] ${color} bg-opacity-10 dark:bg-opacity-20 flex items-center justify-center ${color.replace('bg-', 'text-')} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-sm`}>
+        <Icon size={28} strokeWidth={2.5} />
       </div>
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{label}</span>
+      <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{label}</span>
     </button>
   );
 };
 
 export const SummaryCard = ({ title, value, color, icon: Icon }: any) => (
-  <div className="group bg-white dark:bg-slate-900/60 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800/50 shadow-[0_10px_40px_rgba(0,0,0,0.03)] dark:shadow-none flex flex-col items-start relative overflow-hidden transition-all hover:border-indigo-500/30">
-    <div className={`absolute right-0 top-0 bottom-0 w-1 ${color} opacity-20`}></div>
-    <div className="flex items-center justify-between w-full mb-3">
-      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">{title}</span>
-      <div className={`p-2 rounded-xl ${color} bg-opacity-5 dark:bg-opacity-10 ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform`}>
-        <Icon size={16} strokeWidth={2.5} />
+  <div className="group glass-card p-7 rounded-[2.5rem] flex flex-col items-start relative overflow-hidden active:scale-[0.98]">
+    <div className={`absolute right-0 top-0 bottom-0 w-1.5 ${color} opacity-40`}></div>
+    <div className="flex items-center justify-between w-full mb-5">
+      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{title}</span>
+      <div className={`p-2.5 rounded-2xl ${color} bg-opacity-10 dark:bg-opacity-20 ${color.replace('bg-', 'text-')} group-hover:scale-110 transition-transform duration-500`}>
+        <Icon size={18} strokeWidth={2.5} />
       </div>
     </div>
-    <h3 className="text-3xl font-black text-slate-900 dark:text-white mt-1 tracking-tight flex items-baseline gap-1">
+    <h3 className="text-4xl font-display font-black text-slate-900 dark:text-white tracking-tight flex items-baseline gap-2">
       {value}
-      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest ml-1">Total</span>
+      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Total</span>
     </h3>
   </div>
 );
 
-// Legacy timetable constants removed in V2 (kept empty for compatibility)
-const TIMETABLE_DATA: Record<string, { period: number; subject: string; teacher: string; time: string }[]> = {};
-const DEFAULT_TIMETABLE = [];
-
-const formatClassLabel = (c: typeof MOCK_CLASSES[0]) => {
-  return c.code ? `${c.name} (${c.code})` : c.name;
-};
-
-// Timetable Modal
 const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[]; groupList?: any[] }> = ({ onClose, staffList = [], groupList = [] }) => {
   const classes = groupList.length > 0 ? groupList : MOCK_CLASSES;
   const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '');
@@ -83,175 +76,120 @@ const TimetableModal: React.FC<{ onClose: () => void; staffList?: any[]; groupLi
         }));
         setTimetable(mapped);
       } catch (e) {
-        console.error("Failed to fetch timetable", e);
         setTimetable([]);
       } finally {
         setLoading(false);
       }
     };
-    if (selectedClass) {
-      fetchTimetable();
-    }
+    if (selectedClass) fetchTimetable();
   }, [selectedClass]);
 
   const handleClose = () => {
+    haptics.impactLight();
     setIsVisible(false);
     setTimeout(onClose, 300);
   };
 
-  const classObj = classes.find(c => c.id === selectedClass);
   const classTeacher = staffList.find(s => s.assignedClassId === selectedClass && s.type === 'CLASS_TEACHER');
 
   const periodColors = [
-    'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-800/30',
-    'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30',
-    'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/30',
-    'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-800/30',
-    'bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-800/30',
-  ];
-
-  const periodTextColors = [
-    'text-indigo-600 dark:text-indigo-400',
-    'text-emerald-600 dark:text-emerald-400',
-    'text-amber-600 dark:text-amber-400',
-    'text-purple-600 dark:text-purple-400',
-    'text-rose-600 dark:text-rose-400',
+    'border-indigo-100 dark:border-indigo-800/30 bg-indigo-50/40',
+    'border-emerald-100 dark:border-emerald-800/30 bg-emerald-50/40',
+    'border-amber-100 dark:border-amber-800/30 bg-amber-50/40',
+    'border-purple-100 dark:border-purple-800/30 bg-purple-50/40',
+    'border-rose-100 dark:border-rose-800/30 bg-rose-50/40',
   ];
 
   return (
-    <div className={`fixed inset-0 z-[300] flex items-end sm:items-center justify-center transition-all duration-300 ${isVisible ? 'bg-black/40 backdrop-blur-md' : 'bg-transparent'}`}>
+    <div className={`fixed inset-0 z-[300] flex items-end sm:items-center justify-center transition-all duration-500 ${isVisible ? 'bg-slate-950/40 backdrop-blur-xl' : 'bg-transparent'}`}>
       <div className="absolute inset-0" onClick={handleClose} />
       <div
         className={`
           relative w-full sm:max-w-xl max-h-[85vh] overflow-hidden flex flex-col
           bg-white dark:bg-slate-950
-          sm:rounded-[2.5rem] rounded-t-[2.5rem]
-          border border-slate-200 dark:border-slate-800
-          shadow-2xl
-          transition-all duration-300 ease-out
-          ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-12 opacity-0 scale-95'}
+          sm:rounded-[3rem] rounded-t-[3rem]
+          border border-slate-200 dark:border-slate-800/50
+          shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]
+          transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1)
+          ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-24 opacity-0 scale-95'}
         `}
       >
-        {/* Header */}
-        <div className="shrink-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between z-10">
-          <div>
-            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                <Table2 size={20} className="text-indigo-600 dark:text-indigo-400" />
-              </div>
-              Class Timetable
-            </h2>
+        <div className="shrink-0 glass-card border-none p-7 flex items-center justify-between z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
+              <Table2 size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-display font-black text-slate-900 dark:text-white tracking-tight uppercase">Timetable</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Daily Schedule</p>
+            </div>
           </div>
-          <button
-            onClick={handleClose}
-            className="w-10 h-10 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-          >
-            <X size={20} className="text-slate-500" />
+          <button onClick={handleClose} className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all tap-active">
+            <X size={24} className="text-slate-500" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Class Selector & Teacher Info */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="relative group">
-              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block ml-1">Select Class</label>
-              <div className="relative">
-                <Layers className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 z-10 group-focus-within:text-indigo-500" size={18} />
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 z-10 pointer-events-none" size={16} />
+        <div className="flex-1 overflow-y-auto p-7 space-y-7 no-scrollbar">
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Class</label>
+              <div className="relative group">
                 <select
                   value={selectedClass}
-                  onChange={e => setSelectedClass(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3.5 pl-11 pr-10 text-slate-900 dark:text-white font-bold text-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none appearance-none transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+                  onChange={e => { haptics.selection(); setSelectedClass(e.target.value); }}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/50 rounded-2xl py-4 pl-6 pr-12 text-slate-900 dark:text-white font-black text-sm outline-none appearance-none hover:border-indigo-500/50 transition-all cursor-pointer"
                 >
                   {classes.map(c => (
-                    <option key={c.id} value={c.id}>{formatClassLabel(c)}</option>
+                    <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 z-10 pointer-events-none" size={18} />
               </div>
             </div>
 
-            <div className="relative">
-              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block ml-1">Class Teacher</label>
-              <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 pr-4 h-[50px]">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Instructor</label>
+              <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/50 rounded-2xl p-3 h-[58px]">
                 {classTeacher ? (
                   <>
-                    <img
-                      src={classTeacher.avatar}
-                      alt={classTeacher.name}
-                      className="w-[34px] h-[34px] rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-bold text-slate-900 dark:text-white truncate">{classTeacher.name}</p>
-                      <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest truncate">Assigned</p>
+                    <img src={classTeacher.avatar} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm" />
+                    <div>
+                      <p className="text-[11px] font-black text-slate-900 dark:text-white truncate">{classTeacher.name}</p>
+                      <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest mt-0.5">Primary</p>
                     </div>
                   </>
                 ) : (
-                  <>
-                    <div className="w-[34px] h-[34px] rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                      <Users size={16} className="text-slate-400 dark:text-slate-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 truncate">No Teacher</p>
-                      <p className="text-[9px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest truncate">Unassigned</p>
-                    </div>
-                  </>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-2">Unassigned</p>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="w-full h-px bg-slate-100 dark:bg-slate-800/50 my-2"></div>
-
-          {/* Timetable Periods */}
-          <div>
-            <div className="flex items-center justify-between mb-4 px-1">
-              <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Schedule</p>
-              <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{timetable.length} Periods</p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="space-y-3">
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center p-8 text-slate-400">
-                    <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Loading Schedule...</span>
-                  </div>
-                ) : timetable.length === 0 ? (
-                  <div className="text-center p-8 text-slate-400 text-xs font-bold uppercase tracking-widest">No schedule available for today</div>
-                ) : (
-                  timetable.map((period, idx) => (
-                    <div
-                      key={period.period}
-                      className={`group relative flex items-center gap-4 p-3.5 rounded-2xl border ${periodColors[idx % periodColors.length]} transition-all hover:scale-[1.01] hover:shadow-sm bg-opacity-40 backdrop-blur-sm`}
-                      style={{ animationDelay: `${idx * 70}ms` }}
-                    >
-                      {/* Period number */}
-                      <div className={`w-12 h-12 rounded-xl bg-white dark:bg-slate-950/80 border border-slate-100 dark:border-slate-800/50 flex flex-col items-center justify-center shadow-sm shrink-0`}>
-                        <span className={`text-[15px] font-black leading-none ${periodTextColors[idx % periodTextColors.length]}`}>{period.period}</span>
-                        <span className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">Pd</span>
-                      </div>
-
-                      {/* Details */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
-                        <p className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight truncate">{period.subject}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock size={12} className="text-slate-400" />
-                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest tabular-nums">{period.time}</span>
-                        </div>
-                      </div>
-
-                      {/* Teacher Pill */}
-                      <div className="shrink-0 flex items-center gap-1.5 bg-white/60 dark:bg-slate-950/40 px-3 py-1.5 rounded-lg border border-slate-100 dark:border-slate-800/30">
-                        <div className={`w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 ${period.teacher !== 'TBD' ? 'bg-emerald-400' : ''}`}></div>
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest max-w-[80px] truncate">
-                          {period.teacher}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
+          <div className="space-y-4">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center p-12 text-slate-400">
+                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Compiling Schedule...</span>
               </div>
-            </div>
+            ) : timetable.length === 0 ? (
+              <div className="text-center p-12 glass-card rounded-[2rem] text-slate-400 text-[10px] font-black uppercase tracking-widest">No entries for today</div>
+            ) : (
+              timetable.map((period, idx) => (
+                <div key={idx} className={`flex items-center gap-5 p-5 rounded-[1.8rem] border ${periodColors[idx % periodColors.length]} transition-all hover:scale-[1.02] shadow-sm`}>
+                  <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-950 flex flex-col items-center justify-center shadow-lg shadow-black/5 shrink-0">
+                    <span className="text-xl font-display font-black text-indigo-600 dark:text-indigo-400">{period.period}</span>
+                    <span className="text-[8px] font-black text-slate-400 uppercase mt-0.5">Pd</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">{period.subject}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-slate-400">
+                      <Clock size={12} strokeWidth={3} />
+                      <span className="text-[10px] font-black uppercase tracking-widest tabular-nums">{period.time}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -268,136 +206,150 @@ interface DashboardProps {
 }
 
 const AdminDashboard: React.FC<DashboardProps> = ({ studentCount, staffCount, onNavigate, staffList = [], groupList = [] }) => {
-  const [stats, setStats] = useState({
-    presence_index: 0,
-    daily_success: 0,
-    total_enrollment: 0,
-    avg_latency: 0
-  });
+  const [stats, setStats] = useState({ presence_index: 0, daily_success: 0, total_enrollment: 0, avg_latency: 0 });
   const [liveClasses, setLiveClasses] = useState<{ id: string, name: string, status: string }[]>([]);
   const [showTimetable, setShowTimetable] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const statsData = await data.getStats();
+        const [statsData, classesData] = await Promise.all([data.getStats(), data.getLiveClasses()]);
         setStats(statsData);
-        const classesData = await data.getLiveClasses();
         setLiveClasses(classesData);
       } catch (e) {
-        console.error("Failed to load dashboard data", e);
+        console.error("Dashboard error", e);
       }
     };
     fetchData();
   }, []);
 
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className="space-y-8 page-enter">
-      <div
-        className="bg-slate-950 dark:bg-indigo-600 p-8 rounded-[3rem] text-white shadow-2xl relative overflow-hidden group transition-all"
-      >
-        <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 blur-3xl rounded-full"></div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2.5 mb-5">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <p className="text-white/70 text-[12px] font-bold uppercase tracking-widest">Main Hub</p>
-          </div>
-          <h2 className="text-3xl font-black tracking-tight leading-none uppercase mb-8">Home<br />Summary</h2>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/10 px-5 py-4 rounded-2xl border border-white/5 backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1 flex items-center gap-2">
-                <CalendarDays size={14} /> {today}
-              </p>
-              <p className="font-bold text-base tracking-tight">Active</p>
-            </div>
-            <div className="bg-white/10 px-5 py-4 rounded-2xl border border-white/5 backdrop-blur-md">
-              <p className="text-[10px] font-bold uppercase text-white/50 tracking-wider mb-1 flex items-center gap-2">
-                <Sparkles size={14} className="text-amber-400" /> Data
-              </p>
-              <p className="font-bold text-base tracking-tight">Verified {stats.daily_success}%</p>
-            </div>
+    <div className="space-y-10 page-enter pb-20">
+      {/* Dynamic Header Part */}
+      <div className="space-y-2">
+        <p className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.4em] mb-1">Administrative Console</p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-5xl font-display font-black text-slate-900 dark:text-white tracking-tight leading-none uppercase">Overview</h1>
+          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900/60 p-2 rounded-2xl border border-slate-200 dark:border-slate-800/50">
+            <CalendarDays size={18} className="text-indigo-600" strokeWidth={2.5} />
+            <span className="text-[11px] font-black text-slate-900 dark:text-white tracking-widest uppercase">{today}</span>
           </div>
         </div>
       </div>
 
-      {/* Timetable Big Button */}
-      <button
-        onClick={() => setShowTimetable(true)}
-        className="w-full bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 dark:from-indigo-500 dark:via-indigo-600 dark:to-purple-600 p-7 rounded-[2.5rem] text-white shadow-xl shadow-indigo-600/20 dark:shadow-indigo-500/30 flex items-center gap-5 group tap-active transition-all hover:shadow-2xl hover:shadow-indigo-600/30 active:scale-[0.98] relative overflow-hidden"
-      >
-        {/* Decorative elements */}
-        <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      {/* Hero Stats Card */}
+      <div className="glass-card p-10 rounded-[3.5rem] relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 blur-[120px] rounded-full translate-x-20 -translate-y-20"></div>
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="space-y-8">
+            <div className="flex items-center gap-3">
+              <span className="flex h-3 w-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></span>
+              <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.3em]">System Health: Operational</p>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-6xl font-display font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">{stats.presence_index}%</h2>
+              <p className="text-[10px] font-black text-indigo-600/60 dark:text-indigo-400/60 uppercase tracking-[0.4em]">Presence Index Efficiency</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <div className="bg-emerald-500/10 dark:bg-emerald-500/20 px-4 py-2 rounded-xl flex items-center gap-2">
+                <TrendingUp size={14} className="text-emerald-500" />
+                <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{stats.daily_success}% Success</span>
+              </div>
+              <div className="bg-amber-500/10 dark:bg-amber-500/20 px-4 py-2 rounded-xl flex items-center gap-2">
+                <Clock size={14} className="text-amber-500" />
+                <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">{stats.avg_latency}s Latency</span>
+              </div>
+            </div>
+          </div>
 
-        <div className="w-16 h-16 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/10 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shrink-0">
-          <Table2 size={28} strokeWidth={2} />
+          <div className="flex flex-col justify-end space-y-4">
+            <button
+              onClick={() => { haptics.impactHeavy(); setShowTimetable(true); }}
+              className="w-full bg-indigo-600 hover:bg-white hover:text-indigo-600 dark:hover:bg-indigo-500 dark:hover:text-white p-6 rounded-[2rem] text-white shadow-2xl shadow-indigo-600/30 transition-all duration-500 flex items-center justify-between group tap-active"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                  <Table2 size={24} />
+                </div>
+                <div className="text-left">
+                  <p className="text-[11px] font-black uppercase tracking-widest">Access Schedule</p>
+                  <p className="text-sm font-black uppercase tracking-tight opacity-70">Main Timetable</p>
+                </div>
+              </div>
+              <ChevronRight size={24} className="opacity-40 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <button onClick={() => onNavigate('/reports')} className="w-full glass-card border-slate-200/50 dark:border-slate-800/50 p-6 rounded-[2rem] text-slate-900 dark:text-white flex items-center justify-between group tap-active">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center shrink-0">
+                  <TrendingUp size={24} className="text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">View Dossier</p>
+                  <p className="text-sm font-black uppercase tracking-tight">Analytics Suite</p>
+                </div>
+              </div>
+              <ChevronRight size={24} className="opacity-20 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
         </div>
-        <div className="flex-1 text-left relative z-10">
-          <h3 className="text-base font-black uppercase tracking-tight leading-none">View Timetable</h3>
-          <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mt-2">
-            {(groupList.length || MOCK_CLASSES.length)} Classes • Daily Schedule
-          </p>
-        </div>
-        <ChevronRight size={22} className="text-white/40 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />
-      </button>
+      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button onClick={() => onNavigate('/students')} className="text-left tap-active">
+      <div className="grid grid-cols-2 gap-6">
+        <button onClick={() => { haptics.impactMedium(); onNavigate('/students'); }} className="text-left">
           <SummaryCard title="Students" value={studentCount} color="bg-indigo-600" icon={Users} />
         </button>
-        <button onClick={() => onNavigate('/staff')} className="text-left tap-active">
-          <SummaryCard title="Teachers" value={staffCount} color="bg-emerald-600" icon={GraduationCap} />
+        <button onClick={() => { haptics.impactMedium(); onNavigate('/staff'); }} className="text-left">
+          <SummaryCard title="Instructors" value={staffCount} color="bg-emerald-600" icon={GraduationCap} />
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900/60 p-8 rounded-[3.5rem] border border-slate-100 dark:border-slate-800/50 shadow-[0_15px_50px_rgba(0,0,0,0.02)] dark:shadow-none">
-        <div className="flex justify-between items-center mb-6 px-1">
-          <div className="flex flex-col">
-            <h3 className="text-[12px] font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                <Clock size={16} className="text-indigo-600 dark:text-indigo-400" />
-              </div>
-              Live Learning
-            </h3>
+      <div className="glass-card p-10 rounded-[4rem] relative">
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h3 className="text-2xl font-display font-black text-slate-900 dark:text-white tracking-tight uppercase">Live Sessions</h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">Current Active Learning Channels</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full">
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Active Now</span>
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full border border-emerald-500/20">
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.2em]">Live Stream</span>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {liveClasses.map((cls, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {liveClasses.length > 0 ? liveClasses.map((cls, i) => (
             <div
               key={cls.id}
               onClick={() => onNavigate('/classes')}
-              className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 rounded-3xl tap-active group hover:bg-white dark:hover:bg-slate-900 transition-all"
+              className="flex items-center justify-between p-7 bg-white dark:bg-slate-950 border border-slate-100 dark:border-white/5 rounded-[2.2rem] tap-active group hover:bg-indigo-50 dark:hover:bg-indigo-900/20 shadow-sm transition-all saturate-[1.2]"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center font-black text-slate-600 dark:text-white text-base">
-                  {i + 1}
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 bg-slate-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center font-display font-black text-slate-400 group-hover:text-indigo-600 text-xl border border-slate-100 dark:border-slate-800 transition-colors">
+                  {(i + 1).toString().padStart(2, '0')}
                 </div>
                 <div>
-                  <p className="text-base font-bold text-slate-900 dark:text-slate-200">{cls.name}</p>
-                  <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">Ongoing</p>
+                  <p className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase">{cls.name}</p>
+                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Active Status</p>
                 </div>
               </div>
-              <ChevronRight size={20} className="text-slate-300 group-hover:text-indigo-600 transition-all group-hover:translate-x-1" />
+              <ChevronRight size={24} className="text-slate-200 group-hover:text-indigo-600 transition-all group-hover:translate-x-1" />
             </div>
-          ))}
+          )) : (
+            <div className="col-span-full py-20 text-center glass-card border-dashed rounded-[3rem]">
+              <Sparkles size={40} className="mx-auto text-slate-200 mb-4" />
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Awaiting Active sessions</p>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <QuickAction label="Classes" icon={Layers} color="bg-amber-600" onClick={() => onNavigate('/classes')} />
-        <QuickAction label="Students" icon={Users} color="bg-blue-600" onClick={() => onNavigate('/students')} />
-        <QuickAction label="Teachers" icon={GraduationCap} color="bg-purple-600" onClick={() => onNavigate('/staff')} />
+      <div className="grid grid-cols-3 gap-6">
+        <QuickAction label="Academic Groups" icon={Layers} color="bg-amber-600" onClick={() => onNavigate('/classes')} />
+        <QuickAction label="Biometrics" icon={Users} color="bg-blue-600" onClick={() => onNavigate('/students')} />
+        <QuickAction label="Console" icon={LayoutGrid} color="bg-slate-800" onClick={() => onNavigate('/dashboard')} />
       </div>
 
-      {/* Timetable Modal */}
       {showTimetable && (
         <TimetableModal onClose={() => setShowTimetable(false)} staffList={staffList} groupList={groupList} />
       )}
