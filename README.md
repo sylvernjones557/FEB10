@@ -31,14 +31,31 @@ Build with a focus on resilient, "Survivor" infrastructure:
 
 ---
 
+---
+
+## 🚀 Recent Updates (V2.1)
+The latest version introduces significant enhancements for field usability and premium feel:
+- **📳 Haptic Logic**: Native tactile feedback for mobile web using `web-haptics`. Success/Error/Impact vibrations for scanning and navigation.
+- **👩‍🏫 Teacher UI**: A specialized dashboard for staff members (`testclass` user) optimized for quick attendance and class management.
+- **🧪 Test Class System**: Built-in unrestricted testing mode for groups named "Test Class" (Code: `TEST`), allowing attendance at any time.
+- **🛡️ Resilience Layer**: Global Error Boundaries and loading states to eliminate "blank screen" issues even on high-latency mobile connections.
+
 ## 📂 Project Structure
 ```text
 FEB10/
-├── frontend_smart_presence/   # The high-end React UI
+├── frontend_smart_presence/   # The high-end React UI (Haptics integrated)
 ├── backend_smart_presence/    # FastAPI + ML Engine + Local DBs
 ├── mcp_smart_presence/        # The AI Gateway (Feature Add-on)
 └── diagrams/                  # Visual architecture by Sylvester Jones
 ```
+
+---
+
+## ✨ Premium Experience
+Smart Presence isn't just a tool; it's a mobile-first PWA experience:
+- **Glassmorphism UI**: High-end translucent interfaces with animated background "blobs".
+- **Tactile Responses**: Every scan and menu tap provides physical feedback.
+- **Adaptive Loading**: Smart skeletons and spinners ensure the UI feels fast on any network.
 
 ---
 
