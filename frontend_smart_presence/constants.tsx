@@ -51,16 +51,16 @@ export const isTestClass = (cls: { name?: string; code?: string; id?: string } |
 
 export const NAV_ITEMS = {
   ADMIN: [
-    { label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'Classes', icon: Layers, path: '/classes' },
-    { label: 'Staff', icon: GraduationCap, path: '/staff' },
-    { label: 'Settings', icon: Settings, path: '/settings' },
+    { label: 'Home', icon: <LayoutDashboard size={24} />, path: '/dashboard' },
+    { label: 'Classes', icon: <Layers size={24} />, path: '/classes' },
+    { label: 'Staff', icon: <GraduationCap size={24} />, path: '/staff' },
+    { label: 'Settings', icon: <Settings size={24} />, path: '/settings' },
   ],
   STAFF: [
-    { label: 'Home', icon: LayoutDashboard, path: '/staff-home' },
-    { label: 'Groups', icon: BookOpen, path: '/staff-subjects' },
-    { label: 'My Group', icon: Users, path: '/my-class' },
-    { label: 'Chat', icon: MessageSquare, path: '/staff-chat' },
+    { label: 'Home', icon: <LayoutDashboard size={24} />, path: '/staff-home' },
+    { label: 'Groups', icon: <BookOpen size={24} />, path: '/staff-subjects' },
+    { label: 'My Group', icon: <Users size={24} />, path: '/my-class' },
+    { label: 'Chat', icon: <MessageSquare size={24} />, path: '/staff-chat' },
   ]
 };
 

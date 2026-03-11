@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smart Presence MCP Server  v3.0
+Smart Presence MCP Server  v3.1
 JSON-RPC 2.0 compliant Model Context Protocol server.
 Exposes the entire Smart Presence application (backend API + frontend metadata)
 as MCP tools, resources, and prompts for AI-driven automation.
@@ -486,7 +486,7 @@ async def handle_jsonrpc(request: dict) -> dict:
                 },
                 "serverInfo": {
                     **SERVER_CONFIG["serverInfo"],
-                    "version": "3.0.0",
+                    "version": "3.1.0",
                 },
             })
 
@@ -922,7 +922,7 @@ async def run_http(port: int):
         <body>
             <h1>🧠 Smart Presence MCP Server</h1>
             <div class="card">
-                <p><strong>Version:</strong> 3.0.0 &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Protocol:</strong> MCP 2024-11-05</p>
+                <p><strong>Version:</strong> 3.1.0 &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Protocol:</strong> MCP 2024-11-05</p>
                 <p><strong>Backend:</strong> <a href="{BACKEND_URL}">{BACKEND_URL}</a> <span class="status {'ok' if backend_ok else 'err'}">{backend_status}</span></p>
                 <p><strong>Auth:</strong> <span class="status {'ok' if auth.is_authenticated else 'err'}">{auth_status}</span></p>
             </div>
@@ -957,7 +957,7 @@ async def run_http(port: int):
         return JSONResponse({
             "status": "ok",
             "server": SERVER_CONFIG["serverInfo"]["name"],
-            "version": "3.0.0",
+            "version": "3.1.0",
             "tools": len(TOOLS_MANIFEST.get("tools", [])) + 2,
             "resources": len(RESOURCES_MANIFEST.get("resources", [])),
             "prompts": len(PROMPTS_MANIFEST.get("prompts", [])),
@@ -987,7 +987,7 @@ async def run_http(port: int):
     )
 
     logger.info("=" * 60)
-    logger.info(f"Smart Presence MCP Server v3.0 (HTTP transport)")
+    logger.info(f"Smart Presence MCP Server v3.1 (HTTP transport)")
     logger.info(f"URL: http://localhost:{port}")
     logger.info("=" * 60)
     logger.info(f"Backend URL: {BACKEND_URL}")
@@ -1014,7 +1014,7 @@ async def run_http(port: int):
 # ── Entry Point ────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Smart Presence MCP Server v3.0")
+    parser = argparse.ArgumentParser(description="Smart Presence MCP Server v3.1")
     parser.add_argument("--port", type=int, default=None, help="HTTP port for SSE/REST transport (default: stdio)")
     parser.add_argument("--backend-url", type=str, default=None, help="Backend API URL override")
     parser.add_argument("--auto-user", type=str, default=None, help="Auto-login username")

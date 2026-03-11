@@ -1,41 +1,24 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  Camera,
-  Scan,
-  CheckCircle2,
-  UserPlus,
-  Fingerprint,
-  Shield,
-  ArrowRight,
-  RotateCw,
-  AlertCircle,
-  Loader2,
-  Sparkles,
-  ShieldCheck,
-  Shapes,
-  User,
-  Hash,
-  GraduationCap
-} from 'lucide-react';
+import { Camera, Scan, CheckCircle2, UserPlus, Fingerprint, Shield, ArrowRight, RotateCw, AlertCircle, Loader2 } from 'lucide-react';
 import { BackButton } from '../constants';
 import { data as dataApi, recognition } from '../services/api';
-import { haptics } from '../services/haptics';
 
-const ANGLES = ['Front View', 'Left Profile', 'Right Profile'] as const;
+const ANGLES = ['Front', 'Left', 'Right'] as const;
 
 const Enrollment: React.FC = () => {
   const [step, setStep] = useState(1);
-  const [scanStep, setScanStep] = useState(0);
+  const [scanStep, setScanStep] = useState(0); // 0 = not started, 1 = Front, 2 = Left, 3 = Right
   const [angleStatus, setAngleStatus] = useState<('idle' | 'capturing' | 'done' | 'error')[]>(['idle', 'idle', 'idle']);
   const [formData, setFormData] = useState({ name: '', roll: '', standard: '', section: 'A' });
   const [studentId, setStudentId] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<string | null>(null); // Stores duplicate face owner name
   const [isCreating, setIsCreating] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Start camera when entering step 2
   useEffect(() => {
     if (step === 2) {
       navigator.mediaDevices.getUserMedia({
@@ -45,6 +28,7 @@ const Enrollment: React.FC = () => {
         if (videoRef.current) videoRef.current.srcObject = stream;
       }).catch(() => setErrorMsg('Camera access denied.'));
     }
+    // Cleanup camera when leaving step 2
     return () => {
       if (step === 2 && streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
@@ -53,6 +37,7 @@ const Enrollment: React.FC = () => {
     };
   }, [step]);
 
+  /** Capture a JPEG blob from the video */
   const captureFrame = useCallback((): Promise<Blob | null> => {
     return new Promise((resolve) => {
       const video = videoRef.current;
@@ -67,12 +52,15 @@ const Enrollment: React.FC = () => {
     });
   }, []);
 
+  /** Create the student in DB, then move to step 2 */
   const handleProceedToScan = async () => {
     setErrorMsg(null);
     setIsCreating(true);
-    haptics.impactMedium();
     try {
+      // Generate a student ID from roll + class info
       const sid = `s-${formData.roll}-${formData.standard.replace(/\s+/g, '').toLowerCase()}${formData.section.toLowerCase()}`;
+      
+      // Determine class_id – map standard+section to an existing class
       const classMap: Record<string, string> = {
         '1stA': 'c1', '1stB': 'c2',
         '2ndA': 'c3', '2ndB': 'c4',
@@ -94,6 +82,7 @@ const Enrollment: React.FC = () => {
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       if (detail && typeof detail === 'string' && detail.includes('already exists')) {
+        // Student exists — allow re-registration of face
         const sid = `s-${formData.roll}-${formData.standard.replace(/\s+/g, '').toLowerCase()}${formData.section.toLowerCase()}`;
         setStudentId(sid);
         setStep(2);
@@ -105,19 +94,20 @@ const Enrollment: React.FC = () => {
     }
   };
 
+  /** Start the 3-angle face capture process */
   const startScan = () => {
-    haptics.impactHeavy();
     setScanStep(1);
     setAngleStatus(['capturing', 'idle', 'idle']);
     setErrorMsg(null);
   };
 
+  /** Capture current angle and register with backend */
   const captureCurrentAngle = async () => {
-    const idx = scanStep - 1;
+    const idx = scanStep - 1; // 0, 1, or 2
     if (idx < 0 || idx > 2) return;
 
+    // Mark capturing
     setAngleStatus(prev => { const n = [...prev]; n[idx] = 'capturing'; return n; });
-    haptics.impactLight();
     setErrorMsg(null);
 
     try {
@@ -126,13 +116,15 @@ const Enrollment: React.FC = () => {
 
       await recognition.registerFace(studentId, blob);
 
-      haptics.notificationSuccess();
+      // Mark done
       setAngleStatus(prev => { const n = [...prev]; n[idx] = 'done'; return n; });
 
+      // Advance to next angle or finish
       if (scanStep < 3) {
         setScanStep(scanStep + 1);
         setAngleStatus(prev => { const n = [...prev]; n[idx] = 'done'; n[idx + 1] = 'idle'; return n; });
       } else {
+        // All 3 angles captured — success! Stop camera and go to step 3
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(t => t.stop());
           streamRef.current = null;
@@ -143,262 +135,211 @@ const Enrollment: React.FC = () => {
       const detail = err?.response?.data?.detail || 'Face registration failed. Try again.';
       const status = err?.response?.status;
 
+      // Duplicate face detected — stop the entire registration flow
       if (status === 409 || (typeof detail === 'string' && detail.includes('DUPLICATE_FACE'))) {
+        // Extract the name from "DUPLICATE_FACE: This face is already registered to "Name"..."
         const nameMatch = detail.match(/registered to "([^"]+)"/);
         const ownerName = nameMatch ? nameMatch[1] : 'another student';
         setDuplicateInfo(ownerName);
         setErrorMsg(null);
+        // Stop camera
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((t: MediaStreamTrack) => t.stop());
           streamRef.current = null;
         }
-        haptics.notificationWarning();
-        return;
+        return; // Stop — do NOT continue to next angle
       }
 
-      haptics.notificationError();
       setErrorMsg(detail);
       setAngleStatus(prev => { const n = [...prev]; n[idx] = 'error'; return n; });
     }
   };
 
   return (
-    <div className="space-y-10 page-enter font-main pb-20">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <BackButton onClick={() => {
-            if (step === 2 && scanStep === 0) { setStep(1); return; }
-            if (step > 1) { setStep(step - 1); setScanStep(0); setAngleStatus(['idle', 'idle', 'idle']); setErrorMsg(null); }
-          }} />
-          <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900/60 p-2 rounded-2xl border border-slate-200 dark:border-slate-800/50">
-            <ShieldCheck size={18} className="text-indigo-600" />
-            <span className="text-[10px] font-black text-slate-900 dark:text-white tracking-widest uppercase">Secure Admission</span>
-          </div>
-        </div>
-
-        <div className="text-left">
-          <p className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.4em] mb-2">Biometric Onboarding</p>
-          <h2 className="text-4xl font-display font-black text-slate-900 dark:text-white tracking-tight uppercase leading-none">
-            {step === 1 ? 'Pupil Profile' : step === 2 ? 'Face Geometry' : 'Success'}
-          </h2>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <BackButton onClick={() => {
+        if (step === 2 && scanStep === 0) { setStep(1); return; }
+        if (step > 1) { setStep(step - 1); setScanStep(0); setAngleStatus(['idle','idle','idle']); setErrorMsg(null); }
+      }} />
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-bold text-white tracking-tight">Pupil Admission & Biometrics</h2>
+        <p className="text-slate-400">Register new students with high-fidelity face recognition.</p>
       </div>
 
-      <div className="glass-card p-10 rounded-[3.5rem] relative overflow-hidden">
+      <div className="glass p-8 lg:p-12 rounded-[3rem] border border-slate-800 shadow-2xl min-h-[500px] flex flex-col">
         {step === 1 && (
-          <div className="space-y-10 animate-in">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Student Full Name</label>
-                  <div className="relative group">
-                    <User className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full h-16 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-2xl pl-14 pr-6 text-slate-900 dark:text-white font-black text-sm outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                      placeholder="Rahul Sharma"
-                    />
-                  </div>
+          <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Student Name</label>
+                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 text-white focus:border-indigo-600 transition-all" placeholder="Enter full name" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Roll Number</label>
+                  <input type="text" value={formData.roll} onChange={e => setFormData({...formData, roll: e.target.value})} className="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 text-white focus:border-indigo-600 transition-all" placeholder="e.g. 101" />
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Registration ID</label>
-                    <div className="relative group">
-                      <Hash className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                      <input
-                        type="text"
-                        value={formData.roll}
-                        onChange={e => setFormData({ ...formData, roll: e.target.value })}
-                        className="w-full h-16 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-2xl pl-14 pr-6 text-slate-900 dark:text-white font-black text-sm outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5 transition-all"
-                        placeholder="e.g. 1042"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Academic Grade</label>
-                    <div className="relative group">
-                      <GraduationCap className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-                      <select
-                        value={formData.standard}
-                        onChange={e => setFormData({ ...formData, standard: e.target.value })}
-                        className="w-full h-16 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-2xl pl-14 pr-10 text-slate-900 dark:text-white font-black text-sm outline-none appearance-none focus:border-indigo-600 transition-all cursor-pointer"
-                      >
-                        <option value="">Select Grade</option>
-                        <option value="1st">1st Standard</option>
-                        <option value="2nd">2nd Standard</option>
-                        <option value="3rd">3rd Standard</option>
-                        <option value="4th">4th Standard</option>
-                        <option value="5th">5th Standard</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Assigned Section</label>
-                  <div className="flex gap-4 p-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-[1.8rem]">
-                    {['A', 'B'].map(sec => (
-                      <button
-                        key={sec}
-                        onClick={() => { haptics.selection(); setFormData({ ...formData, section: sec as any }); }}
-                        className={`flex-1 py-4 rounded-[1.2rem] font-display font-black text-[12px] transition-all uppercase tracking-widest ${formData.section === sec ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:text-indigo-500'}`}
-                      >
-                        Section {sec}
-                      </button>
-                    ))}
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Standard</label>
+                  <select value={formData.standard} onChange={e => setFormData({...formData, standard: e.target.value})} className="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 text-white">
+                    <option value="">Select Grade</option>
+                    <option value="1st">1st Standard</option>
+                    <option value="2nd">2nd Standard</option>
+                    <option value="3rd">3rd Standard</option>
+                    <option value="4th">4th Standard</option>
+                    <option value="5th">5th Standard</option>
+                  </select>
                 </div>
               </div>
-
-              <div className="bg-slate-50 dark:bg-slate-900/60 p-8 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-center space-y-6">
-                <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                  <Fingerprint size={40} strokeWidth={2.5} />
-                </div>
-                <div>
-                  <h4 className="text-xl font-display font-black text-slate-900 dark:text-white tracking-tight uppercase">High Fidelity</h4>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 leading-relaxed">System will capture 3-angle geometry for 99.8% recognition accuracy.</p>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Section</label>
+                <div className="flex gap-4">
+                   {['A', 'B'].map(sec => (
+                     <button key={sec} onClick={() => setFormData({...formData, section: sec as any})} className={`flex-1 py-3 rounded-xl border-2 font-bold transition-all ${formData.section === sec ? 'bg-indigo-600/10 border-indigo-500 text-indigo-400' : 'bg-slate-900 border-slate-800 text-slate-600'}`}>
+                       Section {sec}
+                     </button>
+                   ))}
                 </div>
               </div>
             </div>
 
             {errorMsg && (
-              <div className="p-5 rounded-3xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center gap-4 text-sm font-black uppercase tracking-tight tabular-nums">
-                <AlertCircle size={20} /> {errorMsg}
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold">
+                <AlertCircle size={18} /> {errorMsg}
               </div>
             )}
 
-            <button
-              onClick={handleProceedToScan}
-              disabled={!formData.name || !formData.standard || !formData.roll || isCreating}
-              className="w-full py-6 bg-indigo-600 text-white font-display font-black rounded-[2rem] text-[13px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-4 disabled:opacity-40 tap-active hover:bg-slate-950 dark:hover:bg-indigo-500 transition-all saturate-[1.2]"
-            >
-              {isCreating ? <><Loader2 size={24} className="animate-spin" /> Authenticating...</> : <>Synchronize with Camera <ArrowRight size={22} /></>}
+            <button onClick={handleProceedToScan} disabled={!formData.name || !formData.standard || !formData.roll || isCreating} className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2 group">
+              {isCreating ? <><Loader2 size={20} className="animate-spin" /> Creating Student…</> : <>PROCEED TO CAMERA SCAN <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></>}
             </button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-8 animate-in">
-            <div className="relative w-full aspect-video bg-slate-950 rounded-[3.5rem] overflow-hidden border border-slate-200 dark:border-slate-800/50 shadow-2xl group">
+          <div className="flex-1 flex flex-col gap-8">
+            <div className="relative w-full aspect-video bg-slate-950 rounded-[2rem] overflow-hidden border-2 border-slate-800">
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
-
-              {/* V4 Scanner Overlay */}
+              
+              {/* Scanning overlay */}
               {scanStep > 0 && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <div className="relative w-72 h-72">
-                    <div className="absolute inset-0 border-2 border-indigo-400/20 rounded-[3rem]" style={{ animation: 'face-ring-pulse 2s infinite' }}></div>
-                    <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-indigo-500 rounded-tl-3xl"></div>
-                    <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-indigo-500 rounded-tr-3xl"></div>
-                    <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-indigo-500 rounded-bl-3xl"></div>
-                    <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-indigo-500 rounded-br-3xl"></div>
-
-                    <div className="absolute inset-4 overflow-hidden rounded-[2rem]">
-                      <div className="scan-line"></div>
-                    </div>
-                  </div>
-
-                  <div className="mt-10 bg-black/60 backdrop-blur-xl px-10 py-5 rounded-[2rem] border border-white/20">
-                    <p className="text-white font-display font-black text-sm uppercase tracking-[0.4em]">
-                      {scanStep === 1 ? '📷 Straight' : scanStep === 2 ? '← Left Profile' : 'Right Profile →'}
-                    </p>
-                  </div>
+                   {/* Modern face scanning frame */}
+                   <div className="relative w-64 h-64">
+                     {/* Outer glow ring */}
+                     <div className="absolute inset-0 rounded-[2rem] border-2 border-indigo-400/30" style={{ animation: 'face-ring-pulse 2s ease-in-out infinite' }} />
+                     {/* Corner brackets */}
+                     <div className="absolute top-0 left-0 w-8 h-8 border-t-[3px] border-l-[3px] border-indigo-400 rounded-tl-xl" />
+                     <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-indigo-400 rounded-tr-xl" />
+                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-[3px] border-l-[3px] border-indigo-400 rounded-bl-xl" />
+                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3px] border-r-[3px] border-indigo-400 rounded-br-xl" />
+                     {/* Scanning line */}
+                     <div className="absolute inset-x-2 top-2 bottom-2 overflow-hidden rounded-xl">
+                       <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-400 to-transparent" style={{ animation: 'scan 2s ease-in-out infinite' }} />
+                     </div>
+                     {/* Center crosshair dot */}
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-indigo-400/50 animate-ping" />
+                   </div>
+                   <div className="mt-6 bg-black/60 backdrop-blur-md px-6 py-2.5 rounded-xl border border-white/10">
+                     <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest">
+                       {scanStep === 1 ? '📷 Look Straight' : scanStep === 2 ? '← Turn Left Slightly' : 'Turn Right Slightly →'}
+                     </p>
+                   </div>
                 </div>
               )}
 
+              {/* Begin button */}
               {scanStep === 0 && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md flex flex-col items-center justify-center text-center p-10 space-y-6">
-                  <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-indigo-600/40 animate-bounce">
-                    <Camera size={48} strokeWidth={2.5} />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-display font-black text-white tracking-tight uppercase">Optical Readiness</h3>
-                    <p className="text-indigo-200/60 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Ready to map biometric geometry</p>
-                  </div>
-                  <button onClick={startScan} className="px-12 py-5 bg-white text-indigo-600 rounded-[1.8rem] font-display font-black text-xs uppercase tracking-[0.3em] hover:scale-105 active:scale-95 transition-all shadow-xl">
-                    Initiate Sequence
+                <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center backdrop-blur-sm">
+                  <button onClick={startScan} className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-2xl hover:bg-indigo-500 transition-all flex items-center gap-2">
+                    <Camera size={20} /> BEGIN SCAN
                   </button>
                 </div>
               )}
             </div>
 
+            {/* Error message */}
+            {errorMsg && !duplicateInfo && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold">
+                <AlertCircle size={18} /> {errorMsg}
+              </div>
+            )}
+
+            {/* Duplicate face detected — full stop UI */}
             {duplicateInfo && (
-              <div className="p-10 rounded-[3rem] bg-rose-500/10 border-2 border-rose-500/30 text-center space-y-6 animate-in">
-                <div className="w-20 h-20 bg-rose-500/20 rounded-[2rem] border-2 border-rose-400 flex items-center justify-center mx-auto shadow-2xl shadow-rose-500/20">
-                  <Shield size={36} className="text-rose-500" />
+              <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-rose-500/10 border-2 border-rose-500/30 text-center">
+                <div className="w-16 h-16 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center">
+                  <Shield size={32} className="text-rose-400" />
                 </div>
-                <div>
-                  <h4 className="text-2xl font-display font-black text-rose-500 tracking-tight uppercase">Duplicate Identity</h4>
-                  <p className="text-slate-400 text-sm font-medium mt-3 max-w-sm mx-auto leading-relaxed">
-                    Biometric profile already linked to <span className="text-white font-black">{duplicateInfo}</span>. Access Denied.
+                <div className="space-y-1.5">
+                  <h4 className="text-lg font-bold text-rose-400">Duplicate Face Detected</h4>
+                  <p className="text-sm text-rose-300/80">
+                    This face is already registered to <strong className="text-white">{duplicateInfo}</strong>.
+                    Each student must have a unique face for accurate attendance tracking.
                   </p>
                 </div>
-                <button onClick={() => { setDuplicateInfo(null); setStep(1); }} className="px-10 py-4 bg-rose-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest tap-active">
-                  Resolve Conflict
+                <button
+                  onClick={() => {
+                    setDuplicateInfo(null);
+                    setStep(1);
+                    setScanStep(0);
+                    setAngleStatus(['idle', 'idle', 'idle']);
+                    setErrorMsg(null);
+                    setStudentId('');
+                  }}
+                  className="px-6 py-3 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-bold transition-all flex items-center gap-2"
+                >
+                  <RotateCw size={16} /> Go Back & Try Different Student
                 </button>
               </div>
             )}
 
+            {/* Angle indicators + capture button */}
             {!duplicateInfo && (
-              <div className="space-y-10">
-                <div className="grid grid-cols-3 gap-6">
-                  {ANGLES.map((label, i) => (
-                    <div key={label} className="space-y-4">
-                      <div className={`h-2 rounded-full transition-all duration-700 ${angleStatus[i] === 'done' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : scanStep === i + 1 ? 'bg-indigo-600 animate-pulse' : 'bg-slate-100 dark:bg-slate-800'}`}></div>
-                      <div className="flex flex-col items-center gap-2">
-                        {angleStatus[i] === 'done' ? <ShieldCheck size={20} className="text-emerald-500" /> : <Shapes size={20} className="text-slate-300" />}
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="flex justify-between items-end px-10">
+               {ANGLES.map((label, i) => (
+                 <div key={label} className={`flex flex-col items-center gap-2 ${scanStep > i || angleStatus[i] === 'done' ? 'text-emerald-400' : scanStep === i + 1 ? 'text-indigo-400' : 'text-slate-600'}`}>
+                    {angleStatus[i] === 'done' ? (
+                      <CheckCircle2 size={24} />
+                    ) : angleStatus[i] === 'capturing' ? (
+                      <Loader2 size={24} className="animate-spin" />
+                    ) : angleStatus[i] === 'error' ? (
+                      <AlertCircle size={24} className="text-rose-500" />
+                    ) : (
+                      <RotateCw className={scanStep === i + 1 ? 'animate-spin' : ''} />
+                    )}
+                    <span className="text-[10px] font-bold uppercase">{label}</span>
+                 </div>
+               ))}
+            </div>
+            )}
 
-                {scanStep > 0 && scanStep <= 3 && angleStatus[scanStep - 1] !== 'done' && (
-                  <button onClick={captureCurrentAngle} disabled={angleStatus[scanStep - 1] === 'capturing'} className="w-full py-6 bg-indigo-600 text-white font-display font-black rounded-[2rem] text-[13px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-4 tap-active saturate-[1.2]">
-                    {angleStatus[scanStep - 1] === 'capturing' ? <Loader2 size={24} className="animate-spin" /> : <><Camera size={24} /> Capture Optical Signal</>}
-                  </button>
+            {/* Capture button — only visible when scanning is active and no duplicate */}
+            {!duplicateInfo && scanStep > 0 && scanStep <= 3 && angleStatus[scanStep - 1] !== 'done' && (
+              <button
+                onClick={captureCurrentAngle}
+                disabled={angleStatus[scanStep - 1] === 'capturing'}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2"
+              >
+                {angleStatus[scanStep - 1] === 'capturing' ? (
+                  <><Loader2 size={20} className="animate-spin" /> Registering Face…</>
+                ) : angleStatus[scanStep - 1] === 'error' ? (
+                  <><RotateCw size={20} /> Retry Capture</>
+                ) : (
+                  <><Camera size={20} /> Capture {ANGLES[scanStep - 1]} Angle</>
                 )}
-              </div>
+              </button>
             )}
           </div>
         )}
 
         {step === 3 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-10 animate-in">
-            <div className="relative">
-              <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full scale-150 animate-pulse"></div>
-              <div className="relative w-32 h-32 bg-emerald-500 rounded-[3rem] shadow-2xl shadow-emerald-500/40 flex items-center justify-center text-white rotate-3 hover:rotate-0 transition-transform duration-500">
-                <CheckCircle2 size={64} strokeWidth={2.5} />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-5xl font-display font-black text-slate-900 dark:text-white tracking-tight uppercase">Success</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium max-w-sm mx-auto leading-relaxed">
-                Admission for <span className="text-indigo-600 dark:text-indigo-400 font-black">{formData.name}</span> has been processed and biometric seeds are deployed.
-              </p>
-            </div>
-            <button onClick={() => { setStep(1); setScanStep(0); setAngleStatus(['idle', 'idle', 'idle']); setFormData({ name: '', roll: '', standard: '', section: 'A' }); setStudentId(''); setErrorMsg(null); setDuplicateInfo(null); }} className="px-12 py-5 bg-slate-950 dark:bg-white text-white dark:text-slate-950 font-display font-black rounded-3xl text-[12px] uppercase tracking-[0.3em] shadow-2xl tap-active hover:scale-105 transition-transform">
-              New Admission
-            </button>
+          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
+             <div className="w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500"><CheckCircle2 size={40} /></div>
+             <h3 className="text-2xl font-bold text-white">Pupil Registered</h3>
+             <p className="text-slate-500 max-w-sm mx-auto">Admission for <strong>{formData.name}</strong> ({formData.standard} Standard - {formData.section}) is complete and biometrics are encrypted.</p>
+             <button onClick={() => { setStep(1); setScanStep(0); setAngleStatus(['idle','idle','idle']); setFormData({ name: '', roll: '', standard: '', section: 'A' }); setStudentId(''); setErrorMsg(null); setDuplicateInfo(null); }} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/10 transition-all">NEW ADMISSION</button>
           </div>
         )}
-      </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        {[
-          { label: 'Secure', icon: Shield, color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
-          { label: 'Verified', icon: Sparkles, color: 'text-amber-600', bg: 'bg-amber-500/10' },
-          { label: 'Encrypted', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-500/10' }
-        ].map((feat, i) => (
-          <div key={i} className="flex flex-col items-center gap-3">
-            <div className={`w-14 h-14 ${feat.bg} rounded-2xl flex items-center justify-center ${feat.color}`}>
-              <feat.icon size={24} />
-            </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{feat.label}</span>
-          </div>
-        ))}
       </div>
     </div>
   );

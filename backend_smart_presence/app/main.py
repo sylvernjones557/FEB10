@@ -92,9 +92,53 @@ def on_startup():
         db.add(Staff(id=staff_ids["STF002"], organization_id=org.id, name="Vikram Das",  email="vikram@school.edu", staff_code="STF002", role="STAFF", hashed_password=security.get_password_hash("password123"), is_active=True))
         db.add(Staff(id=staff_ids["STF003"], organization_id=org.id, name="Priya Sharma", email="priya@school.edu", staff_code="STF003", role="ADMIN", hashed_password=security.get_password_hash("password123"), is_active=True))
         # Admin superuser
-        db.add(Staff(organization_id=org.id, staff_code="admin", name="Administrator", email="admin@smartpresence.edu",
-                     hashed_password=security.get_password_hash("admin"), role="ADMIN", is_superuser=True, is_active=True))
+        admin_staff = Staff(
+            organization_id=org.id,
+            staff_code="admin",
+            name="Administrator",
+            email="admin@smartpresence.edu",
+            hashed_password=security.get_password_hash("admin"),
+            role="ADMIN",
+            is_superuser=True,
+            is_active=True,
+        )
+        db.add(admin_staff)
         db.flush()
+
+        # ── Test Class group + demo test staff (testclass/testclass) ──
+        # Ensure a dedicated Test Class exists for unrestricted attendance sessions.
+        test_group = db.query(Group).filter(
+            Group.organization_id == org.id,
+            (Group.name.ilike("%Test Class%")) | (Group.code.ilike("TEST"))
+        ).first()
+        if not test_group:
+            test_group = Group(
+                organization_id=org.id,
+                name="Test Class",
+                code="TEST",
+                is_active=True,
+            )
+            db.add(test_group)
+            db.flush()
+
+        # Create a demo staff login for Test Class if it doesn't already exist.
+        existing_test_staff = db.query(Staff).filter(Staff.staff_code == "testclass").first()
+        if not existing_test_staff:
+            test_staff = Staff(
+                organization_id=org.id,
+                name="Test Class Teacher",
+                full_name="Test Class Teacher",
+                email="testclass@school.edu",
+                staff_code="testclass",
+                role="STAFF",
+                type="CLASS_TEACHER",
+                assigned_class_id=test_group.id,
+                avatar_url=None,
+                is_active=True,
+                is_superuser=False,
+                hashed_password=security.get_password_hash("testclass"),
+            )
+            db.add(test_staff)
 
         # ── Timetable ──
         tt = [

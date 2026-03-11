@@ -3,7 +3,7 @@
   "mcpVersion": "1.0",
   "serverInfo": {
     "name": "smart-presence-mcp-server",
-    "version": "2.0.0",
+    "version": "3.1.0",
     "description": "MCP Server for Smart Presence — AI-powered attendance system with face recognition, timetable scheduling, staff/student management. CPU-optimized for low-power deployments.",
     "vendor": "SmartPresence",
     "homepage": "http://127.0.0.1:3000"

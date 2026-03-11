@@ -13,8 +13,7 @@
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "recharts": "^3.6.0",
-    "web-haptics": "^0.0.6"
+    "recharts": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",

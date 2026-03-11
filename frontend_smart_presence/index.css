@@ -1,211 +1,276 @@
-/* ── Premium Design System: Smart Presence V4 ── */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
+/* Global navbar glow animations for both light and dark modes */
 :root {
-  --primary: #4f46e5;
-  --primary-glow: rgba(79, 70, 229, 0.4);
-  --secondary: #0ea5e9;
-  --accent: #f43f5e;
-  --success: #10b981;
-  --warning: #f59e0b;
-
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-
-  --font-main: 'Inter', sans-serif;
-  --font-display: 'Outfit', sans-serif;
-
   --glow-color: rgba(79, 70, 229, 0.25);
+  /* indigo glow */
   --glow-color-strong: rgba(79, 70, 229, 0.35);
   --glow-blur: 14px;
   --glow-drop: 12px;
+  --label-hover-opacity: 0.85;
 }
 
 html.dark :root {
-  --glass-bg: rgba(15, 23, 42, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-
-  --glow-color: rgba(79, 70, 229, 0.35);
-  --glow-color-strong: rgba(79, 70, 229, 0.55);
+  /* Slightly softer in dark mode to avoid overpowering */
+  --glow-color: rgba(79, 70, 229, 0.28);
+  --glow-color-strong: rgba(79, 70, 229, 0.42);
+  --glow-blur: 16px;
+  --glow-drop: 14px;
+  --label-hover-opacity: 0.8;
 }
 
-body {
-  font-family: var(--font-main);
-  background: white;
-  transition: background-color 0.5s ease;
-  overflow-x: hidden;
+html.light :root {
+  /* Make glow clearer/cleaner in light mode per requirement */
+  --glow-color: rgba(79, 70, 229, 0.32);
+  --glow-color-strong: rgba(79, 70, 229, 0.5);
+  --glow-blur: 18px;
+  --glow-drop: 16px;
+  --label-hover-opacity: 0.9;
 }
 
-html.dark body {
-  background: #020617;
-  /* Deepest blue/black */
-}
-
-/* ── Typography ── */
-h1,
-h2,
-h3,
-h4,
-.font-display {
-  font-family: var(--font-display);
-}
-
-/* ── Custom Scrollbar ── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
-}
-
-html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
-}
-
-/* ── Premium Glassmorphism ── */
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.glass-card:hover {
-  border-color: rgba(79, 70, 229, 0.3);
-}
-
-/* ── Liquid Animations ── */
+/* Generic enter animations used across pages */
 .animate-in {
-  animation: liquid-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --tw-enter-opacity: 0;
+  --tw-enter-x: 0;
+  --tw-enter-y: 0;
+  --tw-enter-scale: 1;
+  opacity: var(--tw-enter-opacity);
+  transform: translate3d(var(--tw-enter-x), var(--tw-enter-y), 0) scale3d(var(--tw-enter-scale), var(--tw-enter-scale), 1);
+  animation: sp-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes liquid-enter {
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+
+.slide-in-from-bottom-6 {
+  --tw-enter-y: 1.5rem;
+}
+
+.slide-in-from-right-6 {
+  --tw-enter-x: 1.5rem;
+}
+
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+.animate-in.bounce-in {
+  opacity: 0;
+  transform: scale3d(0.95, 0.95, 1);
+  animation: sp-bounce-in 520ms cubic-bezier(0.2, 0.9, 0.2, 1.15) forwards;
+}
+
+@keyframes sp-enter {
   from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-    filter: blur(10px);
+    opacity: var(--tw-enter-opacity, 0);
+    transform: translate3d(var(--tw-enter-x, 0), var(--tw-enter-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), 1);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
   }
 }
 
-.page-enter {
-  animation: page-slide 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes page-slide {
-  from {
-    opacity: 0;
-    transform: translateX(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* ── Floating Blobs 2.0 ── */
-.floating-blob {
-  position: fixed;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  filter: blur(120px);
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.15;
-}
-
-html.dark .floating-blob {
-  opacity: 0.08;
-}
-
-.blob-1 {
-  background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-  top: -10%;
-  left: -10%;
-  animation: blob-float 30s infinite alternate ease-in-out;
-}
-
-.blob-2 {
-  background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
-  bottom: -10%;
-  right: -10%;
-  animation: blob-float 25s infinite alternate-reverse ease-in-out;
-}
-
-.blob-3 {
-  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
-  top: 40%;
-  left: 50%;
-  animation: blob-float 35s infinite alternate ease-in-out;
-}
-
-@keyframes blob-float {
+@keyframes sp-bounce-in {
   0% {
-    transform: translate(0, 0) scale(1);
+    opacity: 0;
+    transform: scale3d(0.95, 0.95, 1);
   }
 
-  33% {
-    transform: translate(10%, 15%) scale(1.1);
-  }
-
-  66% {
-    transform: translate(-15%, 5%) scale(0.9);
+  60% {
+    opacity: 1;
+    transform: scale3d(1.03, 1.03, 1);
   }
 
   100% {
-    transform: translate(5%, -10%) scale(1.05);
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
   }
 }
 
-/* ── Interactive Elements ── */
-.tap-active {
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* Performance optimizations for mobile */
+@media (max-width: 768px) {
+  .nav-blur {
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+  }
+
+  .backdrop-blur-md,
+  .backdrop-blur-xl {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  /* Reduce animation complexity on mobile */
+  .page-enter {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Disable heavy hover transitions on mobile as they aren't needed */
+  .nav-glow:hover .glow-target,
+  .nav-glow-logout:hover .glow-target-rose {
+    animation: none;
+    transform: none;
+  }
 }
 
-.tap-active:active {
-  transform: scale(0.94);
+/* Full-screen camera safe-area helpers */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .p-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .p-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
-.nav-glow {
-  transition: all 0.3s ease;
+/* Fullscreen scanner scrollbar hide */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Tabular nums for smooth counter transitions */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── iPhone Face ID-style scan line sweep ── */
+@keyframes scanSweep {
+  0% {
+    top: 5%;
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    top: 92%;
+    opacity: 0;
+  }
+}
+
+.scan-line-sweep {
+  animation: scanSweep 2.4s ease-in-out infinite;
+}
+
+/* Face guide glow pulse */
+.face-guide-active svg {
+  filter: drop-shadow(0 0 18px rgba(19, 127, 236, 0.35));
+}
+
+.face-guide-idle svg {
+  filter: none;
+  transition: filter 0.5s;
+}
+
+/* Slide-in-from-bottom for recognized card */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in.slide-in-from-bottom-4 {
+  animation: slideInFromBottom 0.4s ease-out forwards;
+}
+
+.animate-in.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    filter: none;
+  }
+
+  35% {
+    box-shadow: 0 0 var(--glow-blur) var(--glow-color);
+    filter: drop-shadow(0 0 var(--glow-drop) var(--glow-color-strong));
+    transform: translateY(-1px) scale(1.06);
+  }
+
+  70% {
+    box-shadow: 0 0 calc(var(--glow-blur) * 0.8) var(--glow-color);
+    filter: drop-shadow(0 0 calc(var(--glow-drop) * 0.8) var(--glow-color-strong));
+    transform: translateY(0) scale(1.03);
+  }
+
+  100% {
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    filter: none;
+    transform: none;
+  }
+}
+
+/* Apply glow on navbar items */
 .nav-glow:hover .glow-target {
-  background: var(--primary-glow);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px -5px var(--primary-glow);
+  box-shadow: 0 0 var(--glow-blur) var(--glow-color);
+  filter: drop-shadow(0 0 var(--glow-drop) var(--glow-color-strong));
+  transform: scale(1.07);
+  animation: glowPulse 900ms ease-out;
 }
 
-/* ── Face Scanner Effects ── */
+/* Keep a subtle persistent glow on active items */
+.nav-glow[data-active="true"] .glow-target {
+  box-shadow: 0 0 calc(var(--glow-blur) * 0.6) rgba(79, 70, 229, 0.18);
+}
+
+html.dark .nav-glow[data-active="true"] .glow-target {
+  box-shadow: 0 0 calc(var(--glow-blur) * 0.7) rgba(79, 70, 229, 0.25);
+}
+
+/* Label clarity tweaks */
+.nav-glow:hover .glow-label {
+  opacity: var(--label-hover-opacity);
+  filter: saturate(1.05) contrast(1.02);
+}
+
+/* Logout (rose) icon hover glow, matching existing design but smoother */
+.nav-glow-logout:hover .glow-target-rose {
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.22);
+  filter: drop-shadow(0 0 14px rgba(244, 63, 94, 0.35));
+  transform: scale(1.07);
+  animation: glowPulse 900ms ease-out;
+}
+
+/* Face scanner scanning line animation */
 @keyframes scan {
 
   0%,
   100% {
     top: 0%;
-    opacity: 0.2;
+    opacity: 0.3;
   }
 
   50% {
@@ -214,68 +279,27 @@ html.dark .floating-blob {
   }
 }
 
-.scan-line {
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(to right, transparent, var(--primary), transparent);
-  animation: scan 3s ease-in-out infinite;
-}
-
-/* ── Shimmer Effect ── */
-.shimmer {
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(255, 255, 255, 0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite;
-}
-
-@keyframes shimmer {
-  from {
-    background-position: 200% 0;
+/* Face scanner enrollment ring animation */
+@keyframes face-ring-spin {
+  0% {
+    transform: rotate(0deg);
   }
 
-  to {
-    background-position: -200% 0;
+  100% {
+    transform: rotate(360deg);
   }
 }
 
-/* ── School Grid Pattern ── */
-.school-grid {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
+@keyframes face-ring-pulse {
 
-html.dark .school-grid {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-}
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
 
-/* ── Tabular Nums ── */
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Navbar persistence ── */
-.nav-glow[data-active="true"] .glow-target {
-  background: var(--primary);
-  color: white !important;
-  box-shadow: 0 8px 16px -4px var(--primary-glow);
-}
-
-.nav-glow[data-active="true"] .glow-label {
-  color: var(--primary);
-  font-weight: 800;
-  opacity: 1;
-}
-
-/* Utility for no-scrollbar */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
 }

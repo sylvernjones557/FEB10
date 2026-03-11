@@ -2,8 +2,6 @@
 import React, { useState } from 'react';
 import { Lock, User, ChevronRight, Eye, EyeOff, BookOpen, ShieldCheck, Zap } from 'lucide-react';
 
-import { haptics } from '../services/haptics';
-
 interface LoginProps {
   onLogin: (username: string, password: string) => void;
 }
@@ -15,13 +13,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    haptics.impactMedium();
     if (username.trim()) onLogin(username, password);
-  };
-
-  const togglePassword = () => {
-    haptics.impactLight();
-    setShowPassword(!showPassword);
   };
 
   return (
@@ -82,7 +74,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 />
                 <button
                   type="button"
-                  onClick={togglePassword}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 tap-active"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

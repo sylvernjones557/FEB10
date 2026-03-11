@@ -106,6 +106,40 @@
       "toolSequence": [
         { "step": 1, "tool": "student_create", "description": "Create each student record (repeat per student)", "repeat": true }
       ]
+    },
+    {
+      "name": "testclass_quick_session",
+      "description": "Run a full AI attendance session against the Test Class (all students, no timetable limits). Useful for demo and stress testing.",
+      "arguments": [
+        { "name": "group_id", "type": "string", "required": true, "description": "UUID of the Test Class group (name contains 'Test' or code 'TEST')." },
+        { "name": "camera_frames", "type": "array", "items": { "type": "string", "format": "binary" }, "required": true, "description": "Camera frame images to scan for faces." },
+        { "name": "manual_additions", "type": "array", "items": { "type": "string" }, "required": false, "description": "Student UUIDs to manually mark present (optional)." }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "attendance_start_session", "description": "Start Test Class attendance session" },
+        { "step": 2, "tool": "recognition_recognize", "description": "Send each camera frame for face recognition (repeat per frame)", "repeat": true },
+        { "step": 3, "tool": "attendance_stop", "description": "Stop the scanning phase" },
+        { "step": 4, "tool": "attendance_verify", "description": "Submit any manual additions (optional)" },
+        { "step": 5, "tool": "attendance_finalize", "description": "Finalize and persist Test Class attendance records" }
+      ]
+    },
+    {
+      "name": "teacher_testclass_workflow",
+      "description": "Teacher-centric flow using the Test Class: ensure login, list all students in Test Class, then run a short attendance session.",
+      "arguments": [
+        { "name": "username", "type": "string", "required": false, "description": "Staff login (defaults to 'testclass')." },
+        { "name": "password", "type": "string", "required": false, "description": "Password (defaults to 'testclass')." },
+        { "name": "group_id", "type": "string", "required": true, "description": "UUID of the Test Class group." },
+        { "name": "camera_frames", "type": "array", "items": { "type": "string", "format": "binary" }, "required": false, "description": "Optional camera frames for quick scan." }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "auth_login", "description": "Authenticate as Test Class teacher (or provided credentials)" },
+        { "step": 2, "tool": "group_students", "description": "List all students visible in the Test Class" },
+        { "step": 3, "tool": "attendance_start_session", "description": "Start Test Class attendance session" },
+        { "step": 4, "tool": "recognition_recognize", "description": "Optionally process camera frames for recognition (repeat per frame)", "repeat": true },
+        { "step": 5, "tool": "attendance_stop", "description": "Stop scanning phase" },
+        { "step": 6, "tool": "attendance_finalize", "description": "Finalize Test Class attendance" }
+      ]
     }
   ]
 }
