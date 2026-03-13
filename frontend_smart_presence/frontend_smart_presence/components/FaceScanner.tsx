@@ -109,7 +109,7 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
     setStatusText('Starting camera…');
     try {
       const ms = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
+        video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 } },
       });
       streamRef.current = ms;
       setStream(ms);

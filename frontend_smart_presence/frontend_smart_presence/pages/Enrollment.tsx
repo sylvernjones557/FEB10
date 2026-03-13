@@ -22,7 +22,7 @@ const Enrollment: React.FC = () => {
   useEffect(() => {
     if (step === 2) {
       navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
       }).then(stream => {
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
