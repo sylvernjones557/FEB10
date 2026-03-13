@@ -1,0 +1,55 @@
+{
+  "jsonrpc": "2.0",
+  "mcpVersion": "1.0",
+  "serverInfo": {
+    "name": "smart-presence-mcp-server",
+    "version": "3.1.0",
+    "description": "MCP Server for Smart Presence — AI-powered attendance system with face recognition, timetable scheduling, staff/student management. CPU-optimized for low-power deployments.",
+    "vendor": "SmartPresence",
+    "homepage": "http://127.0.0.1:3000"
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": true,
+    "logging": true
+  },
+  "transport": {
+    "type": "stdio",
+    "command": "python",
+    "args": ["mcp_server.py"],
+    "cwd": "."
+  },
+  "environment": {
+    "backend": {
+      "framework": "FastAPI",
+      "runtime": "Python 3.11",
+      "server": "uvicorn",
+      "host": "127.0.0.1",
+      "port": 8000,
+      "baseUrl": "http://127.0.0.1:8000",
+      "apiPrefix": "/api/v1",
+      "database": "SQLite (local)",
+      "orm": "SQLAlchemy",
+      "vectorDb": "ChromaDB",
+      "faceEngine": "InsightFace (buffalo_sc)",
+      "onnxRuntime": "1.16.3 (CPU-only)"
+    },
+    "frontend": {
+      "framework": "React 19 + TypeScript",
+      "bundler": "Vite 6.4.1",
+      "styling": "Tailwind CSS",
+      "httpClient": "Axios",
+      "host": "127.0.0.1",
+      "port": 3000,
+      "baseUrl": "http://127.0.0.1:3000"
+    },
+    "auth": {
+      "method": "JWT Bearer Token",
+      "tokenEndpoint": "/api/v1/login/access-token",
+      "tokenExpiry": "8 days",
+      "roles": ["ADMIN", "STAFF"],
+      "staffTypes": ["CLASS_TEACHER", "SUBJECT_TEACHER"]
+    }
+  }
+}

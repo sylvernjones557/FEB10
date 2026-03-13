@@ -1,0 +1,69 @@
+# 🎓 College Network "Flex" Deployment Guide
+
+Since your college blocks `ngrok`, `winget`, and `chocolatey`, follow these steps to get your app running on your phone via a secure tunnel.
+
+## 1. Get the Apps Running Locally
+Ensure your backend and frontend are ready.
+
+**Frontend (Build it once):**
+```powershell
+cd e:\FEB10\frontend_smart_presence
+npm run build
+```
+
+**Backend (Serve everything on Port 8000):**
+```powershell
+cd e:\FEB10\backend_smart_presence
+python -m uvicorn app.main:app --port 8000 --host 0.0.0.0
+```
+*Wait for it to say "Uvicorn running on http://0.0.0.0:8000"*
+
+---
+
+## 2. Install Cloudflare Tunnel (Manual Bypass)
+Run this in a **new PowerShell window** to download the `cloudflared` binary directly from GitHub:
+
+```powershell
+# Create a folder for the tool
+mkdir C:\tools -ErrorAction SilentlyContinue
+cd C:\tools
+
+# Download the latest cloudflared exe directly (Bypasses Winget/Choco)
+Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
+
+# Run the tunnel (Port 8000)
+.\cloudflared.exe tunnel --url http://localhost:8000
+```
+
+---
+
+## 3. The "Phone Flex" 📱
+1. Look at the output of the `cloudflared` command.
+2. It will show a URL like: `https://some-random-words.trycloudflare.com`
+3. **Open this URL on your phone.**
+4. Since your [main.py](file:///e:/FEB10/backend_smart_presence/app/main.py) serves the frontend, the PWA will load automatically!
+5. **Pro Tip:** Add it to your phone's Home Screen to see the full PWA icon and splashes.
+
+---
+
+## 4. Syncing GitHub Properly
+Your `master` branch is currently **much newer** and more organized than the `main` branch on GitHub. To make GitHub look professional for external visitors:
+
+**Push your work to Master:**
+```bash
+git push origin master
+```
+
+**Optional: Make Master the default branch on GitHub:**
+1. Go to your repo on GitHub.
+2. Settings > Branches.
+3. Switch the default branch to `master`.
+
+---
+
+## 5. Troubleshooting College DNS
+If Cloudflare is also blocked:
+1. **The Mobile Hotspot Trick**: Connect your PC and Phone to your phone's mobile hotspot.
+2. Find your PC's IP (`ipconfig`).
+3. Open `http://[YOUR_PC_IP]:8000` on your phone browser.
+4. This bypasses the college network entirely.

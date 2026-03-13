@@ -1,0 +1,3828 @@
+{
+  "timestamp": "2026-03-08 18:48:20",
+  "mode": "CPU-only",
+  "python_version": "3.11.4 (tags/v3.11.4:d2340ef, Jun  7 2023, 05:45:37) [MSC v.1934 64 bit (AMD64)]",
+  "total_tests": 24,
+  "passed": 24,
+  "failed": 0,
+  "avg_response_ms": 7.34,
+  "results": [
+    {
+      "test": "Root endpoint",
+      "method": "GET",
+      "url": "/",
+      "status_code": 200,
+      "response_time_ms": 4.25,
+      "response_body": {
+        "message": "Welcome to Smart Presence Backend",
+        "status": "online",
+        "version": "1.0.0",
+        "mode": "CPU-optimized (low-power)",
+        "docs_url": "/api/v1/docs"
+      },
+      "pass": true
+    },
+    {
+      "test": "Health check",
+      "method": "GET",
+      "url": "/health",
+      "status_code": 200,
+      "response_time_ms": 3.0,
+      "response_body": {
+        "status": "ok",
+        "device": "cpu",
+        "mode": "low-power"
+      },
+      "pass": true
+    },
+    {
+      "test": "System info",
+      "method": "GET",
+      "url": "/system-info",
+      "status_code": 200,
+      "response_time_ms": 2.0,
+      "response_body": {
+        "device": "CPU-only",
+        "database": "SQLite (local)",
+        "face_model": "buffalo_sc",
+        "det_size": 320,
+        "max_image_dim": 640,
+        "onnx_threads": 2,
+        "lazy_load": true,
+        "env_omp_threads": "2",
+        "env_cuda_visible": "",
+        "frontend_mode": "standalone (API only)",
+        "python_version": "3.11.8",
+        "platform": "Windows-10-10.0.26200-SP0"
+      },
+      "pass": true
+    },
+    {
+      "test": "OpenAPI schema",
+      "method": "GET",
+      "url": "/api/v1/openapi.json",
+      "status_code": 200,
+      "response_time_ms": 26.28,
+      "response_body": {
+        "openapi": "3.1.0",
+        "info": {
+          "title": "Smart Presence Backend",
+          "description": "Smart Presence Backend API - CPU-optimized for low-power systems. Local SQLite + InsightFace.",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/v1/login/access-token": {
+            "post": {
+              "tags": [
+                "auth"
+              ],
+              "summary": "Login Access Token",
+              "operationId": "login_access_token_api_v1_login_access_token_post",
+              "requestBody": {
+                "content": {
+                  "application/x-www-form-urlencoded": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Body_login_access_token_api_v1_login_access_token_post"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Token"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/organizations/": {
+            "get": {
+              "tags": [
+                "organizations"
+              ],
+              "summary": "Read Organizations",
+              "operationId": "read_organizations_api_v1_organizations__get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "items": {
+                          "$ref": "#/components/schemas/Organization"
+                        },
+                        "type": "array",
+                        "title": "Response Read Organizations Api V1 Organizations  Get"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            },
+            "post": {
+              "tags": [
+                "organizations"
+              ],
+              "summary": "Create Organization",
+              "operationId": "create_organization_api_v1_organizations__post",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/OrganizationCreate"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Organization"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/organizations/{org_id}": {
+            "get": {
+              "tags": [
+                "organizations"
+              ],
+              "summary": "Read Organization",
+              "operationId": "read_organization_api_v1_organizations__org_id__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "org_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Org Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Organization"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/groups/": {
+            "get": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Read Groups",
+              "operationId": "read_groups_api_v1_groups__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "organization_id",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Organization Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Group"
+                        },
+                        "title": "Response Read Groups Api V1 Groups  Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "post": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Create Group",
+              "operationId": "create_group_api_v1_groups__post",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/GroupCreate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Group"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/groups/{group_id}": {
+            "get": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Read Group",
+              "operationId": "read_group_api_v1_groups__group_id__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Group Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Group"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "patch": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Update Group",
+              "operationId": "update_group_api_v1_groups__group_id__patch",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Group Id"
+                  }
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/GroupUpdate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Group"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "delete": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Delete Group",
+              "operationId": "delete_group_api_v1_groups__group_id__delete",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Group Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Delete Group Api V1 Groups  Group Id  Delete"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/groups/{group_id}/students": {
+            "get": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Read Group Students",
+              "operationId": "read_group_students_api_v1_groups__group_id__students_get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Group Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Student"
+                        },
+                        "title": "Response Read Group Students Api V1 Groups  Group Id  Students Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/groups/{group_id}/timetable": {
+            "get": {
+              "tags": [
+                "groups"
+              ],
+              "summary": "Read Group Timetable",
+              "operationId": "read_group_timetable_api_v1_groups__group_id__timetable_get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Group Id"
+                  }
+                },
+                {
+                  "name": "day_of_week",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Day Of Week"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Timetable"
+                        },
+                        "title": "Response Read Group Timetable Api V1 Groups  Group Id  Timetable Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/staff/": {
+            "get": {
+              "tags": [
+                "staff"
+              ],
+              "summary": "Read Staff",
+              "operationId": "read_staff_api_v1_staff__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "skip",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "type": "integer",
+                    "default": 0,
+                    "title": "Skip"
+                  }
+                },
+                {
+                  "name": "limit",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "type": "integer",
+                    "default": 100,
+                    "title": "Limit"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Staff"
+                        },
+                        "title": "Response Read Staff Api V1 Staff  Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "post": {
+              "tags": [
+                "staff"
+              ],
+              "summary": "Create Staff",
+              "operationId": "create_staff_api_v1_staff__post",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/StaffCreate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Staff"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/staff/me": {
+            "get": {
+              "tags": [
+                "staff"
+              ],
+              "summary": "Read Staff Me",
+              "operationId": "read_staff_me_api_v1_staff_me_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Staff"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/staff/{staff_id}": {
+            "get": {
+              "tags": [
+                "staff"
+              ],
+              "summary": "Read Staff By Id",
+              "operationId": "read_staff_by_id_api_v1_staff__staff_id__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "staff_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Staff Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Staff"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "patch": {
+              "tags": [
+                "staff"
+              ],
+              "summary": "Update Staff",
+              "operationId": "update_staff_api_v1_staff__staff_id__patch",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "staff_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Staff Id"
+                  }
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/StaffUpdate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Staff"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "delete": {
+              "tags": [
+                "staff"
+              ],
+              "summary": "Delete Staff",
+              "operationId": "delete_staff_api_v1_staff__staff_id__delete",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "staff_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Staff Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Delete Staff Api V1 Staff  Staff Id  Delete"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/students/": {
+            "get": {
+              "tags": [
+                "students"
+              ],
+              "summary": "Read Students",
+              "operationId": "read_students_api_v1_students__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Group Id"
+                  }
+                },
+                {
+                  "name": "organization_id",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Organization Id"
+                  }
+                },
+                {
+                  "name": "skip",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "type": "integer",
+                    "default": 0,
+                    "title": "Skip"
+                  }
+                },
+                {
+                  "name": "limit",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "type": "integer",
+                    "default": 100,
+                    "title": "Limit"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Student"
+                        },
+                        "title": "Response Read Students Api V1 Students  Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "post": {
+              "tags": [
+                "students"
+              ],
+              "summary": "Create Student",
+              "operationId": "create_student_api_v1_students__post",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/StudentCreate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/students/{student_id}": {
+            "get": {
+              "tags": [
+                "students"
+              ],
+              "summary": "Read Student",
+              "operationId": "read_student_api_v1_students__student_id__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "student_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Student Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "patch": {
+              "tags": [
+                "students"
+              ],
+              "summary": "Update Student",
+              "operationId": "update_student_api_v1_students__student_id__patch",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "student_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Student Id"
+                  }
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/StudentUpdate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "delete": {
+              "tags": [
+                "students"
+              ],
+              "summary": "Delete Student",
+              "operationId": "delete_student_api_v1_students__student_id__delete",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "student_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Student Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Delete Student Api V1 Students  Student Id  Delete"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/timetable/": {
+            "get": {
+              "tags": [
+                "timetable"
+              ],
+              "summary": "Read Timetable",
+              "operationId": "read_timetable_api_v1_timetable__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "group_id",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Group Id"
+                  }
+                },
+                {
+                  "name": "staff_id",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Staff Id"
+                  }
+                },
+                {
+                  "name": "day_of_week",
+                  "in": "query",
+                  "required": false,
+                  "schema": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "title": "Day Of Week"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Timetable"
+                        },
+                        "title": "Response Read Timetable Api V1 Timetable  Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "post": {
+              "tags": [
+                "timetable"
+              ],
+              "summary": "Create Timetable Entry",
+              "operationId": "create_timetable_entry_api_v1_timetable__post",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TimetableCreate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Timetable"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/timetable/{entry_id}": {
+            "get": {
+              "tags": [
+                "timetable"
+              ],
+              "summary": "Read Timetable Entry",
+              "operationId": "read_timetable_entry_api_v1_timetable__entry_id__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "entry_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Entry Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Timetable"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "patch": {
+              "tags": [
+                "timetable"
+              ],
+              "summary": "Update Timetable Entry",
+              "operationId": "update_timetable_entry_api_v1_timetable__entry_id__patch",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "entry_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Entry Id"
+                  }
+                }
+              ],
+              "requestBody": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TimetableUpdate"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Timetable"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "delete": {
+              "tags": [
+                "timetable"
+              ],
+              "summary": "Delete Timetable Entry",
+              "operationId": "delete_timetable_entry_api_v1_timetable__entry_id__delete",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "entry_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Entry Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Delete Timetable Entry Api V1 Timetable  Entry Id  Delete"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/attendance/start": {
+            "post": {
+              "tags": [
+                "attendance"
+              ],
+              "summary": "Start Session",
+              "description": "Start a new attendance scanning session for a group.",
+              "operationId": "start_session_api_v1_attendance_start_post",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AttendanceSessionCreate"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Start Session Api V1 Attendance Start Post"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/attendance/status": {
+            "get": {
+              "tags": [
+                "attendance"
+              ],
+              "summary": "Get Status",
+              "description": "Get the current attendance session status.",
+              "operationId": "get_status_api_v1_attendance_status_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Get Status Api V1 Attendance Status Get"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/attendance/stop": {
+            "post": {
+              "tags": [
+                "attendance"
+              ],
+              "summary": "Stop Scanning",
+              "description": "Stop the scanning phase, move to VERIFYING.",
+              "operationId": "stop_scanning_api_v1_attendance_stop_post",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Stop Scanning Api V1 Attendance Stop Post"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/attendance/verify": {
+            "post": {
+              "tags": [
+                "attendance"
+              ],
+              "summary": "Verify Attendance",
+              "description": "Apply manual adjustments (add present, remove present).",
+              "operationId": "verify_attendance_api_v1_attendance_verify_post",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AttendanceVerifyRequest"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Verify Attendance Api V1 Attendance Verify Post"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/attendance/finalize": {
+            "post": {
+              "tags": [
+                "attendance"
+              ],
+              "summary": "Finalize Session",
+              "description": "Finalize the session and persist attendance records to DB.",
+              "operationId": "finalize_session_api_v1_attendance_finalize_post",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Finalize Session Api V1 Attendance Finalize Post"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/attendance/history/weekly/{staff_id}": {
+            "get": {
+              "tags": [
+                "attendance"
+              ],
+              "summary": "Get Weekly History",
+              "description": "Get attendance session history for a staff member over the past 7 days.",
+              "operationId": "get_weekly_history_api_v1_attendance_history_weekly__staff_id__get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "staff_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Staff Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Get Weekly History Api V1 Attendance History Weekly  Staff Id  Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/v1/recognition/register-face": {
+            "post": {
+              "tags": [
+                "recognition"
+              ],
+              "summary": "Register Face",
+              "description": "Register a face embedding for a student.",
+              "operationId": "register_face_api_v1_recognition_register_face_post",
+              "requestBody": {
+                "content": {
+                  "multipart/form-data": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Body_register_face_api_v1_recognition_register_face_post"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Register Face Api V1 Recognition Register Face Post"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/recognition/clear-faces": {
+            "post": {
+              "tags": [
+                "recognition"
+              ],
+              "summary": "Clear All Faces",
+              "description": "Clear ALL face embeddings from the vector store and reset face_data_registered flags.",
+              "operationId": "clear_all_faces_api_v1_recognition_clear_faces_post",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Clear All Faces Api V1 Recognition Clear Faces Post"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/recognition/recognize": {
+            "post": {
+              "tags": [
+                "recognition"
+              ],
+              "summary": "Recognize Face",
+              "description": "Recognize faces in an image frame. Returns matches with student IDs and bounding boxes.",
+              "operationId": "recognize_face_api_v1_recognition_recognize_post",
+              "requestBody": {
+                "content": {
+                  "multipart/form-data": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Body_recognize_face_api_v1_recognition_recognize_post"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Recognize Face Api V1 Recognition Recognize Post"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/stats/institutional": {
+            "get": {
+              "tags": [
+                "stats"
+              ],
+              "summary": "Get Institutional Stats",
+              "description": "Aggregate institutional statistics for the dashboard.",
+              "operationId": "get_institutional_stats_api_v1_stats_institutional_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Get Institutional Stats Api V1 Stats Institutional Get"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/classes/live": {
+            "get": {
+              "tags": [
+                "classes"
+              ],
+              "summary": "Get Live Classes",
+              "description": "Get currently active classes based on timetable and current time.",
+              "operationId": "get_live_classes_api_v1_classes_live_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Get Live Classes Api V1 Classes Live Get"
+                      }
+                    }
+                  }
+                }
+              },
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ]
+            }
+          },
+          "/api/v1/classes/{class_id}/schedule/today": {
+            "get": {
+              "tags": [
+                "classes"
+              ],
+              "summary": "Get Class Schedule Today",
+              "description": "Get today's schedule for a specific class.",
+              "operationId": "get_class_schedule_today_api_v1_classes__class_id__schedule_today_get",
+              "security": [
+                {
+                  "OAuth2PasswordBearer": []
+                }
+              ],
+              "parameters": [
+                {
+                  "name": "class_id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "uuid",
+                    "title": "Class Id"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "title": "Response Get Class Schedule Today Api V1 Classes  Class Id  Schedule Today Get"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/": {
+            "get": {
+              "summary": "Read Root",
+              "operationId": "read_root__get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/health": {
+            "get": {
+              "summary": "Health Check",
+              "operationId": "health_check_health_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/system-info": {
+            "get": {
+              "summary": "System Info",
+              "operationId": "system_info_system_info_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "schemas": {
+            "AttendanceSessionCreate": {
+              "properties": {
+                "group_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Group Id"
+                }
+              },
+              "type": "object",
+              "required": [
+                "group_id"
+              ],
+              "title": "AttendanceSessionCreate"
+            },
+            "AttendanceVerifyRequest": {
+              "properties": {
+                "manual_present": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Manual Present",
+                  "default": []
+                },
+                "manual_absent": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Manual Absent",
+                  "default": []
+                }
+              },
+              "type": "object",
+              "title": "AttendanceVerifyRequest"
+            },
+            "Body_login_access_token_api_v1_login_access_token_post": {
+              "properties": {
+                "grant_type": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "password"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Grant Type"
+                },
+                "username": {
+                  "type": "string",
+                  "title": "Username"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password"
+                },
+                "scope": {
+                  "type": "string",
+                  "title": "Scope",
+                  "default": ""
+                },
+                "client_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Client Id"
+                },
+                "client_secret": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Client Secret"
+                }
+              },
+              "type": "object",
+              "required": [
+                "username",
+                "password"
+              ],
+              "title": "Body_login_access_token_api_v1_login_access_token_post"
+            },
+            "Body_recognize_face_api_v1_recognition_recognize_post": {
+              "properties": {
+                "file": {
+                  "type": "string",
+                  "format": "binary",
+                  "title": "File"
+                }
+              },
+              "type": "object",
+              "required": [
+                "file"
+              ],
+              "title": "Body_recognize_face_api_v1_recognition_recognize_post"
+            },
+            "Body_register_face_api_v1_recognition_register_face_post": {
+              "properties": {
+                "student_id": {
+                  "type": "string",
+                  "title": "Student Id"
+                },
+                "file": {
+                  "type": "string",
+                  "format": "binary",
+                  "title": "File"
+                }
+              },
+              "type": "object",
+              "required": [
+                "student_id",
+                "file"
+              ],
+              "title": "Body_register_face_api_v1_recognition_register_face_post"
+            },
+            "Group": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "code": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Code"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Id"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Organization Id"
+                },
+                "is_active": {
+                  "type": "boolean",
+                  "title": "Is Active",
+                  "default": true
+                },
+                "created_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Created At"
+                },
+                "updated_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Updated At"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "id",
+                "organization_id"
+              ],
+              "title": "Group"
+            },
+            "GroupCreate": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "code": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Code"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Organization Id"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "organization_id"
+              ],
+              "title": "GroupCreate"
+            },
+            "GroupUpdate": {
+              "properties": {
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Name"
+                },
+                "code": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Code"
+                },
+                "is_active": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Is Active"
+                }
+              },
+              "type": "object",
+              "title": "GroupUpdate"
+            },
+            "HTTPValidationError": {
+              "properties": {
+                "detail": {
+                  "items": {
+                    "$ref": "#/components/schemas/ValidationError"
+                  },
+                  "type": "array",
+                  "title": "Detail"
+                }
+              },
+              "type": "object",
+              "title": "HTTPValidationError"
+            },
+            "Organization": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Id"
+                },
+                "created_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Created At"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "id"
+              ],
+              "title": "Organization"
+            },
+            "OrganizationCreate": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "title": "OrganizationCreate"
+            },
+            "Staff": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Email"
+                },
+                "staff_code": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Staff Code"
+                },
+                "role": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Role",
+                  "default": "STAFF"
+                },
+                "type": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Type",
+                  "default": "SUBJECT_TEACHER"
+                },
+                "primary_subject": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Primary Subject"
+                },
+                "assigned_class_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Assigned Class Id"
+                },
+                "avatar_url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Avatar Url"
+                },
+                "full_name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Full Name"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Id"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Organization Id"
+                },
+                "is_active": {
+                  "type": "boolean",
+                  "title": "Is Active",
+                  "default": true
+                },
+                "is_superuser": {
+                  "type": "boolean",
+                  "title": "Is Superuser",
+                  "default": false
+                },
+                "created_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Created At"
+                },
+                "updated_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Updated At"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "id",
+                "organization_id"
+              ],
+              "title": "Staff"
+            },
+            "StaffCreate": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Email"
+                },
+                "staff_code": {
+                  "type": "string",
+                  "title": "Staff Code"
+                },
+                "role": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Role",
+                  "default": "STAFF"
+                },
+                "type": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Type",
+                  "default": "SUBJECT_TEACHER"
+                },
+                "primary_subject": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Primary Subject"
+                },
+                "assigned_class_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Assigned Class Id"
+                },
+                "avatar_url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Avatar Url"
+                },
+                "full_name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Full Name"
+                },
+                "organization_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Organization Id"
+                },
+                "password": {
+                  "type": "string",
+                  "title": "Password"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "staff_code",
+                "password"
+              ],
+              "title": "StaffCreate"
+            },
+            "StaffUpdate": {
+              "properties": {
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Name"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Email"
+                },
+                "role": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Role"
+                },
+                "type": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Type"
+                },
+                "primary_subject": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Primary Subject"
+                },
+                "assigned_class_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Assigned Class Id"
+                },
+                "avatar_url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Avatar Url"
+                },
+                "full_name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Full Name"
+                },
+                "is_active": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Is Active"
+                },
+                "password": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Password"
+                }
+              },
+              "type": "object",
+              "title": "StaffUpdate"
+            },
+            "Student": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "roll_no": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Roll No"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Email"
+                },
+                "external_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "External Id"
+                },
+                "avatar_url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Avatar Url"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Id"
+                },
+                "organization_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Organization Id"
+                },
+                "group_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Group Id"
+                },
+                "face_data_registered": {
+                  "type": "boolean",
+                  "title": "Face Data Registered",
+                  "default": false
+                },
+                "is_active": {
+                  "type": "boolean",
+                  "title": "Is Active",
+                  "default": true
+                },
+                "created_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Created At"
+                },
+                "updated_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Updated At"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "id",
+                "organization_id",
+                "group_id"
+              ],
+              "title": "Student"
+            },
+            "StudentCreate": {
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "Name"
+                },
+                "roll_no": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Roll No"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Email"
+                },
+                "external_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "External Id"
+                },
+                "avatar_url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Avatar Url"
+                },
+                "organization_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Organization Id"
+                },
+                "group_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Group Id"
+                }
+              },
+              "type": "object",
+              "required": [
+                "name",
+                "group_id"
+              ],
+              "title": "StudentCreate"
+            },
+            "StudentUpdate": {
+              "properties": {
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Name"
+                },
+                "roll_no": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Roll No"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Email"
+                },
+                "external_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "External Id"
+                },
+                "avatar_url": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Avatar Url"
+                },
+                "group_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Group Id"
+                },
+                "is_active": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Is Active"
+                },
+                "face_data_registered": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Face Data Registered"
+                }
+              },
+              "type": "object",
+              "title": "StudentUpdate"
+            },
+            "Timetable": {
+              "properties": {
+                "day_of_week": {
+                  "type": "integer",
+                  "title": "Day Of Week"
+                },
+                "period": {
+                  "type": "integer",
+                  "title": "Period"
+                },
+                "subject": {
+                  "type": "string",
+                  "title": "Subject"
+                },
+                "start_time": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Start Time"
+                },
+                "end_time": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "End Time"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Id"
+                },
+                "group_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Group Id"
+                },
+                "staff_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Staff Id"
+                },
+                "created_at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Created At"
+                }
+              },
+              "type": "object",
+              "required": [
+                "day_of_week",
+                "period",
+                "subject",
+                "id",
+                "group_id"
+              ],
+              "title": "Timetable"
+            },
+            "TimetableCreate": {
+              "properties": {
+                "day_of_week": {
+                  "type": "integer",
+                  "title": "Day Of Week"
+                },
+                "period": {
+                  "type": "integer",
+                  "title": "Period"
+                },
+                "subject": {
+                  "type": "string",
+                  "title": "Subject"
+                },
+                "start_time": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Start Time"
+                },
+                "end_time": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "End Time"
+                },
+                "group_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Group Id"
+                },
+                "staff_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Staff Id"
+                }
+              },
+              "type": "object",
+              "required": [
+                "day_of_week",
+                "period",
+                "subject",
+                "group_id"
+              ],
+              "title": "TimetableCreate"
+            },
+            "TimetableUpdate": {
+              "properties": {
+                "day_of_week": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Day Of Week"
+                },
+                "period": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Period"
+                },
+                "subject": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Subject"
+                },
+                "staff_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Staff Id"
+                },
+                "start_time": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Start Time"
+                },
+                "end_time": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "End Time"
+                }
+              },
+              "type": "object",
+              "title": "TimetableUpdate"
+            },
+            "Token": {
+              "properties": {
+                "access_token": {
+                  "type": "string",
+                  "title": "Access Token"
+                },
+                "token_type": {
+                  "type": "string",
+                  "title": "Token Type"
+                }
+              },
+              "type": "object",
+              "required": [
+                "access_token",
+                "token_type"
+              ],
+              "title": "Token"
+            },
+            "ValidationError": {
+              "properties": {
+                "loc": {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "type": "array",
+                  "title": "Location"
+                },
+                "msg": {
+                  "type": "string",
+                  "title": "Message"
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Error Type"
+                }
+              },
+              "type": "object",
+              "required": [
+                "loc",
+                "msg",
+                "type"
+              ],
+              "title": "ValidationError"
+            }
+          },
+          "securitySchemes": {
+            "OAuth2PasswordBearer": {
+              "type": "oauth2",
+              "flows": {
+                "password": {
+                  "scopes": {},
+                  "tokenUrl": "/api/v1/login/access-token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "test": "Login - wrong credentials",
+      "method": "POST",
+      "url": "/api/v1/login/access-token",
+      "status_code": 400,
+      "response_time_ms": 4.18,
+      "response_body": {
+        "detail": "Incorrect staff code or password"
+      },
+      "pass": true
+    },
+    {
+      "test": "Login - missing credentials",
+      "method": "POST",
+      "url": "/api/v1/login/access-token",
+      "status_code": 422,
+      "response_time_ms": 3.55,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "username"
+            ],
+            "msg": "Field required",
+            "input": null,
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "password"
+            ],
+            "msg": "Field required",
+            "input": null,
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "test": "Login - admin credentials",
+      "method": "POST",
+      "url": "/api/v1/login/access-token",
+      "status_code": 200,
+      "response_time_ms": 60.02,
+      "response_body": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzM2NjcxMDAsInN1YiI6ImFkbWluIn0.cu-73wisCrHzy6fHvvVixCqFWuB6WcQhgH2nDuOxRr8",
+        "token_type": "bearer"
+      },
+      "pass": true
+    },
+    {
+      "test": "Staff - Get current user",
+      "method": "GET",
+      "url": "/api/v1/staff/me",
+      "status_code": 200,
+      "response_time_ms": 4.17,
+      "response_body": {
+        "name": "Administrator",
+        "email": "admin@smartpresence.edu",
+        "staff_code": "admin",
+        "role": "ADMIN",
+        "type": "SUBJECT_TEACHER",
+        "primary_subject": null,
+        "assigned_class_id": null,
+        "avatar_url": null,
+        "full_name": null,
+        "id": "d01eced5-9722-4c99-85c6-bae974e3b60e",
+        "organization_id": "11111111-1111-1111-1111-111111111111",
+        "is_active": true,
+        "is_superuser": true,
+        "created_at": "2026-03-06T14:42:09",
+        "updated_at": "2026-03-06T14:42:09"
+      },
+      "pass": true
+    },
+    {
+      "test": "Staff - List all",
+      "method": "GET",
+      "url": "/api/v1/staff/",
+      "status_code": 200,
+      "response_time_ms": 4.62,
+      "response_body": [
+        {
+          "name": "Asha Raman",
+          "email": "asha@school.edu",
+          "staff_code": "STF001",
+          "role": "STAFF",
+          "type": "SUBJECT_TEACHER",
+          "primary_subject": null,
+          "assigned_class_id": null,
+          "avatar_url": null,
+          "full_name": null,
+          "id": "33333333-3333-3333-3333-333333333331",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "is_superuser": false,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Vikram Das",
+          "email": "vikram@school.edu",
+          "staff_code": "STF002",
+          "role": "STAFF",
+          "type": "SUBJECT_TEACHER",
+          "primary_subject": null,
+          "assigned_class_id": null,
+          "avatar_url": null,
+          "full_name": null,
+          "id": "33333333-3333-3333-3333-333333333332",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "is_superuser": false,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Priya Sharma",
+          "email": "priya@school.edu",
+          "staff_code": "STF003",
+          "role": "ADMIN",
+          "type": "SUBJECT_TEACHER",
+          "primary_subject": null,
+          "assigned_class_id": null,
+          "avatar_url": null,
+          "full_name": null,
+          "id": "33333333-3333-3333-3333-333333333333",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "is_superuser": false,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Administrator",
+          "email": "admin@smartpresence.edu",
+          "staff_code": "admin",
+          "role": "ADMIN",
+          "type": "SUBJECT_TEACHER",
+          "primary_subject": null,
+          "assigned_class_id": null,
+          "avatar_url": null,
+          "full_name": null,
+          "id": "d01eced5-9722-4c99-85c6-bae974e3b60e",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "is_superuser": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Bad",
+          "email": null,
+          "staff_code": "bad_test",
+          "role": "STAFF",
+          "type": "SUBJECT_TEACHER",
+          "primary_subject": null,
+          "assigned_class_id": null,
+          "avatar_url": null,
+          "full_name": "Bad",
+          "id": "10721577-591a-41c1-8b52-c859e225ff60",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "is_superuser": false,
+          "created_at": "2026-03-06T14:58:53",
+          "updated_at": "2026-03-06T14:58:53"
+        },
+        {
+          "name": "edison",
+          "email": "edison@smartpresence.edu",
+          "staff_code": "edison",
+          "role": "STAFF",
+          "type": "CLASS_TEACHER",
+          "primary_subject": "",
+          "assigned_class_id": "22222222-2222-2222-2222-222222222221",
+          "avatar_url": "https://ui-avatars.com/api/?name=edison&background=6366F1&color=fff&size=150&bold=true",
+          "full_name": "edison",
+          "id": "885a4cbb-5835-43b9-826a-b1ef22eb8a5f",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "is_superuser": false,
+          "created_at": "2026-03-07T05:18:57",
+          "updated_at": "2026-03-07T05:18:57"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "test": "Organizations - List",
+      "method": "GET",
+      "url": "/api/v1/organizations/",
+      "status_code": 200,
+      "response_time_ms": 4.22,
+      "response_body": [
+        {
+          "name": "Green Valley School",
+          "id": "11111111-1111-1111-1111-111111111111",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Test Org CRUD",
+          "id": "5a29aded-9e50-4189-860d-94819ead472a",
+          "created_at": "2026-03-06T15:15:43"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "test": "Groups - List",
+      "method": "GET",
+      "url": "/api/v1/groups/",
+      "status_code": 200,
+      "response_time_ms": 4.77,
+      "response_body": [
+        {
+          "name": "Class 1",
+          "code": "C1",
+          "id": "22222222-2222-2222-2222-222222222221",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Class 2",
+          "code": "C2",
+          "id": "22222222-2222-2222-2222-222222222222",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Class 3",
+          "code": "C3",
+          "id": "22222222-2222-2222-2222-222222222223",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Class 4",
+          "code": "C4",
+          "id": "22222222-2222-2222-2222-222222222224",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        },
+        {
+          "name": "Class 5",
+          "code": "C5",
+          "id": "22222222-2222-2222-2222-222222222225",
+          "organization_id": "11111111-1111-1111-1111-111111111111",
+          "is_active": true,
+          "created_at": "2026-03-06T14:42:09",
+          "updated_at": "2026-03-06T14:42:09"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "test": "Students - List",
+      "method": "GET",
+      "url": "/api/v1/students/",
+      "status_code": 200,
+      "response_time_ms": 3.64,
+      "response_body": [],
+      "pass": true
+    },
+    {
+      "test": "Timetable - List",
+      "method": "GET",
+      "url": "/api/v1/timetable/",
+      "status_code": 200,
+      "response_time_ms": 4.95,
+      "response_body": [
+        {
+          "day_of_week": 1,
+          "period": 1,
+          "subject": "Math",
+          "start_time": "09:00:00",
+          "end_time": "09:45:00",
+          "id": "11b17b90-4c74-4602-b1df-24ff891afbbc",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333331",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 1,
+          "subject": "English",
+          "start_time": "09:00:00",
+          "end_time": "09:45:00",
+          "id": "c1a3f4e7-391a-4b0c-b2fe-940ebcdc8efa",
+          "group_id": "22222222-2222-2222-2222-222222222222",
+          "staff_id": "33333333-3333-3333-3333-333333333332",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 1,
+          "subject": "Science",
+          "start_time": "09:00:00",
+          "end_time": "09:45:00",
+          "id": "13b33565-75a9-4098-a1c8-9f055dcf5d03",
+          "group_id": "22222222-2222-2222-2222-222222222223",
+          "staff_id": "33333333-3333-3333-3333-333333333333",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 2,
+          "subject": "English",
+          "start_time": "10:00:00",
+          "end_time": "10:45:00",
+          "id": "f32d280a-e850-4c1d-b35d-99a98dc2e114",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333332",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 2,
+          "subject": "Math",
+          "start_time": "10:00:00",
+          "end_time": "10:45:00",
+          "id": "aca78534-a4e9-4b8b-9fab-349972e9eb75",
+          "group_id": "22222222-2222-2222-2222-222222222222",
+          "staff_id": "33333333-3333-3333-3333-333333333331",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 2,
+          "subject": "Math",
+          "start_time": "10:00:00",
+          "end_time": "10:45:00",
+          "id": "65238c4f-17b5-405b-aea1-4c7a191765a4",
+          "group_id": "22222222-2222-2222-2222-222222222223",
+          "staff_id": "33333333-3333-3333-3333-333333333331",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 3,
+          "subject": "Science",
+          "start_time": "11:00:00",
+          "end_time": "11:45:00",
+          "id": "bc627ac8-f1cd-4f4a-b9db-ce294e3d3549",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333333",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 1,
+          "period": 3,
+          "subject": "Art",
+          "start_time": "11:00:00",
+          "end_time": "11:45:00",
+          "id": "7c3edce2-5404-40d8-ba9f-f3177932b12f",
+          "group_id": "22222222-2222-2222-2222-222222222222",
+          "staff_id": "33333333-3333-3333-3333-333333333333",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 2,
+          "period": 1,
+          "subject": "Science",
+          "start_time": "09:00:00",
+          "end_time": "09:45:00",
+          "id": "b211b292-88d3-4afc-970a-56a54ae63d2d",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333333",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 2,
+          "period": 2,
+          "subject": "Math",
+          "start_time": "10:00:00",
+          "end_time": "10:45:00",
+          "id": "a42681b6-e331-415b-b269-0bd17a5dbad6",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333331",
+          "created_at": "2026-03-06T14:42:09"
+        },
+        {
+          "day_of_week": 2,
+          "period": 3,
+          "subject": "English",
+          "start_time": "11:00:00",
+          "end_time": "11:45:00",
+          "id": "f0376c61-3dac-4840-8b36-b73ee0ec5691",
+          "group_id": "22222222-2222-2222-2222-222222222221",
+          "staff_id": "33333333-3333-3333-3333-333333333332",
+          "created_at": "2026-03-06T14:42:09"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "test": "Stats - Institutional",
+      "method": "GET",
+      "url": "/api/v1/stats/institutional",
+      "status_code": 200,
+      "response_time_ms": 5.54,
+      "response_body": {
+        "total_students": 0,
+        "total_staff": 4,
+        "total_classes": 5,
+        "today_attendance_rate": 0,
+        "today_present": 0,
+        "today_total": 0,
+        "sessions_today": 0
+      },
+      "pass": true
+    },
+    {
+      "test": "Classes - Live",
+      "method": "GET",
+      "url": "/api/v1/classes/live",
+      "status_code": 200,
+      "response_time_ms": 4.51,
+      "response_body": [],
+      "pass": true
+    },
+    {
+      "test": "Staff/me - No auth (expect 401)",
+      "method": "GET",
+      "url": "/api/v1/staff/me",
+      "status_code": 401,
+      "response_time_ms": 2.62,
+      "response_body": {
+        "detail": "Not authenticated"
+      },
+      "pass": true
+    },
+    {
+      "test": "Students - No auth (expect 401)",
+      "method": "GET",
+      "url": "/api/v1/students/",
+      "status_code": 401,
+      "response_time_ms": 2.17,
+      "response_body": {
+        "detail": "Not authenticated"
+      },
+      "pass": true
+    },
+    {
+      "test": "Orgs - No auth (expect 401)",
+      "method": "GET",
+      "url": "/api/v1/organizations/",
+      "status_code": 401,
+      "response_time_ms": 2.22,
+      "response_body": {
+        "detail": "Not authenticated"
+      },
+      "pass": true
+    },
+    {
+      "test": "Staff/me - Invalid token (expect 401/403)",
+      "method": "GET",
+      "url": "/api/v1/staff/me",
+      "status_code": 403,
+      "response_time_ms": 2.02,
+      "response_body": {
+        "detail": "Could not validate credentials"
+      },
+      "pass": true
+    },
+    {
+      "test": "Create student - empty body",
+      "method": "POST",
+      "url": "/api/v1/students/",
+      "status_code": 422,
+      "response_time_ms": 3.53,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "name"
+            ],
+            "msg": "Field required",
+            "input": {},
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "group_id"
+            ],
+            "msg": "Field required",
+            "input": {},
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "test": "Create group - empty body",
+      "method": "POST",
+      "url": "/api/v1/groups/",
+      "status_code": 422,
+      "response_time_ms": 3.01,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "name"
+            ],
+            "msg": "Field required",
+            "input": {},
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          },
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "organization_id"
+            ],
+            "msg": "Field required",
+            "input": {},
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "test": "Start session - empty body",
+      "method": "POST",
+      "url": "/api/v1/attendance/start",
+      "status_code": 422,
+      "response_time_ms": 4.51,
+      "response_body": {
+        "detail": [
+          {
+            "type": "missing",
+            "loc": [
+              "body",
+              "group_id"
+            ],
+            "msg": "Field required",
+            "input": {},
+            "url": "https://errors.pydantic.dev/2.5/v/missing"
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "test": "Recognize - blank image (CPU)",
+      "method": "POST",
+      "url": "/api/v1/recognition/recognize",
+      "status_code": 200,
+      "response_time_ms": 10.51,
+      "response_body": {
+        "match": false,
+        "matches": [],
+        "unrecognized": [],
+        "frame_size": [
+          640,
+          480
+        ],
+        "detail": "No faces detected"
+      },
+      "pass": true
+    },
+    {
+      "test": "Register face - blank image (CPU)",
+      "method": "POST",
+      "url": "/api/v1/recognition/register-face",
+      "status_code": 404,
+      "response_time_ms": 5.83,
+      "response_body": {
+        "detail": "Student not found"
+      },
+      "pass": true
+    }
+  ]
+}

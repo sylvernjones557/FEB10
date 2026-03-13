@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-03-11 17:21:32",
+  "mode": "GPU (CUDA)",
+  "python_version": "3.11.8 (tags/v3.11.8:db85d51, Feb  6 2024, 22:03:32) [MSC v.1937 64 bit (AMD64)]",
+  "total_tests": 11,
+  "passed": 11,
+  "failed": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "test": "ONNX CUDA check",
+      "status": "PASS",
+      "elapsed_ms": 0,
+      "details": "CUDA=YES, TensorRT=YES"
+    },
+    {
+      "test": "GPU Hardware Detection",
+      "status": "PASS",
+      "elapsed_ms": 0,
+      "details": "NVIDIA GeForce RTX 3060, 12288 MiB, 11080 MiB, 591.74, 51"
+    },
+    {
+      "test": "CUDA session options",
+      "status": "PASS",
+      "elapsed_ms": 0.0,
+      "details": "Session options created"
+    },
+    {
+      "test": "FaceEngine GPU init (buffalo_sc, 640x640)",
+      "status": "PASS",
+      "elapsed_ms": 777.15,
+      "details": "Model loaded on GPU"
+    },
+    {
+      "test": "GPU detect - blank 640x640",
+      "status": "PASS",
+      "elapsed_ms": 37.08,
+      "details": "Detected 0 faces"
+    },
+    {
+      "test": "GPU detect - blank 1920x1080",
+      "status": "PASS",
+      "elapsed_ms": 107.66,
+      "details": "Detected 0 faces"
+    },
+    {
+      "test": "GPU detect - rect 640x640",
+      "status": "PASS",
+      "elapsed_ms": 34.07,
+      "details": "Detected 0 faces"
+    },
+    {
+      "test": "FaceEngine CPU init (buffalo_sc, 320x320)",
+      "status": "PASS",
+      "elapsed_ms": 352.87,
+      "details": "Model loaded on CPU"
+    },
+    {
+      "test": "CPU detect - blank 640x640",
+      "status": "PASS",
+      "elapsed_ms": 4.0,
+      "details": "Detected 0 faces"
+    },
+    {
+      "test": "CPU detect - blank 1920x1080",
+      "status": "PASS",
+      "elapsed_ms": 37.04,
+      "details": "Detected 0 faces"
+    },
+    {
+      "test": "Config comparison",
+      "status": "PASS",
+      "elapsed_ms": 0,
+      "details": "{\"FACE_DET_SIZE_CPU\": 320, \"FACE_DET_SIZE_GPU\": 640, \"FACE_MODEL_NAME\": \"buffalo_sc\", \"MAX_IMAGE_DIMENSION\": 640, \"ONNX_NUM_THREADS\": 2}"
+    }
+  ]
+}

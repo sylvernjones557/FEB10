@@ -1,0 +1,145 @@
+{
+  "jsonrpc": "2.0",
+  "mcpVersion": "1.0",
+  "prompts": [
+    {
+      "name": "enroll_student",
+      "description": "Complete student enrollment workflow: create student record, then register 3-angle face embeddings",
+      "arguments": [
+        { "name": "student_name", "type": "string", "required": true, "description": "Full name of the student" },
+        { "name": "group_id", "type": "string", "required": true, "description": "Group/class UUID to enroll into" },
+        { "name": "external_id", "type": "string", "required": false, "description": "External ID like roll number" },
+        { "name": "front_image", "type": "string", "format": "binary", "required": true, "description": "Front-facing photo" },
+        { "name": "left_image", "type": "string", "format": "binary", "required": true, "description": "Left-profile photo" },
+        { "name": "right_image", "type": "string", "format": "binary", "required": true, "description": "Right-profile photo" }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "student_create", "description": "Create student record in database" },
+        { "step": 2, "tool": "recognition_register_face", "description": "Register front-facing face embedding" },
+        { "step": 3, "tool": "recognition_register_face", "description": "Register left-profile face embedding" },
+        { "step": 4, "tool": "recognition_register_face", "description": "Register right-profile face embedding" }
+      ]
+    },
+    {
+      "name": "take_attendance",
+      "description": "Complete attendance session workflow: start session, scan faces, verify, and finalize",
+      "arguments": [
+        { "name": "group_id", "type": "string", "required": true, "description": "Group/class UUID to take attendance for" },
+        { "name": "camera_frames", "type": "array", "items": { "type": "string", "format": "binary" }, "required": true, "description": "Camera frame images to scan" },
+        { "name": "manual_additions", "type": "array", "items": { "type": "string" }, "required": false, "description": "Student UUIDs to manually mark present" }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "attendance_start_session", "description": "Start scanning session for the group" },
+        { "step": 2, "tool": "recognition_recognize", "description": "Send each camera frame for face recognition (repeat per frame)", "repeat": true },
+        { "step": 3, "tool": "attendance_stop", "description": "Stop the scanning phase" },
+        { "step": 4, "tool": "attendance_verify", "description": "Submit manual corrections if any" },
+        { "step": 5, "tool": "attendance_finalize", "description": "Finalize and persist attendance records" }
+      ]
+    },
+    {
+      "name": "onboard_teacher",
+      "description": "Complete teacher onboarding: create staff account, assign timetable entries",
+      "arguments": [
+        { "name": "name", "type": "string", "required": true, "description": "Teacher display name" },
+        { "name": "staff_code", "type": "string", "required": true, "description": "Login ID" },
+        { "name": "password", "type": "string", "required": true, "description": "Login password" },
+        { "name": "type", "type": "string", "enum": ["CLASS_TEACHER", "SUBJECT_TEACHER"], "required": true },
+        { "name": "primary_subject", "type": "string", "required": false },
+        { "name": "assigned_class_id", "type": "string", "required": false, "description": "For CLASS_TEACHER — class UUID" },
+        { "name": "timetable_entries", "type": "array", "required": false, "description": "Array of {day_of_week, period, subject, group_id, start_time, end_time}" }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "staff_create", "description": "Create staff account" },
+        { "step": 2, "tool": "timetable_create", "description": "Create each timetable entry (repeat per entry)", "repeat": true }
+      ]
+    },
+    {
+      "name": "dashboard_overview",
+      "description": "Fetch all data needed to render the admin dashboard",
+      "arguments": [],
+      "toolSequence": [
+        { "step": 1, "tool": "stats_institutional", "description": "Get institutional statistics", "parallel": true },
+        { "step": 2, "tool": "classes_live", "description": "Get currently active classes", "parallel": true },
+        { "step": 3, "tool": "staff_list", "description": "Get all staff members", "parallel": true },
+        { "step": 4, "tool": "student_list", "description": "Get all students", "parallel": true },
+        { "step": 5, "tool": "group_list", "description": "Get all groups/classes", "parallel": true }
+      ]
+    },
+    {
+      "name": "class_schedule_lookup",
+      "description": "Get full schedule for a class with teacher details",
+      "arguments": [
+        { "name": "class_id", "type": "string", "required": true, "description": "Class/group UUID" }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "classes_schedule_today", "description": "Get today's schedule entries with teacher names" }
+      ]
+    },
+    {
+      "name": "weekly_report",
+      "description": "Generate weekly attendance report for a staff member",
+      "arguments": [
+        { "name": "staff_id", "type": "string", "required": true, "description": "Staff UUID" }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "attendance_weekly_history", "description": "Fetch 7-day attendance history" },
+        { "step": 2, "tool": "staff_get", "description": "Get staff member details for report header" }
+      ]
+    },
+    {
+      "name": "system_health_check",
+      "description": "Full system health verification — backend, face engine, database connectivity",
+      "arguments": [],
+      "toolSequence": [
+        { "step": 1, "tool": "health_check", "description": "Check backend is running" },
+        { "step": 2, "tool": "system_info", "description": "Check face engine configuration" },
+        { "step": 3, "tool": "stats_institutional", "description": "Verify database connectivity via stats query" }
+      ]
+    },
+    {
+      "name": "bulk_student_enrollment",
+      "description": "Enroll multiple students into a class (without face registration)",
+      "arguments": [
+        { "name": "group_id", "type": "string", "required": true },
+        { "name": "students", "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "external_id": { "type": "string" } } }, "required": true }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "student_create", "description": "Create each student record (repeat per student)", "repeat": true }
+      ]
+    },
+    {
+      "name": "testclass_quick_session",
+      "description": "Run a full AI attendance session against the Test Class (all students, no timetable limits). Useful for demo and stress testing.",
+      "arguments": [
+        { "name": "group_id", "type": "string", "required": true, "description": "UUID of the Test Class group (name contains 'Test' or code 'TEST')." },
+        { "name": "camera_frames", "type": "array", "items": { "type": "string", "format": "binary" }, "required": true, "description": "Camera frame images to scan for faces." },
+        { "name": "manual_additions", "type": "array", "items": { "type": "string" }, "required": false, "description": "Student UUIDs to manually mark present (optional)." }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "attendance_start_session", "description": "Start Test Class attendance session" },
+        { "step": 2, "tool": "recognition_recognize", "description": "Send each camera frame for face recognition (repeat per frame)", "repeat": true },
+        { "step": 3, "tool": "attendance_stop", "description": "Stop the scanning phase" },
+        { "step": 4, "tool": "attendance_verify", "description": "Submit any manual additions (optional)" },
+        { "step": 5, "tool": "attendance_finalize", "description": "Finalize and persist Test Class attendance records" }
+      ]
+    },
+    {
+      "name": "teacher_testclass_workflow",
+      "description": "Teacher-centric flow using the Test Class: ensure login, list all students in Test Class, then run a short attendance session.",
+      "arguments": [
+        { "name": "username", "type": "string", "required": false, "description": "Staff login (defaults to 'testclass')." },
+        { "name": "password", "type": "string", "required": false, "description": "Password (defaults to 'testclass')." },
+        { "name": "group_id", "type": "string", "required": true, "description": "UUID of the Test Class group." },
+        { "name": "camera_frames", "type": "array", "items": { "type": "string", "format": "binary" }, "required": false, "description": "Optional camera frames for quick scan." }
+      ],
+      "toolSequence": [
+        { "step": 1, "tool": "auth_login", "description": "Authenticate as Test Class teacher (or provided credentials)" },
+        { "step": 2, "tool": "group_students", "description": "List all students visible in the Test Class" },
+        { "step": 3, "tool": "attendance_start_session", "description": "Start Test Class attendance session" },
+        { "step": 4, "tool": "recognition_recognize", "description": "Optionally process camera frames for recognition (repeat per frame)", "repeat": true },
+        { "step": 5, "tool": "attendance_stop", "description": "Stop scanning phase" },
+        { "step": 6, "tool": "attendance_finalize", "description": "Finalize Test Class attendance" }
+      ]
+    }
+  ]
+}

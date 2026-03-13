@@ -50,13 +50,8 @@ class Settings(BaseSettings):
     # JPEG quality for any re-encoding (lower = faster processing)
     IMAGE_QUALITY: int = Field(default=80, env="IMAGE_QUALITY")
 
-    # GPU Support
-    CUDA_VISIBLE_DEVICES: Optional[str] = Field(default=None, env="CUDA_VISIBLE_DEVICES")
-
     class Config:
         case_sensitive = True
         env_file = ".env"
-        extra = "ignore"
-
 
 settings = Settings()

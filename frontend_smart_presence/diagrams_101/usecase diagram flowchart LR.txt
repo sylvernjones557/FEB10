@@ -1,0 +1,335 @@
+usecase diagram flowchart LR
+    subgraph Actors
+        Admin((Admin))
+        Staff((Staff/Teacher))
+        AI_Agent((AI Agent via MCP))
+    end
+
+    subgraph UseCases["Smart Presence System"]
+        UC1["Login / Authenticate"]
+        UC2["View Dashboard"]
+        UC3["Manage Organizations"]
+        UC4["Manage Classes/Groups"]
+        UC5["Manage Staff"]
+        UC6["Enroll Students"]
+        UC7["Register Student Face"]
+        UC8["Start Attendance Session"]
+        UC9["Scan Faces for Attendance"]
+        UC10["Stop Attendance Session"]
+        UC11["View Attendance Reports"]
+        UC12["Manage Timetable"]
+        UC13["View Statistics"]
+        UC14["View Class Details"]
+        UC15["View Staff Details"]
+        UC16["Manual Attendance"]
+        UC17["AI Chat / Global Chat"]
+    end
+
+    Admin --> UC1
+    Admin --> UC2
+    Admin --> UC3
+    Admin --> UC4
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+    Admin --> UC11
+    Admin --> UC12
+    Admin --> UC13
+    
+    Staff --> UC1
+    Staff --> UC2
+    Staff --> UC6
+    Staff --> UC7
+    Staff --> UC8
+    Staff --> UC9
+    Staff --> UC10
+    Staff --> UC11
+    Staff --> UC14
+    Staff --> UC15
+    Staff --> UC16
+    Staff --> UC17
+
+    AI_Agent --> UC1
+    AI_Agent --> UC6
+    AI_Agent --> UC8
+    AI_Agent --> UC9
+    AI_Agent --> UC10
+    AI_Agent --> UC13
+
+    style Actors fill:#e1f5fe,stroke:#0277bd
+    style UseCases fill:#fff8e1,stroke:#f57f17  sequence diagram sequenceDiagram
+    autonumber
+    actor Staff as Staff/Admin
+    participant FE as React Frontend
+    participant BE as FastAPI Backend
+    participant FaceEng as Face Engine (InsightFace)
+    participant SQLite as SQLite DB
+    participant Chroma as ChromaDB
+
+    rect rgb(232, 245, 233)
+        Note over Staff,SQLite: Login Flow
+        Staff->>FE: Enter username & password
+        FE->>BE: POST /api/v1/auth/login
+        BE->>SQLite: Query staff by staff_code
+        SQLite-->>BE: Staff record + hashed_password
+        BE->>BE: Verify Argon2 hash
+        BE-->>FE: JWT access_token
+        FE->>FE: Store token in state
+    end
+
+    rect rgb(227, 242, 253)
+        Note over Staff,Chroma: Face Registration Flow
+        Staff->>FE: Upload student photo
+        FE->>BE: POST /api/v1/recognition/register (multipart)
+        BE->>FaceEng: Detect face & extract embedding
+        FaceEng-->>BE: 512-dim embedding vector
+        BE->>Chroma: Store embedding with student_id
+        Chroma-->>BE: OK
+        BE->>SQLite: UPDATE student SET face_data_registered=true
+        BE-->>FE: Registration success
+    end
+
+    rect rgb(255, 243, 224)
+        Note over Staff,Chroma: Attendance Session Flow
+        Staff->>FE: Click "Start Attendance" for Class
+        FE->>BE: POST /api/v1/attendance/start {group_id}
+        BE->>SQLite: CREATE attendance_session (SCANNING)
+        BE-->>FE: session_id
+        
+        loop Each Camera Frame
+            FE->>BE: POST /api/v1/recognition/recognize (image)
+            BE->>FaceEng: Detect faces in frame
+            FaceEng-->>BE: Face embeddings[]
+            BE->>Chroma: Search nearest match
+            Chroma-->>BE: student_id + confidence
+            BE->>SQLite: INSERT attendance_record (PRESENT, FACE)
+            BE-->>FE: {student_name, confidence}
+        end
+
+        Staff->>FE: Click "Stop Attendance"
+        FE->>BE: POST /api/v1/attendance/stop
+        BE->>SQLite: UPDATE session SET status=COMPLETED
+        BE-->>FE: Session summary
+    end  dfd level o and 1 flowchart TB
+    subgraph DFD0["DFD Level 0 - Context Diagram"]
+        Admin((Admin / Staff))
+        System[Smart Presence System]
+        DB[(Database)]
+        
+        Admin -->|Login Credentials| System
+        Admin -->|Student Data, Face Images| System
+        Admin -->|Start/Stop Attendance| System
+        System -->|JWT Token, Dashboard Data| Admin
+        System -->|Attendance Reports| Admin
+        System -->|Recognition Results| Admin
+        System <-->|Read/Write| DB
+    end
+
+    subgraph DFD1["DFD Level 1 - Process Breakdown"]
+        direction TB
+        P1["1.0 Authentication"]
+        P2["2.0 Student Management"]
+        P3["3.0 Face Recognition"]
+        P4["4.0 Attendance Management"]
+        P5["5.0 Reporting & Stats"]
+        P6["6.0 Organization/Class Mgmt"]
+        P7["7.0 Timetable Management"]
+        
+        DS1[(SQLite DB)]
+        DS2[(ChromaDB Vectors)]
+        
+        User2((Staff/Admin))
+        
+        User2 -->|credentials| P1
+        P1 -->|JWT token| User2
+        User2 -->|student info + photo| P2
+        P2 -->|CRUD| DS1
+        P2 -->|face embedding| P3
+        P3 -->|store/search vector| DS2
+        User2 -->|start session| P4
+        P4 -->|camera frame| P3
+        P3 -->|student match| P4
+        P4 -->|session + records| DS1
+        P5 -->|query| DS1
+        P5 -->|stats & reports| User2
+        User2 -->|org/class data| P6
+        P6 -->|CRUD| DS1
+        User2 -->|schedule data| P7
+        P7 -->|CRUD| DS1
+    end  er diagram erDiagram
+    organizations {
+        UUID id PK
+        STRING name
+        DATETIME created_at
+    }
+
+    staff {
+        UUID id PK
+        UUID organization_id FK
+        STRING name
+        STRING email UK
+        STRING staff_code UK
+        STRING role "ADMIN | STAFF"
+        STRING type "CLASS_TEACHER | SUBJECT_TEACHER"
+        STRING primary_subject
+        UUID assigned_class_id FK
+        STRING avatar_url
+        STRING full_name
+        BOOLEAN is_active
+        STRING hashed_password
+        BOOLEAN is_superuser
+        DATETIME created_at
+        DATETIME updated_at
+    }
+
+    groups {
+        UUID id PK
+        UUID organization_id FK
+        STRING name
+        STRING code
+        BOOLEAN is_active
+        DATETIME created_at
+        DATETIME updated_at
+    }
+
+    students {
+        UUID id PK
+        UUID organization_id FK
+        UUID group_id FK
+        STRING name
+        STRING roll_no
+        STRING email
+        STRING external_id
+        BOOLEAN face_data_registered
+        STRING avatar_url
+        BOOLEAN is_active
+        DATETIME created_at
+        DATETIME updated_at
+    }
+
+    timetable {
+        UUID id PK
+        UUID group_id FK
+        INTEGER day_of_week "1=Mon to 7=Sun"
+        INTEGER period
+        STRING subject
+        UUID staff_id FK
+        TIME start_time
+        TIME end_time
+        DATETIME created_at
+    }
+
+    attendance_sessions {
+        UUID id PK
+        UUID group_id FK
+        UUID created_by FK
+        STRING status "SCANNING | VERIFYING | COMPLETED"
+        DATETIME started_at
+        DATETIME ended_at
+    }
+
+    attendance_records {
+        UUID id PK
+        UUID session_id FK
+        UUID student_id FK
+        STRING status "PRESENT | ABSENT"
+        STRING method "FACE | MANUAL"
+        DATETIME marked_at
+    }
+
+    chromadb_vectors {
+        STRING student_id FK
+        FLOAT_ARRAY embedding "512-dim face vector"
+        JSON metadata
+    }
+
+    organizations ||--o{ groups : "has classes"
+    organizations ||--o{ staff : "employs"
+    organizations ||--o{ students : "enrolls"
+    groups ||--o{ students : "contains"
+    groups ||--o{ timetable : "has schedule"
+    groups ||--o{ attendance_sessions : "holds sessions"
+    groups ||--o| staff : "assigned teacher"
+    staff ||--o{ timetable : "teaches"
+    staff ||--o{ attendance_sessions : "creates"
+    attendance_sessions ||--o{ attendance_records : "has records"
+    students ||--o{ attendance_records : "marked in"
+    students ||--o| chromadb_vectors : "face embedding" ssystem architecture diagram graph TB
+    subgraph Client["Client Layer"]
+        direction TB
+        Browser["Web Browser"]
+        AI["AI Assistant / LLM"]
+    end
+
+    subgraph Frontend["Frontend (React 19 + TypeScript + Vite)"]
+        direction TB
+        Login["Login.tsx"]
+        Dashboard["Dashboard.tsx"]
+        ClassDir["ClassDirectory.tsx"]
+        ClassDetail["ClassDetail.tsx"]
+        Enrollment["Enrollment.tsx"]
+        Attendance["ClassAttendance.tsx"]
+        FaceScanner["FaceScanner.tsx"]
+        Reports["Reports.tsx"]
+        StaffDir["StaffDirectory.tsx"]
+        StaffDetail["StaffDetail.tsx"]
+        Timetable["MyClassPage.tsx"]
+        GlobalChat["GlobalChat.tsx"]
+        ApiService["API Service Layer"]
+    end
+
+    subgraph MCP["MCP Server (JSON-RPC 2.0)"]
+        direction TB
+        MCPHandler["JSON-RPC Handler"]
+        Tools42["42 Tools"]
+        Resources5["5 Resources"]
+        Prompts8["8 Prompts"]
+    end
+
+    subgraph Backend["Backend (FastAPI + Uvicorn)"]
+        direction TB
+        subgraph APIRoutes["API Routes (/api/v1)"]
+            AuthAPI["/auth"]
+            OrgAPI["/organizations"]
+            GroupAPI["/groups"]
+            StaffAPI["/staff"]
+            StudentAPI["/students"]
+            TimetableAPI["/timetable"]
+            AttendanceAPI["/attendance"]
+            RecognitionAPI["/recognition"]
+            StatsAPI["/stats"]
+            ClassesAPI["/classes"]
+        end
+        subgraph Core["Core Services"]
+            Security["Security (JWT + Argon2)"]
+            Config["Configuration"]
+        end
+        subgraph Engine["Face Recognition Engine"]
+            InsightFace["InsightFace (buffalo_sc)"]
+            ONNX["ONNX Runtime (CPU)"]
+            Downscaler["Image Downscaler (640px)"]
+        end
+    end
+
+    subgraph Database["Data Layer"]
+        direction TB
+        SQLite[("SQLite DB\ndb/sqlite/smart_presence.db")]
+        ChromaDB[("ChromaDB Vector Store\ndb/chroma/")]
+    end
+
+    Browser -->|HTTPS :3001| Frontend
+    AI -->|stdio| MCP
+    Frontend --> ApiService
+    ApiService -->|HTTP :8000| Backend
+    MCP --> MCPHandler
+    MCPHandler -->|HTTP :8000| Backend
+    APIRoutes --> Core
+    RecognitionAPI --> Engine
+    APIRoutes --> SQLite
+    Engine --> ChromaDB
+
+    style Client fill:#e1f5fe,stroke:#01579b
+    style Frontend fill:#f3e5f5,stroke:#4a148c
+    style MCP fill:#fff3e0,stroke:#e65100
+    style Backend fill:#e8f5e9,stroke:#1b5e20
+    style Database fill:#fce4ec,stroke:#880e4f

@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node.js
+node_modules/
+
+# Environment variables (secrets)
+.env
+*.env
+!*.env.example
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Build
+dist/
+build/
+*.egg-info/
+.vite/
+
+# Database / Vector store
+backend_smart_presence/db/sqlite/
+backend_smart_presence/db/chroma/
+chroma_store/
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# AI model files (downloaded at runtime)
+yolov8n.pt
+*.onnx
+
+# Certs (generated locally)
+backend_smart_presence/certs/
+
+# Lock files
+*.lock.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+test_log.txt
+test_output.txt
+
+# Reports (auto-generated)
+BENCHMARK_REPORT.md
+FULL_PROJECT_VALIDATION_REPORT.md
+HTTPS_MIGRATION_NOTES.md

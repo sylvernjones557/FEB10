@@ -11,7 +11,6 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
         proxy: {
-          // All API calls and health checks are forwarded to the backend
           '/api': {
             target: 'http://127.0.0.1:8000',
             changeOrigin: true,

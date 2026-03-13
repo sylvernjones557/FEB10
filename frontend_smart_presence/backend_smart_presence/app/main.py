@@ -4,24 +4,15 @@ import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'), override=True)
 
-# ── GPU/CPU Performance setup ──
-_cpu_threads = os.getenv("ONNX_NUM_THREADS", "4")
-_device = os.getenv("FACE_DEVICE_PREFERENCE", "cuda")
-
-# Environment variables for parallel processing
+# ── CPU Performance: Set thread limits BEFORE importing any numerical libraries ──
+_cpu_threads = os.getenv("ONNX_NUM_THREADS", "2")
 os.environ.setdefault("OMP_NUM_THREADS", _cpu_threads)
+os.environ.setdefault("OMP_WAIT_POLICY", "PASSIVE")
 os.environ.setdefault("MKL_NUM_THREADS", _cpu_threads)
-
-if _device == "cuda":
-    # Enable GPU - do NOT set CUDA_VISIBLE_DEVICES to empty
-    os.environ.setdefault("ONNXRUNTIME_PROVIDERS", "CUDAExecutionProvider,CPUExecutionProvider")
-    print(f"[INFO] Backend starting in GPU Mode (CUDA preference)")
-else:
-    # Force CPU-only
-    os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
-    os.environ.setdefault("ONNXRUNTIME_PROVIDERS", "CPUExecutionProvider")
-    print(f"[INFO] Backend starting in CPU-Only Mode")
-
+os.environ.setdefault("OPENBLAS_NUM_THREADS", _cpu_threads)
+os.environ.setdefault("NUMEXPR_NUM_THREADS", _cpu_threads)
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+os.environ.setdefault("ONNXRUNTIME_PROVIDERS", "CPUExecutionProvider")
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -197,14 +188,13 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "device": os.getenv("FACE_DEVICE_PREFERENCE", "cuda"), "mode": "Performance (GPU)" if os.getenv("FACE_DEVICE_PREFERENCE") == "cuda" else "Efficiency (CPU)"}
-
+    return {"status": "ok", "device": "cpu", "mode": "low-power"}
 
 @app.get("/system-info")
 def system_info():
     import platform as _platform
     return {
-        "device": os.getenv("FACE_DEVICE_PREFERENCE", "cuda"),
+        "device": "CPU-only",
         "database": "SQLite (local)",
         "face_model": settings.FACE_MODEL_NAME,
         "det_size": settings.FACE_DET_SIZE_CPU,
@@ -212,8 +202,7 @@ def system_info():
         "onnx_threads": settings.ONNX_NUM_THREADS,
         "lazy_load": settings.LAZY_LOAD_ENGINE,
         "env_omp_threads": os.environ.get("OMP_NUM_THREADS"),
-        "env_cuda_visible": os.environ.get("CUDA_VISIBLE_DEVICES", "0 (GPU Enabled)"),
-
+        "env_cuda_visible": os.environ.get("CUDA_VISIBLE_DEVICES", "(not set)"),
         "frontend_mode": "unified (Docker)" if _frontend_available else "standalone (API only)",
         "python_version": _platform.python_version(),
         "platform": _platform.platform(),

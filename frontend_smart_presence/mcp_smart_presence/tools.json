@@ -1,0 +1,1343 @@
+{
+  "jsonrpc": "2.0",
+  "mcpVersion": "1.0",
+  "tools": [
+    {
+      "name": "health_check",
+      "description": "Check backend health status, device type, and operating mode",
+      "category": "system",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/health",
+        "auth": false,
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["ok"] },
+          "device": { "type": "string", "enum": ["cpu", "gpu"] },
+          "mode": { "type": "string", "enum": ["low-power", "standard"] }
+        }
+      }
+    },
+    {
+      "name": "system_info",
+      "description": "Get detailed system configuration: face model, detection size, ONNX threads, image limits, lazy load status",
+      "category": "system",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/system-info",
+        "auth": false,
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "device": { "type": "string" },
+          "face_model": { "type": "string" },
+          "det_size": { "type": "array", "items": { "type": "integer" } },
+          "max_image_dim": { "type": "integer" },
+          "onnx_threads": { "type": "integer" },
+          "lazy_load": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "name": "server_root",
+      "description": "Get server welcome message with version and mode information",
+      "category": "system",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/",
+        "auth": false,
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "status": { "type": "string" },
+          "version": { "type": "string" },
+          "mode": { "type": "string" },
+          "docs_url": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "auth_login",
+      "description": "Authenticate a staff member and obtain a JWT access token. Uses staff_code as username.",
+      "category": "auth",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Staff code (login ID)"
+          },
+          "password": {
+            "type": "string",
+            "description": "Staff password"
+          }
+        },
+        "required": ["username", "password"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/login/access-token",
+        "contentType": "application/x-www-form-urlencoded",
+        "auth": false,
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "access_token": { "type": "string" },
+          "token_type": { "type": "string", "enum": ["bearer"] }
+        }
+      }
+    },
+    {
+      "name": "organization_list",
+      "description": "List all organizations",
+      "category": "organizations",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/organizations/",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "format": "uuid" },
+            "name": { "type": "string" },
+            "created_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    {
+      "name": "organization_create",
+      "description": "Create a new organization (superuser only)",
+      "category": "organizations",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Organization name"
+          }
+        },
+        "required": ["name"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/organizations/",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": {
+        "$ref": "#/schemas/Organization"
+      }
+    },
+    {
+      "name": "organization_get",
+      "description": "Get a specific organization by ID",
+      "category": "organizations",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Organization UUID"
+          }
+        },
+        "required": ["org_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/organizations/{org_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "$ref": "#/schemas/Organization"
+      }
+    },
+    {
+      "name": "group_list",
+      "description": "List all groups/classes, optionally filtered by organization",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Filter by organization UUID (optional)"
+          }
+        },
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/groups/",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": { "$ref": "#/schemas/Group" }
+      }
+    },
+    {
+      "name": "group_create",
+      "description": "Create a new group/class (superuser only)",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent organization UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Group name (e.g., 'Class 1')"
+          },
+          "code": {
+            "type": "string",
+            "description": "Short code (e.g., 'C1')"
+          }
+        },
+        "required": ["organization_id", "name"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/groups/",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Group" }
+    },
+    {
+      "name": "group_get",
+      "description": "Get a specific group/class by ID",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Group UUID"
+          }
+        },
+        "required": ["group_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/groups/{group_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": { "$ref": "#/schemas/Group" }
+    },
+    {
+      "name": "group_update",
+      "description": "Update a group/class (superuser only)",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Group UUID"
+          },
+          "name": { "type": "string", "description": "New group name" },
+          "code": { "type": "string", "description": "New group code" },
+          "is_active": { "type": "boolean", "description": "Active status" }
+        },
+        "required": ["group_id"]
+      },
+      "annotations": {
+        "httpMethod": "PATCH",
+        "endpoint": "/api/v1/groups/{group_id}",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Group" }
+    },
+    {
+      "name": "group_delete",
+      "description": "Delete a group/class. Blocks if students or timetable entries exist. (superuser only)",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Group UUID to delete"
+          }
+        },
+        "required": ["group_id"]
+      },
+      "annotations": {
+        "httpMethod": "DELETE",
+        "endpoint": "/api/v1/groups/{group_id}",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false,
+        "destructive": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "group_students",
+      "description": "List all students in a specific group/class",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Group UUID"
+          }
+        },
+        "required": ["group_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/groups/{group_id}/students",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": { "$ref": "#/schemas/Student" }
+      }
+    },
+    {
+      "name": "group_timetable",
+      "description": "Get timetable entries for a group, optionally filtered by day of week",
+      "category": "groups",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Group UUID"
+          },
+          "day_of_week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7,
+            "description": "ISO day of week (1=Monday, 7=Sunday)"
+          }
+        },
+        "required": ["group_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/groups/{group_id}/timetable",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": { "$ref": "#/schemas/Timetable" }
+      }
+    },
+    {
+      "name": "staff_list",
+      "description": "List all staff members with pagination",
+      "category": "staff",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "skip": {
+            "type": "integer",
+            "default": 0,
+            "description": "Number of records to skip"
+          },
+          "limit": {
+            "type": "integer",
+            "default": 100,
+            "description": "Maximum number of records to return"
+          }
+        },
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/staff/",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": { "$ref": "#/schemas/Staff" }
+      }
+    },
+    {
+      "name": "staff_create",
+      "description": "Create a new staff member (superuser only). Requires name, staff_code, and password.",
+      "category": "staff",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Full display name" },
+          "staff_code": { "type": "string", "description": "Unique login ID" },
+          "password": { "type": "string", "description": "Login password (min 6 chars)" },
+          "email": { "type": "string", "format": "email", "description": "Email address" },
+          "role": { "type": "string", "enum": ["ADMIN", "STAFF"], "description": "User role" },
+          "type": { "type": "string", "enum": ["CLASS_TEACHER", "SUBJECT_TEACHER"], "description": "Staff type" },
+          "primary_subject": { "type": "string", "description": "Primary teaching subject" },
+          "assigned_class_id": { "type": "string", "format": "uuid", "description": "Assigned class UUID (for CLASS_TEACHER)" },
+          "avatar_url": { "type": "string", "description": "Profile photo URL" },
+          "full_name": { "type": "string", "description": "Full legal name" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Organization UUID" }
+        },
+        "required": ["name", "staff_code", "password"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/staff/",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Staff" }
+    },
+    {
+      "name": "staff_me",
+      "description": "Get the currently authenticated staff member's profile",
+      "category": "staff",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/staff/me",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": { "$ref": "#/schemas/Staff" }
+    },
+    {
+      "name": "staff_get",
+      "description": "Get a specific staff member by ID",
+      "category": "staff",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "staff_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Staff UUID"
+          }
+        },
+        "required": ["staff_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/staff/{staff_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": { "$ref": "#/schemas/Staff" }
+    },
+    {
+      "name": "staff_update",
+      "description": "Update a staff member. Users can self-edit; superuser can edit others.",
+      "category": "staff",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "staff_id": { "type": "string", "format": "uuid", "description": "Staff UUID" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["ADMIN", "STAFF"] },
+          "type": { "type": "string", "enum": ["CLASS_TEACHER", "SUBJECT_TEACHER"] },
+          "primary_subject": { "type": "string" },
+          "assigned_class_id": { "type": "string", "format": "uuid" },
+          "avatar_url": { "type": "string" },
+          "full_name": { "type": "string" },
+          "is_active": { "type": "boolean" },
+          "password": { "type": "string", "description": "New password (optional)" }
+        },
+        "required": ["staff_id"]
+      },
+      "annotations": {
+        "httpMethod": "PATCH",
+        "endpoint": "/api/v1/staff/{staff_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Staff" }
+    },
+    {
+      "name": "staff_delete",
+      "description": "Delete a staff member. Blocks if timetable entries exist. Cannot self-delete. (superuser only)",
+      "category": "staff",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "staff_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Staff UUID to delete"
+          }
+        },
+        "required": ["staff_id"]
+      },
+      "annotations": {
+        "httpMethod": "DELETE",
+        "endpoint": "/api/v1/staff/{staff_id}",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false,
+        "destructive": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "student_list",
+      "description": "List all students with optional filtering by group or organization",
+      "category": "students",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": { "type": "string", "format": "uuid", "description": "Filter by group/class UUID" },
+          "organization_id": { "type": "string", "format": "uuid", "description": "Filter by organization UUID" },
+          "skip": { "type": "integer", "default": 0 },
+          "limit": { "type": "integer", "default": 100 }
+        },
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/students/",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": { "$ref": "#/schemas/Student" }
+      }
+    },
+    {
+      "name": "student_create",
+      "description": "Create/enroll a new student in a group",
+      "category": "students",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Student full name" },
+          "group_id": { "type": "string", "format": "uuid", "description": "Group/class UUID" },
+          "roll_no": { "type": "string", "description": "Roll number" },
+          "email": { "type": "string", "format": "email" },
+          "external_id": { "type": "string", "description": "External identifier (e.g., M001)" },
+          "avatar_url": { "type": "string", "description": "Profile photo URL" },
+          "organization_id": { "type": "string", "format": "uuid" }
+        },
+        "required": ["name", "group_id"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/students/",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Student" }
+    },
+    {
+      "name": "student_get",
+      "description": "Get a specific student by ID",
+      "category": "students",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Student UUID"
+          }
+        },
+        "required": ["student_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/students/{student_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": { "$ref": "#/schemas/Student" }
+    },
+    {
+      "name": "student_update",
+      "description": "Update a student's information",
+      "category": "students",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "student_id": { "type": "string", "format": "uuid", "description": "Student UUID" },
+          "name": { "type": "string" },
+          "roll_no": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "external_id": { "type": "string" },
+          "avatar_url": { "type": "string" },
+          "group_id": { "type": "string", "format": "uuid" },
+          "is_active": { "type": "boolean" },
+          "face_data_registered": { "type": "boolean" }
+        },
+        "required": ["student_id"]
+      },
+      "annotations": {
+        "httpMethod": "PATCH",
+        "endpoint": "/api/v1/students/{student_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Student" }
+    },
+    {
+      "name": "student_delete",
+      "description": "Delete a student and clean up face embeddings + attendance records (superuser only)",
+      "category": "students",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Student UUID to delete"
+          }
+        },
+        "required": ["student_id"]
+      },
+      "annotations": {
+        "httpMethod": "DELETE",
+        "endpoint": "/api/v1/students/{student_id}",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false,
+        "destructive": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "student_id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "timetable_list",
+      "description": "List timetable entries with optional filtering by group, staff, or day",
+      "category": "timetable",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": { "type": "string", "format": "uuid", "description": "Filter by group UUID" },
+          "staff_id": { "type": "string", "format": "uuid", "description": "Filter by staff UUID" },
+          "day_of_week": { "type": "integer", "minimum": 1, "maximum": 7, "description": "ISO day (1=Mon, 7=Sun)" }
+        },
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/timetable/",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": { "$ref": "#/schemas/Timetable" }
+      }
+    },
+    {
+      "name": "timetable_create",
+      "description": "Create a new timetable entry (superuser only)",
+      "category": "timetable",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": { "type": "string", "format": "uuid", "description": "Class/group UUID" },
+          "day_of_week": { "type": "integer", "minimum": 1, "maximum": 7, "description": "Day (1=Mon)" },
+          "period": { "type": "integer", "minimum": 1, "description": "Period number" },
+          "subject": { "type": "string", "description": "Subject name" },
+          "staff_id": { "type": "string", "format": "uuid", "description": "Teacher UUID" },
+          "start_time": { "type": "string", "format": "time", "description": "HH:MM format" },
+          "end_time": { "type": "string", "format": "time", "description": "HH:MM format" }
+        },
+        "required": ["group_id", "day_of_week", "period", "subject"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/timetable/",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Timetable" }
+    },
+    {
+      "name": "timetable_get",
+      "description": "Get a specific timetable entry by ID",
+      "category": "timetable",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entry_id": { "type": "string", "format": "uuid", "description": "Timetable entry UUID" }
+        },
+        "required": ["entry_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/timetable/{entry_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": { "$ref": "#/schemas/Timetable" }
+    },
+    {
+      "name": "timetable_update",
+      "description": "Update a timetable entry (superuser only)",
+      "category": "timetable",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entry_id": { "type": "string", "format": "uuid", "description": "Timetable entry UUID" },
+          "day_of_week": { "type": "integer", "minimum": 1, "maximum": 7 },
+          "period": { "type": "integer", "minimum": 1 },
+          "subject": { "type": "string" },
+          "staff_id": { "type": "string", "format": "uuid" },
+          "start_time": { "type": "string", "format": "time" },
+          "end_time": { "type": "string", "format": "time" }
+        },
+        "required": ["entry_id"]
+      },
+      "annotations": {
+        "httpMethod": "PATCH",
+        "endpoint": "/api/v1/timetable/{entry_id}",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": { "$ref": "#/schemas/Timetable" }
+    },
+    {
+      "name": "timetable_delete",
+      "description": "Delete a timetable entry (superuser only)",
+      "category": "timetable",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "entry_id": { "type": "string", "format": "uuid", "description": "Timetable entry UUID" }
+        },
+        "required": ["entry_id"]
+      },
+      "annotations": {
+        "httpMethod": "DELETE",
+        "endpoint": "/api/v1/timetable/{entry_id}",
+        "auth": true,
+        "authLevel": "superuser",
+        "idempotent": false,
+        "readOnly": false,
+        "destructive": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "attendance_start_session",
+      "description": "Start an AI-powered attendance scanning session for a class/group",
+      "category": "attendance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Class/group UUID to start attendance for"
+          }
+        },
+        "required": ["group_id"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/attendance/start",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "session_id": { "type": "string", "format": "uuid" },
+          "group_id": { "type": "string", "format": "uuid" },
+          "state": { "type": "string", "enum": ["SCANNING"] }
+        }
+      }
+    },
+    {
+      "name": "attendance_status",
+      "description": "Get current attendance session status (active state, present count, recognized list)",
+      "category": "attendance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/attendance/status",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "active": { "type": "boolean" },
+          "state": { "type": "string", "enum": ["IDLE", "SCANNING", "VERIFYING", "FINALIZED"] },
+          "present_count": { "type": "integer" },
+          "present_list": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    {
+      "name": "attendance_stop",
+      "description": "Stop the scanning phase and transition to verification",
+      "category": "attendance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/attendance/stop",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "state": { "type": "string", "enum": ["VERIFYING"] }
+        }
+      }
+    },
+    {
+      "name": "attendance_verify",
+      "description": "Submit manual corrections to attendance (add/remove students before finalizing)",
+      "category": "attendance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "manual_present": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Student UUIDs to mark as present"
+          },
+          "manual_absent": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Student UUIDs to mark as absent"
+          }
+        },
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/attendance/verify",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "present_count": { "type": "integer" },
+          "present_list": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    {
+      "name": "attendance_finalize",
+      "description": "Finalize the attendance session and persist records to database",
+      "category": "attendance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/attendance/finalize",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "session_id": { "type": "string", "format": "uuid" },
+          "present_count": { "type": "integer" },
+          "total_students": { "type": "integer" },
+          "present_details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "student_id": { "type": "string" },
+                "name": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "attendance_weekly_history",
+      "description": "Get weekly attendance history for a staff member (last 7 days of sessions)",
+      "category": "attendance",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "staff_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Staff member UUID"
+          }
+        },
+        "required": ["staff_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/attendance/history/weekly/{staff_id}",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "staff_id": { "type": "string" },
+          "week": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": { "type": "string", "format": "date" },
+                "sessions_count": { "type": "integer" },
+                "total_present": { "type": "integer" },
+                "total_students": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "recognition_register_face",
+      "description": "Register a student's face embedding from an image. Supports multi-angle registration (front, left, right). Detects duplicate faces across students.",
+      "category": "recognition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "description": "Student UUID to register face for"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Face image file (JPEG/PNG, multipart upload)"
+          }
+        },
+        "required": ["student_id", "file"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/recognition/register-face",
+        "contentType": "multipart/form-data",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": false,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "student_id": { "type": "string" }
+        }
+      },
+      "errors": [
+        { "code": 409, "message": "Face already registered to another student (duplicate detection)" },
+        { "code": 400, "message": "No face detected in image" }
+      ]
+    },
+    {
+      "name": "recognition_recognize",
+      "description": "Recognize faces in a camera frame. Returns matched students and unrecognized bounding boxes. Auto-marks students present if a scanning session is active.",
+      "category": "recognition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Camera frame image (JPEG, multipart upload)"
+          }
+        },
+        "required": ["file"]
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/recognition/recognize",
+        "contentType": "multipart/form-data",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "match": { "type": "boolean" },
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "student_id": { "type": "string" },
+                "distance": { "type": "number" },
+                "metadata": { "type": "object" },
+                "bbox": { "type": "array", "items": { "type": "number" } }
+              }
+            }
+          },
+          "unrecognized": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bbox": { "type": "array", "items": { "type": "number" } }
+              }
+            }
+          },
+          "frame_size": { "type": "array", "items": { "type": "integer" } }
+        }
+      }
+    },
+    {
+      "name": "recognition_clear_faces",
+      "description": "Clear ALL face embeddings from vector store and reset face_data_registered flags for all students",
+      "category": "recognition",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "POST",
+        "endpoint": "/api/v1/recognition/clear-faces",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": false,
+        "destructive": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "cleared": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "stats_institutional",
+      "description": "Get institutional dashboard statistics: student/staff counts, attendance rates, active sessions",
+      "category": "stats",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/stats/institutional",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "total_students": { "type": "integer" },
+          "total_staff": { "type": "integer" },
+          "total_classes": { "type": "integer" },
+          "today_attendance_rate": { "type": "number" },
+          "today_present": { "type": "integer" },
+          "today_total": { "type": "integer" },
+          "sessions_today": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "classes_live",
+      "description": "Get currently active/live classes based on today's timetable and current time",
+      "category": "classes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/classes/live",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "group_id": { "type": "string" },
+            "group_name": { "type": "string" },
+            "subject": { "type": "string" },
+            "period": { "type": "integer" },
+            "teacher_name": { "type": "string" },
+            "start_time": { "type": "string" },
+            "end_time": { "type": "string" }
+          }
+        }
+      }
+    },
+    {
+      "name": "classes_schedule_today",
+      "description": "Get today's full schedule for a specific class with teacher names and time slots",
+      "category": "classes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "class_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Class/group UUID"
+          }
+        },
+        "required": ["class_id"]
+      },
+      "annotations": {
+        "httpMethod": "GET",
+        "endpoint": "/api/v1/classes/{class_id}/schedule/today",
+        "auth": true,
+        "authLevel": "active_user",
+        "idempotent": true,
+        "readOnly": true
+      },
+      "returns": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "format": "uuid" },
+            "period": { "type": "integer" },
+            "subject": { "type": "string" },
+            "teacher_name": { "type": "string" },
+            "staff_id": { "type": "string", "format": "uuid" },
+            "time": { "type": "string", "description": "HH:MM - HH:MM format" },
+            "start_time": { "type": "string", "format": "time" },
+            "end_time": { "type": "string", "format": "time" }
+          }
+        }
+      }
+    }
+  ],
+  "schemas": {
+    "Organization": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Group": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organization_id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "is_active": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Staff": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organization_id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "full_name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "staff_code": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "STAFF"] },
+        "type": { "type": "string", "enum": ["CLASS_TEACHER", "SUBJECT_TEACHER"] },
+        "primary_subject": { "type": "string" },
+        "assigned_class_id": { "type": "string", "format": "uuid" },
+        "avatar_url": { "type": "string" },
+        "is_active": { "type": "boolean" },
+        "is_superuser": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Student": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "organization_id": { "type": "string", "format": "uuid" },
+        "group_id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "roll_no": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "external_id": { "type": "string" },
+        "avatar_url": { "type": "string" },
+        "face_data_registered": { "type": "boolean" },
+        "is_active": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Timetable": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "group_id": { "type": "string", "format": "uuid" },
+        "staff_id": { "type": "string", "format": "uuid" },
+        "day_of_week": { "type": "integer", "minimum": 1, "maximum": 7 },
+        "period": { "type": "integer" },
+        "subject": { "type": "string" },
+        "start_time": { "type": "string", "format": "time" },
+        "end_time": { "type": "string", "format": "time" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

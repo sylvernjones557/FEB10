@@ -1,0 +1,546 @@
+{
+  "jsonrpc": "2.0",
+  "mcpVersion": "1.0",
+  "resources": [
+    {
+      "uri": "smart-presence://frontend/pages",
+      "name": "Frontend Pages Registry",
+      "description": "All React page components with routing, props, and state information",
+      "mimeType": "application/json",
+      "contents": {
+        "routing": {
+          "type": "state-based",
+          "stateVariable": "currentPath",
+          "description": "Manual path-based routing via useState (no React Router). selectedClassId/selectedStaffId override path routing for detail views."
+        },
+        "pages": [
+          {
+            "id": "admin_dashboard",
+            "component": "AdminDashboard",
+            "file": "pages/Dashboard.tsx",
+            "path": "/dashboard",
+            "role": "ADMIN",
+            "description": "Admin home screen with stats cards (students, staff, presence index, latency), live classes list, quick actions grid, and class timetable modal",
+            "props": {
+              "studentCount": "number",
+              "staffCount": "number",
+              "onNavigate": "(path: string) => void",
+              "staffList": "StaffMember[]",
+              "groupList": "Group[]"
+            },
+            "apiCalls": ["stats_institutional", "classes_live"],
+            "subComponents": ["TimetableModal", "QuickAction", "SummaryCard"]
+          },
+          {
+            "id": "login",
+            "component": "Login",
+            "file": "pages/Login.tsx",
+            "path": null,
+            "role": null,
+            "description": "Staff authentication screen with staff_code + password form. Animated gradient background.",
+            "props": {
+              "onLogin": "(username: string, password: string) => void"
+            },
+            "apiCalls": ["auth_login"]
+          },
+          {
+            "id": "settings",
+            "component": "SettingsPage",
+            "file": "pages/Settings.tsx",
+            "path": "/settings",
+            "role": "ADMIN",
+            "description": "Admin settings with tabbed forms: Add Teacher (form + photo capture + timetable allocation) and Add Member (form + 3-angle face registration). Full-screen camera portals for photo capture and face scanning.",
+            "props": {
+              "onBack": "() => void",
+              "onAddStaff": "(staff: any) => void",
+              "onAddStudent": "(student: any) => void",
+              "staffList": "StaffMember[]",
+              "groupList": "Group[]"
+            },
+            "apiCalls": ["staff_create", "student_create", "recognition_register_face", "timetable_create"],
+            "features": [
+              "Staff form with validation (name, login ID, password >= 6 chars, subject, class)",
+              "Avatar camera portal with 3-second countdown capture",
+              "Student form with validation (name, student ID, class)",
+              "3-angle face registration (Front, Left, Right) with auto-capture",
+              "Full-screen teacher timetable scheduling (6 days x 3 periods)",
+              "Backend-synced face registration (only advances on successful embedding storage)"
+            ]
+          },
+          {
+            "id": "class_attendance",
+            "component": "ClassAttendance",
+            "file": "pages/ClassAttendance.tsx",
+            "path": "/attendance",
+            "role": "BOTH",
+            "description": "AI-powered attendance workflow: select class → start session → camera scan with face detection → review & verify (manual corrections) → finalize & submit",
+            "props": {
+              "isManualDay": "boolean",
+              "preSelected": "{ classId: string }",
+              "studentList": "Student[]",
+              "groupList": "Group[]",
+              "onExit": "() => void"
+            },
+            "apiCalls": ["attendance_start_session", "attendance_status", "attendance_stop", "attendance_verify", "attendance_finalize", "recognition_recognize"],
+            "features": [
+              "Class selection dropdown",
+              "AI face scan mode with FaceScanner component",
+              "Manual attendance toggle mode",
+              "Review & Verify step (post-camera review with manual corrections)",
+              "Deduplicated AI + manual present counts",
+              "Session state machine (IDLE → SCANNING → VERIFYING → FINALIZED)"
+            ]
+          },
+          {
+            "id": "class_detail",
+            "component": "ClassDetail",
+            "file": "pages/ClassDetail.tsx",
+            "path": null,
+            "role": "ADMIN",
+            "description": "Class detail view with MONITOR and PUPILS tabs. Shows class teacher, today's periods, and student roster.",
+            "props": {
+              "classObj": "Group",
+              "teacher": "StaffMember | null",
+              "students": "Student[]",
+              "isAdmin": "boolean",
+              "onBack": "() => void",
+              "onStaffClick": "(staffId: string) => void"
+            },
+            "apiCalls": ["classes_schedule_today"]
+          },
+          {
+            "id": "class_directory",
+            "component": "ClassDirectory",
+            "file": "pages/ClassDirectory.tsx",
+            "path": "/classes",
+            "role": "ADMIN",
+            "description": "Grid view of all classes with status filter (All/Active/Archived), student counts, and assigned teacher badges",
+            "props": {
+              "classList": "Group[]",
+              "staffList": "StaffMember[]",
+              "studentList": "Student[]",
+              "onBack": "() => void",
+              "onClassClick": "(classId: string) => void"
+            },
+            "apiCalls": []
+          },
+          {
+            "id": "students_directory",
+            "component": "StudentsDirectory",
+            "file": "pages/StudentsDirectory.tsx",
+            "path": "/students",
+            "role": "ADMIN",
+            "description": "Student directory with search, class filter, detail cards showing face registration status, and admin delete capability",
+            "props": {
+              "studentList": "Student[]",
+              "groupList": "Group[]",
+              "onBack": "() => void",
+              "onDeleteStudent": "(studentId: string) => void",
+              "isAdmin": "boolean"
+            },
+            "apiCalls": ["student_delete"],
+            "features": [
+              "Search by name",
+              "Filter by class/group",
+              "Student detail modal with face registration badge",
+              "Admin-only delete with confirmation dialog"
+            ]
+          },
+          {
+            "id": "staff_directory",
+            "component": "StaffDirectory",
+            "file": "pages/StaffDirectory.tsx",
+            "path": "/staff",
+            "role": "ADMIN",
+            "description": "Staff listing with search, role badges, and click-to-detail navigation",
+            "props": {
+              "staffList": "StaffMember[]",
+              "onBack": "() => void",
+              "onStaffClick": "(staffId: string) => void"
+            },
+            "apiCalls": []
+          },
+          {
+            "id": "staff_detail",
+            "component": "StaffDetail",
+            "file": "pages/StaffDetail.tsx",
+            "path": null,
+            "role": "ADMIN",
+            "description": "Staff member profile with weekly activity chart, role/subject info, and admin actions (chat, terminate)",
+            "props": {
+              "staff": "StaffMember",
+              "onBack": "() => void",
+              "onOpenChat": "(staffId: string) => void",
+              "onTerminateStaff": "(staffId: string) => void",
+              "isAdmin": "boolean"
+            },
+            "apiCalls": ["attendance_weekly_history"]
+          },
+          {
+            "id": "reports",
+            "component": "InstitutionalReport",
+            "file": "pages/Reports.tsx",
+            "path": "/reports",
+            "role": "ADMIN",
+            "description": "Institutional analytics dashboard with presence index, daily success rate, enrollment stats, and AI latency metrics",
+            "props": {
+              "onBack": "() => void"
+            },
+            "apiCalls": ["stats_institutional"]
+          },
+          {
+            "id": "staff_home",
+            "component": "StaffHome",
+            "file": "pages/StaffHome.tsx",
+            "path": "/staff-home",
+            "role": "STAFF",
+            "description": "Staff home screen with greeting, quick actions, weekly timetable modal for assigned subjects",
+            "props": {
+              "user": "any",
+              "onNavigate": "(path: string) => void",
+              "groupList": "Group[]"
+            },
+            "apiCalls": ["timetable_list"],
+            "features": [
+              "Greeting with date",
+              "Quick action buttons (Take Attendance, My Class, Subjects)",
+              "Weekly timetable popup showing all assigned periods"
+            ]
+          },
+          {
+            "id": "staff_subjects",
+            "component": "StaffSubjects",
+            "file": "pages/StaffSubjects.tsx",
+            "path": "/staff-subjects",
+            "role": "STAFF",
+            "description": "Staff view of assigned subjects with performance (top present/absent students)",
+            "props": {
+              "user": "any",
+              "groupList": "Group[]",
+              "studentList": "Student[]"
+            },
+            "apiCalls": ["timetable_list"]
+          },
+          {
+            "id": "my_class",
+            "component": "MyClassPage",
+            "file": "pages/MyClassPage.tsx",
+            "path": "/my-class",
+            "role": "STAFF",
+            "description": "Class teacher's view of their assigned class — students, attendance rates, absent count",
+            "props": {
+              "user": "any",
+              "studentList": "Student[]",
+              "groupList": "Group[]"
+            },
+            "apiCalls": ["attendance_weekly_history"]
+          },
+          {
+            "id": "enrollment",
+            "component": "Enrollment",
+            "file": "pages/Enrollment.tsx",
+            "path": null,
+            "role": "ADMIN",
+            "description": "Standalone student enrollment with form + 3-angle face registration. Embedded in Settings.tsx workflow.",
+            "props": {},
+            "apiCalls": ["student_create", "recognition_register_face"]
+          },
+          {
+            "id": "global_chat",
+            "component": "GlobalChat",
+            "file": "pages/GlobalChat.tsx",
+            "path": null,
+            "role": "BOTH",
+            "description": "Global chat interface (placeholder with local mock messages)",
+            "props": {
+              "onBack": "() => void",
+              "staffList": "StaffMember[]"
+            },
+            "apiCalls": []
+          },
+          {
+            "id": "staff_chat",
+            "component": "StaffChat",
+            "file": "pages/StaffChat.tsx",
+            "path": "/staff-chat",
+            "role": "STAFF",
+            "description": "Staff chat placeholder — 'Coming Soon' screen",
+            "props": {
+              "onBack": "() => void",
+              "targetName": "string"
+            },
+            "apiCalls": []
+          },
+          {
+            "id": "documentation",
+            "component": "Documentation",
+            "file": "pages/Documentation.tsx",
+            "path": null,
+            "role": null,
+            "description": "Static PRD/documentation page (not routed)",
+            "props": {},
+            "apiCalls": []
+          }
+        ]
+      }
+    },
+    {
+      "uri": "smart-presence://frontend/components",
+      "name": "Reusable Components Registry",
+      "description": "Shared React components used across multiple pages",
+      "mimeType": "application/json",
+      "contents": [
+        {
+          "id": "face_scanner",
+          "component": "FaceScanner",
+          "file": "components/FaceScanner.tsx",
+          "description": "Full-screen camera portal with real-time face detection via recognition API. Renders bounding boxes with glow effects and 3-state colors (green=already recognized, blue=new match, amber=identifying). Uses createPortal to document.body.",
+          "props": {
+            "onDetect": "(count: number, matches?: FaceMatch[]) => void",
+            "isScanning": "boolean",
+            "onBack": "() => void",
+            "title": "string",
+            "lastRecognized": "{ name: string, avatar: string, time: string } | null",
+            "recognizedList": "Map<string, { name: string, confidence: number, avatar: string }>",
+            "onDone": "() => void",
+            "count": "number",
+            "total": "number",
+            "bottomContent": "React.ReactNode",
+            "studentLookup": "(id: string) => { name: string, avatar: string } | null",
+            "alreadyRecognizedIds": "Set<string>"
+          },
+          "exports": ["FaceScanner (default)", "FaceMatch (interface)"],
+          "apiCalls": ["recognition_recognize"]
+        },
+        {
+          "id": "layout",
+          "component": "Layout",
+          "file": "components/Layout.tsx",
+          "description": "App shell with header (notifications, dark mode toggle, logout), role-based bottom navigation bar, and content area",
+          "props": {
+            "children": "React.ReactNode",
+            "user": "any",
+            "onLogout": "() => void",
+            "activePath": "string",
+            "onNavigate": "(path: string) => void"
+          }
+        },
+        {
+          "id": "toast",
+          "component": "ToastProvider + useToast",
+          "file": "components/Toast.tsx",
+          "description": "Global toast notification system. Provides showToast(type, title, message?) and showConfirm(title, message, onConfirm) via React context.",
+          "exports": ["ToastProvider", "useToast (hook)", "ToastType"],
+          "toastTypes": ["success", "error", "warning", "info"]
+        }
+      ]
+    },
+    {
+      "uri": "smart-presence://backend/models",
+      "name": "Database Models Registry",
+      "description": "SQLAlchemy ORM models mapping to PostgreSQL tables",
+      "mimeType": "application/json",
+      "contents": [
+        {
+          "model": "Organization",
+          "file": "app/models/organization.py",
+          "table": "organizations",
+          "columns": {
+            "id": "UUID (PK)",
+            "name": "String",
+            "created_at": "DateTime"
+          }
+        },
+        {
+          "model": "Group",
+          "file": "app/models/group.py",
+          "table": "groups",
+          "columns": {
+            "id": "UUID (PK)",
+            "organization_id": "UUID (FK → organizations.id)",
+            "name": "String",
+            "code": "String (optional)",
+            "is_active": "Boolean (default true)",
+            "created_at": "DateTime",
+            "updated_at": "DateTime"
+          }
+        },
+        {
+          "model": "Staff",
+          "file": "app/models/staff.py",
+          "table": "staff",
+          "columns": {
+            "id": "UUID (PK)",
+            "organization_id": "UUID (FK → organizations.id)",
+            "name": "String",
+            "full_name": "String (optional)",
+            "email": "String (optional, unique)",
+            "staff_code": "String (unique, login ID)",
+            "hashed_password": "String",
+            "role": "String (ADMIN | STAFF)",
+            "type": "String (CLASS_TEACHER | SUBJECT_TEACHER)",
+            "primary_subject": "String (optional)",
+            "assigned_class_id": "UUID (optional, FK → groups.id)",
+            "avatar_url": "String (optional)",
+            "is_active": "Boolean (default true)",
+            "is_superuser": "Boolean (default false)",
+            "created_at": "DateTime",
+            "updated_at": "DateTime"
+          }
+        },
+        {
+          "model": "Student",
+          "file": "app/models/student.py",
+          "table": "students",
+          "columns": {
+            "id": "UUID (PK)",
+            "organization_id": "UUID (FK → organizations.id, optional)",
+            "group_id": "UUID (FK → groups.id)",
+            "name": "String",
+            "roll_no": "String (optional)",
+            "email": "String (optional)",
+            "external_id": "String (optional)",
+            "avatar_url": "String (optional)",
+            "face_data_registered": "Boolean (default false)",
+            "is_active": "Boolean (default true)",
+            "created_at": "DateTime",
+            "updated_at": "DateTime"
+          }
+        },
+        {
+          "model": "Timetable",
+          "file": "app/models/timetable.py",
+          "table": "timetable",
+          "columns": {
+            "id": "UUID (PK)",
+            "group_id": "UUID (FK → groups.id)",
+            "staff_id": "UUID (FK → staff.id, optional)",
+            "day_of_week": "Integer (1-7, ISO)",
+            "period": "Integer",
+            "subject": "String",
+            "start_time": "Time (optional)",
+            "end_time": "Time (optional)",
+            "created_at": "DateTime"
+          }
+        },
+        {
+          "model": "AttendanceRecord",
+          "file": "app/models/attendance_record.py",
+          "table": "attendance_records",
+          "columns": {
+            "id": "UUID (PK)",
+            "session_id": "UUID (FK → attendance_sessions.id)",
+            "student_id": "UUID (FK → students.id)",
+            "status": "String (PRESENT | ABSENT)",
+            "method": "String (AI | MANUAL)",
+            "created_at": "DateTime"
+          }
+        },
+        {
+          "model": "Attendance",
+          "file": "app/models/attendance.py",
+          "table": "attendance_sessions",
+          "columns": {
+            "id": "UUID (PK)",
+            "group_id": "UUID (FK → groups.id)",
+            "staff_id": "UUID (FK → staff.id)",
+            "state": "String (SCANNING | VERIFYING | FINALIZED)",
+            "present_count": "Integer",
+            "total_students": "Integer",
+            "created_at": "DateTime",
+            "finalized_at": "DateTime (optional)"
+          }
+        }
+      ]
+    },
+    {
+      "uri": "smart-presence://backend/config",
+      "name": "Backend Configuration",
+      "description": "All configurable environment variables and settings",
+      "mimeType": "application/json",
+      "contents": {
+        "envFile": ".env",
+        "settings": [
+          { "key": "DATABASE_URL", "type": "string", "required": true, "description": "SQLite connection URL (local file)" },
+          { "key": "SECRET_KEY", "type": "string", "required": false, "default": "CHANGE_THIS_TO_A_SECRET_KEY_PLEASE", "description": "JWT signing secret" },
+          { "key": "FACE_DEVICE_PREFERENCE", "type": "string", "default": "cpu", "enum": ["cpu", "gpu"], "description": "Face engine runtime device" },
+          { "key": "FACE_DET_SIZE_CPU", "type": "integer", "default": 320, "description": "Detection input size for CPU mode (px)" },
+          { "key": "FACE_DET_SIZE_GPU", "type": "integer", "default": 640, "description": "Detection input size for GPU mode (px)" },
+          { "key": "FACE_MODEL_NAME", "type": "string", "default": "buffalo_sc", "description": "InsightFace model name" },
+          { "key": "MAX_IMAGE_DIMENSION", "type": "integer", "default": 640, "description": "Max image dimension before downscaling" },
+          { "key": "ONNX_NUM_THREADS", "type": "integer", "default": 2, "description": "ONNX Runtime thread count" },
+          { "key": "UVICORN_WORKERS", "type": "integer", "default": 1, "description": "Number of uvicorn worker processes" },
+          { "key": "LAZY_LOAD_ENGINE", "type": "boolean", "default": true, "description": "Lazy-load face engine on first request" },
+          { "key": "IMAGE_QUALITY", "type": "integer", "default": 80, "description": "JPEG re-encoding quality (1-100)" },
+          { "key": "FACE_MATCH_THRESHOLD", "type": "float", "default": 0.5, "description": "Cosine distance threshold for face matching" },
+          { "key": "CHROMA_DB_PATH", "type": "string", "default": "./db/chroma", "description": "ChromaDB storage directory" }
+        ]
+      }
+    },
+    {
+      "uri": "smart-presence://frontend/config",
+      "name": "Frontend Configuration",
+      "description": "Frontend environment variables and build configuration",
+      "mimeType": "application/json",
+      "contents": {
+        "envFile": ".env",
+        "settings": [
+          { "key": "VITE_API_BASE_URL", "type": "string", "default": "http://127.0.0.1:8000/api/v1", "description": "Backend API base URL" }
+        ],
+        "buildTool": "Vite 6.4.1",
+        "entryPoint": "index.html → index.tsx → App.tsx",
+        "outputDir": "dist/",
+        "typescript": {
+          "target": "ES2022",
+          "module": "ESNext",
+          "jsx": "react-jsx",
+          "strict": false,
+          "noEmit": true
+        }
+      }
+    },
+    {
+      "uri": "smart-presence://backend/testclass_mode",
+      "name": "Test Class Mode & Demo Credentials",
+      "description": "Special Test Class behaviour and demo staff login for unrestricted testing",
+      "mimeType": "application/json",
+      "contents": {
+        "testClassDetection": {
+          "description": "Any group whose name contains 'Test' or whose code is 'TEST' or 'TST' is treated as the special Test Class.",
+          "backendImplementation": {
+            "groupsEndpoint": "/api/v1/groups/{group_id}/students",
+            "studentsEndpoint": "/api/v1/students/",
+            "attendanceEndpoint": "/api/v1/attendance/*"
+          },
+          "rules": [
+            "Listing students for the Test Class returns all active students in the organization.",
+            "Attendance finalize for the Test Class creates records for all active students, not only one group.",
+            "Attendance sessions for the Test Class auto-reset any existing in-memory session so staff can take attendance multiple times without timetable restrictions."
+          ]
+        },
+        "autoTestClassCreation": {
+          "description": "When a student is created, the backend ensures a 'Test Class' group with code 'TEST' exists for that organization.",
+          "groupDefaults": {
+            "name": "Test Class",
+            "code": "TEST",
+            "is_active": true
+          }
+        },
+        "demoStaffAccount": {
+          "description": "A dedicated staff account is provided for Test Class simulations and mobile staff UI testing.",
+          "credentials": {
+            "staff_code": "testclass",
+            "password": "testclass"
+          },
+          "assignedClass": "Automatically assigned to the Test Class group when created via scripts/create_testclass_staff.py or initial seeding.",
+          "role": "STAFF",
+          "type": "CLASS_TEACHER",
+          "notes": [
+            "Ideal default for MCP auto-login when testing teacher workflows instead of admin.",
+            "Has no destructive permissions; use admin/admin for full system configuration."
+          ]
+        }
+      }
+    }
+  ]
+}

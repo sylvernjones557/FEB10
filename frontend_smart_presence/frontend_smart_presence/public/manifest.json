@@ -1,6 +1,8 @@
 {
     "name": "Smart Presence",
     "short_name": "Presence",
+    "id": "/",
+    "scope": "/",
     "description": "Offline-First AI Attendance System by Sylvester Jones",
     "start_url": "/",
     "display": "standalone",
