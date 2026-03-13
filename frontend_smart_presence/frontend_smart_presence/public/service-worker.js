@@ -1,13 +1,12 @@
-const CACHE_NAME = 'smart-presence-v2';
+const CACHE_NAME = 'smart-presence-v3';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/index.css',
+  '/assets/index-BK9kytvD.css',
+  '/assets/index-C1POeuHH.js',
   '/icon-192.png',
-  '/icon-512.png',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
