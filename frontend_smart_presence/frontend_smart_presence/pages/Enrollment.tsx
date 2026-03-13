@@ -22,7 +22,7 @@ const Enrollment: React.FC = () => {
   useEffect(() => {
     if (step === 2) {
       navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
       }).then(stream => {
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
@@ -48,7 +48,7 @@ const Enrollment: React.FC = () => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return resolve(null);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.5);
     });
   }, []);
 

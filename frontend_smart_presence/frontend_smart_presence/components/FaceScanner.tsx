@@ -99,7 +99,7 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
       const ctx = canvas.getContext('2d', { alpha: false });
       if (!ctx) return resolve(null);
       ctx.drawImage(video, 0, 0, tw, th);
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.72);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.5);
     });
   }, []);
 
@@ -109,7 +109,7 @@ const FaceScanner: React.FC<FaceScannerProps> = ({
     setStatusText('Starting camera…');
     try {
       const ms = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+        video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 15 } },
       });
       streamRef.current = ms;
       setStream(ms);
