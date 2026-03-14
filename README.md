@@ -1,88 +1,85 @@
-# 🛡️ Smart Presence by Sylvester Jones
+<div align="center">
+
+# 🛡️ Smart Presence
+**The Ultimate Offline-First, AI-Powered Biometric Attendance System**
 
 [![Developer](https://img.shields.io/badge/Developer-Sylvester--Jones-blue?style=for-the-badge&logo=github)](https://github.com/sylvernjones557)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-100%25--Offline-orange?style=for-the-badge)](https://github.com/sylvernjones557/FEB10)
-
-**Smart Presence** is a cutting-edge, AI-powered attendance system designed for total privacy, zero cloud dependency, and high-performance execution on consumer hardware.
-
-Created and Maintained by **[Sylvester Jones (@sylvernjones557)](https://github.com/sylvernjones557)**.
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](./LICENSE)
 
 ---
+
+*Say goodbye to sluggish cloud APIs, expensive subscriptions, and invasive data sharing.* <br>
+*Say hello to **Smart Presence**—where state-of-the-art AI meets zero-trust architecture.*
+
+</div>
 
 ## 🌟 Why Smart Presence?
-Traditional attendance systems are slow, cloud-dependent, and invasive. **Smart Presence** flips the script:
-- **Zero Cloud**: No Supabase, no Firebase, no AWS. Your data stays on *your* hardware.
-- **AI-Native**: Powered by a custom-tuned **InsightFace** engine running on local **CPU**.
-- **Agentic Ready**: The world's first attendance system with a built-in **Model Context Protocol (MCP)** bridge, allowing LLMs to interact with your data as a local tool.
+
+Traditional attendance systems are slow, cloud-dependent, and invasive. **Smart Presence** flips the script by prioritizing speed, privacy, and user experience:
+
+- **🔐 100% Zero-Cloud Architecture**: No Supabase, no Firebase, no AWS. Your biometric data and records never leave your local hardware. Complete GDPR & FERPA compliance out of the box.
+- **⚡ AI-Native Edge Processing**: Powered by a heavily optimized **InsightFace** engine that runs blazingly fast entirely on standard CPUs. No expensive GPUs required.
+- **🤖 Agentic Ready (MCP)**: The world's first attendance system equipped with a built-in **Model Context Protocol (MCP)** bridge, allowing your favorite LLMs (Claude, ChatGPT) to interact with your school data as a local tool.
+- **📱 Premium "Liquid Glass" PWA**: A stunning, installable Progressive Web App featuring haptic feedback, 60FPS camera scanning, background animations, and an adaptive UI.
 
 ---
 
-## 🏗️ Technical Masterpiece
-Build with a focus on resilient, "Survivor" infrastructure:
+## 🏗️ The Survival Architecture
+
+Built to withstand offline environments and poor network conditions, Smart Presence is divided into highly specialized microservices:
+
+```mermaid
+graph TD
+    A[📱 PWA Frontend<br>React + TypeScript + Vite] -->|HTTPS Proxy| B(⚡ FastAPI Backend<br>Python + Uvicorn )
+    B <--> C[(💾 SQLiteDB<br>Relational Data)]
+    B <--> D[(🧠 ChromaDB<br>Vector Embeddings)]
+    B <--> E[🤖 InsightFace<br>ML Engine]
+    
+    F[🌐 Cloudflare Tunnel] <--> A
+    
+    G[🧠 MCP Gateway] <--> B
+    H[External AI Agents] <--> G
+```
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **User Interface** | React 19 + TypeScript + Vite | Premium Admin & Staff Dashboard |
-| **Processing** | FastAPI + Uvicorn | High-performance Python bridge |
-| **Logic** | CPU-Only ML Engine | Ultra-fast face matching (No GPU needed) |
-| **Storage** | SQLite + ChromaDB | Relational data & Vector embeddings |
-| **Automation** | MCP Gateway | 42+ Tools for AI Agent integration |
+| **Frontend UI** | React 19 + TypeScript + Tailwind | Premium Admin & Staff Dashboard with Haptics |
+| **Backend Core** | FastAPI + Uvicorn | High-performance Python bridge & API |
+| **ML Logic** | CPU-Only ONNX Engine | Ultra-fast local face matching |
+| **Storage** | SQLite + ChromaDB | Relational data & 512-dim Vector embeddings |
+| **Automation** | Full MCP Server | 42+ Tools for AI Agent integration |
+| **Networking** | Cloudflare Tunnels | Secure remote access without exposing ports |
 
 ---
 
----
+## 🔥 Key Features
 
-## 🚀 Recent Updates (V2.1)
-The latest version introduces significant enhancements for field usability and premium feel:
-- **📳 Haptic Logic**: Native tactile feedback for mobile web using `web-haptics`. Success/Error/Impact vibrations for scanning and navigation.
-- **👩‍🏫 Teacher UI**: A specialized dashboard for staff members (`testclass` user) optimized for quick attendance and class management.
-- **🧪 Test Class System**: Built-in unrestricted testing mode for groups named "Test Class" (Code: `TEST`), allowing attendance at any time.
-- **🛡️ Resilience Layer**: Global Error Boundaries and loading states to eliminate "blank screen" issues even on high-latency mobile connections.
-
-## 📂 Project Structure
-```text
-FEB10/
-├── frontend_smart_presence/   # The high-end React UI (Haptics integrated)
-├── backend_smart_presence/    # FastAPI + ML Engine + Local DBs
-├── mcp_smart_presence/        # The AI Gateway (Feature Add-on)
-└── diagrams/                  # Visual architecture by Sylvester Jones
-```
+*   **Group & Class Management**: Beautifully manage organizations, classes, students, and schedules.
+*   **Rapid Face Enrollment**: Capture 3D angles in seconds right from your phone.
+*   **Live Group Scanning**: Scan an entire classroom at once with real-time bounding boxes and confidence tracking.
+*   **Haptic Tactile Engine**: Your phone vibrates distinctively on successful scans, errors, and navigation.
+*   **Test Class Environment**: Practice and demo the software instantly with the unrestricted `testclass` teacher account.
 
 ---
 
-## ✨ Premium Experience
-Smart Presence isn't just a tool; it's a mobile-first PWA experience:
-- **Glassmorphism UI**: High-end translucent interfaces with animated background "blobs".
-- **Tactile Responses**: Every scan and menu tap provides physical feedback.
-- **Adaptive Loading**: Smart skeletons and spinners ensure the UI feels fast on any network.
+## 📚 Documentation & Setup
+
+We have moved all detailed setup instructions to the `/docs` folder for cleanliness. Please choose your starting point:
+
+1. [**Backend Setup Guide**](./docs/backend.md) - Start here to spin up the AI engine and databases.
+2. [**Frontend Setup Guide**](./docs/frontend.md) - Instructions to run the beautiful React UI.
+3. [**MCP Integration Guide**](./docs/mcp_gateway.md) - Connect Smart Presence to your AI Assistants.
+4. [**Cloudflare Tunnel & Remote Access**](./docs/cloudflare_tunnel.md) - Access your local server securely over the internet.
 
 ---
 
-## 🛠️ Getting Started
-### 1️⃣ Backend Setup
-```bash
-cd backend_smart_presence
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-run_server.bat
-```
-### 2️⃣ Frontend Setup
-```bash
-cd frontend_smart_presence
-npm install
-npm run dev
-```
+## 🤝 Community & Support
 
----
-
-## 🤝 Open Source & Contributions
-This project is released under the **MIT License**. We believe in open, secure, and privacy-respecting technology.
+This project is built for the next generation of privacy-conscious institutions.
 
 **Connect with the Developer:**
 - **GitHub**: [sylvernjones557](https://github.com/sylvernjones557)
 - **Project Link**: [Smart Presence](https://github.com/sylvernjones557/FEB10)
 
----
-*Built with ❤️ by Sylvester Jones for the next generation of privacy-conscious institutions.*
+*Built with ❤️ by Sylvester Jones.*
